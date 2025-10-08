@@ -250,15 +250,3 @@ docker compose exec ollama ollama pull gpt-oss:20b-cloud
 Port Conflicts
 
 If ports are already in use, modify them in `docker-compose.yml` and `.env`.
-
-Next Steps
-
-1. Customize the LLM prompts in `backend/app/services/llm_service.py`
-2. Add more career-related graph nodes and relationships in Neo4j
-3. Extend the frontend with more features
-4. Configure authentication and user management
-5. Deploy to production
-
----
-
-Built using cutting-edge technologies
