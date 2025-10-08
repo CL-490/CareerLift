@@ -34,15 +34,17 @@ pytest-cov>=7.0.0
 black>=25.9.0
 ruff>=0.14.0
 mypy>=1.18.2
+<<<<<<< HEAD
 black>=24.8.0,<25.0.0
 ruff>=0.6.0,<0.7.0
 mypy>=1.11.0,<2.0.0
 <<<<<<< HEAD
 >>>>>>> 56726d2 (job scraping with firecrawl, currenbtly uses sample_job since we dont have enough tokens)
 =======
+=======
+>>>>>>> 71bb475 (fixed merge)
 
 >>>>>>> 4ced2bf (fix issue)
 
 
 firecrawl-py
-neo4j>=5,<6
