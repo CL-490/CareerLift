@@ -16,6 +16,7 @@ const navItems: NavItem[] = [
   { label: "Applications", href: "/applications", icon: "🗂️" },
   { label: "Coach Center", href: "/coach-center", icon: "🎯" },
   { label: "Settings", href: "/settings", icon: "⚙️" },
+  { label: "Admin Ingest", href: "/admin/ingest-jobs", icon: "🛠️" }
 ];
 
 export function Sidebar() {

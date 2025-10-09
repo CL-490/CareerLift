@@ -55,9 +55,11 @@ services:
       - NEO4J_PASSWORD=password123
       - OLLAMA_URL=http://ollama:11434
       - PYTHONUNBUFFERED=1
+      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
     volumes:
       - ./backend:/app
       - backend_cache:/root/.cache
+      - ./backend/app/data:/app/app/data
     networks:
       - careerlift-network
     depends_on:

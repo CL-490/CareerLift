@@ -30,6 +30,10 @@ pytest-asyncio>=1.2.0
 pytest-cov>=7.0.0
 
 # Development
+
 black>=25.9.0
 ruff>=0.14.0
 mypy>=1.18.2
+
+
+firecrawl-py

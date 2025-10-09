@@ -1,0 +1,148 @@
+{
+  "jobs": [
+    {
+      "title": "Senior Frontend Engineer",
+      "company": "Acme AI",
+      "location": "Remote (US)",
+      "employment_type": "Full-time",
+      "remote": true,
+      "salary_text": "$170k\u2013$210k + equity",
+      "posted_at": "2025-10-05",
+      "apply_url": "https://boards.greenhouse.io/acme-ai/jobs/1001",
+      "source_url": "https://boards.greenhouse.io/acme-ai",
+      "description": "Build delightful UIs in React/TypeScript for AI-driven workflows."
+    },
+    {
+      "title": "Machine Learning Engineer \u2013 LLM",
+      "company": "Acme AI",
+      "location": "San Francisco, CA",
+      "employment_type": "Full-time",
+      "remote": false,
+      "salary_text": "$200k\u2013$260k + equity",
+      "posted_at": "2025-10-01",
+      "apply_url": "https://boards.greenhouse.io/acme-ai/jobs/1002",
+      "source_url": "https://boards.greenhouse.io/acme-ai",
+      "description": "Train/evaluate LLMs, optimize inference, contribute to research tooling."
+    },
+    {
+      "title": "Product Manager, Job Finder",
+      "company": "CareerLift",
+      "location": "Remote",
+      "employment_type": "Full-time",
+      "remote": true,
+      "salary_text": "Competitive + equity",
+      "posted_at": "2025-09-28",
+      "apply_url": "https://jobs.lever.co/careerlift/pm-job-finder",
+      "source_url": "https://jobs.lever.co/careerlift",
+      "description": "Own roadmap for the Job Finder experience; partner with Eng/Design."
+    },
+    {
+      "title": "Backend Engineer (Python/FastAPI)",
+      "company": "CareerLift",
+      "location": "Remote (Americas)",
+      "employment_type": "Full-time",
+      "remote": true,
+      "salary_text": "$160k\u2013$190k",
+      "posted_at": "2025-09-24",
+      "apply_url": "https://jobs.lever.co/careerlift/backend-python",
+      "source_url": "https://jobs.lever.co/careerlift",
+      "description": "Design APIs, integrate Firecrawl, and ship Neo4j-powered features."
+    },
+    {
+      "title": "Data Engineer",
+      "company": "VectorWorks",
+      "location": "New York, NY",
+      "employment_type": "Full-time",
+      "remote": false,
+      "salary_text": "$150k\u2013$180k",
+      "posted_at": "2025-10-03",
+      "apply_url": "https://jobs.ashbyhq.com/vectorworks/DE-002",
+      "source_url": "https://jobs.ashbyhq.com/vectorworks",
+      "description": "Build data pipelines, warehouse models, and ML feature stores."
+    },
+    {
+      "title": "Full\u2011Stack Engineer (Next.js)",
+      "company": "VectorWorks",
+      "location": "Remote (EU)",
+      "employment_type": "Contract",
+      "remote": true,
+      "salary_text": "\u20ac70\u2013\u20ac90/hr",
+      "posted_at": "2025-09-29",
+      "apply_url": "https://jobs.ashbyhq.com/vectorworks/FS-007",
+      "source_url": "https://jobs.ashbyhq.com/vectorworks",
+      "description": "Ship product surfaces across Next.js + Node, own feature end-to-end."
+    },
+    {
+      "title": "DevOps Engineer",
+      "company": "Nimbus Labs",
+      "location": "Austin, TX",
+      "employment_type": "Full-time",
+      "remote": false,
+      "salary_text": "$155k\u2013$185k",
+      "posted_at": "2025-10-06",
+      "apply_url": "https://apply.workable.com/nimbus-labs/devops-001",
+      "source_url": "https://apply.workable.com/nimbus-labs",
+      "description": "Own CI/CD, K8s, observability; drive SRE best practices."
+    },
+    {
+      "title": "Security Engineer",
+      "company": "Nimbus Labs",
+      "location": "Remote (US/Canada)",
+      "employment_type": "Full-time",
+      "remote": true,
+      "salary_text": "$180k\u2013$210k",
+      "posted_at": "2025-09-18",
+      "apply_url": "https://apply.workable.com/nimbus-labs/sec-003",
+      "source_url": "https://apply.workable.com/nimbus-labs",
+      "description": "Threat modeling, hardening, reviews; collaborate with product teams."
+    },
+    {
+      "title": "iOS Engineer",
+      "company": "ZenApps",
+      "location": "Los Angeles, CA",
+      "employment_type": "Full-time",
+      "remote": true,
+      "salary_text": "$160k\u2013$185k",
+      "posted_at": "2025-09-27",
+      "apply_url": "https://jobs.teamtailor.com/zenapps/ios-001",
+      "source_url": "https://jobs.teamtailor.com/zenapps",
+      "description": "Ship SwiftUI features and collaborate with design on mobile UX."
+    },
+    {
+      "title": "Android Engineer",
+      "company": "ZenApps",
+      "location": "Remote (US)",
+      "employment_type": "Full-time",
+      "remote": true,
+      "salary_text": "$155k\u2013$180k",
+      "posted_at": "2025-09-30",
+      "apply_url": "https://jobs.teamtailor.com/zenapps/android-002",
+      "source_url": "https://jobs.teamtailor.com/zenapps",
+      "description": "Modern Android (Kotlin, Compose), build reliable app experiences."
+    },
+    {
+      "title": "AI Research Engineer",
+      "company": "DeepField",
+      "location": "Boston, MA",
+      "employment_type": "Full-time",
+      "remote": false,
+      "salary_text": "Open",
+      "posted_at": "2025-10-07",
+      "apply_url": "https://careers.smartrecruiters.com/deepfield/re-010",
+      "source_url": "https://careers.smartrecruiters.com/deepfield",
+      "description": "Prototype and evaluate novel LLM techniques; publish and ship."
+    },
+    {
+      "title": "Technical Writer (Developer Docs)",
+      "company": "DeepField",
+      "location": "Remote",
+      "employment_type": "Contract",
+      "remote": true,
+      "salary_text": "$80\u2013$120/hr",
+      "posted_at": "2025-10-02",
+      "apply_url": "https://careers.smartrecruiters.com/deepfield/tw-004",
+      "source_url": "https://careers.smartrecruiters.com/deepfield",
+      "description": "Own docs IA, write guides/samples; collaborate with PM/Eng."
+    }
+  ]
+}
