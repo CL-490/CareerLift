@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { PreferencesProvider } from "@/components/PreferencesProvider";
 import Sidebar from "@/components/Sidebar";
 
 const geistSans = Geist({
@@ -28,7 +29,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased app-bg`}>        
         <div className="min-h-screen flex">
           <Sidebar />
-          <div className="flex-1 min-w-0 px-10 py-12 fade-in">{children}</div>
+          <div className="flex-1 min-w-0 px-10 py-12 fade-in"><PreferencesProvider>{children}</PreferencesProvider></div>
         </div>
       </body>
     </html>
