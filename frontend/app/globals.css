@@ -184,3 +184,90 @@ html {
   border-color: rgba(0,0,0,0.08);
 }
 /* --------------------------------------------------------- */
+
+
+/* -------- Contrast utilities & elevation tokens ---------- */
+.text-foreground { color: var(--foreground); }
+.text-muted { color: var(--muted); }
+
+/* Heading gradient that adapts per theme */
+:root {
+  --heading-grad-from: #b4ffe8;
+  --heading-grad-via: #79ffe8;
+  --heading-grad-to: #39f3ff;
+}
+:root[data-theme="light"] {
+  /* deeper hues for contrast on white */
+  --heading-grad-from: #16a34a; /* emerald-600 */
+  --heading-grad-via: #0891b2;  /* cyan-700 */
+  --heading-grad-to: #2563eb;   /* blue-600 */
+}
+.heading-gradient {
+  background: linear-gradient(90deg,var(--heading-grad-from),var(--heading-grad-via),var(--heading-grad-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Elevation tokens for 3D cards */
+:root {
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.06) inset;
+  --shadow-2: 0 10px 25px -10px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.08) inset;
+  --shadow-3: 0 18px 50px -12px rgba(0,0,0,0.65), 0 1px 0 rgba(255,255,255,0.1) inset;
+}
+:root[data-theme="light"] {
+  --shadow-1: 0 1px 2px rgba(2,6,23,0.10), 0 1px 0 rgba(255,255,255,0.90) inset;
+  --shadow-2: 0 10px 25px -10px rgba(2,6,23,0.20), 0 1px 0 rgba(255,255,255,0.95) inset;
+  --shadow-3: 0 18px 50px -12px rgba(2,6,23,0.28), 0 1px 0 rgba(255,255,255,1) inset;
+}
+
+/* Reusable 3D card */
+.card-3d {
+  background: color-mix(in oklab, var(--background-alt) 92%, transparent);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-2);
+  position: relative;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.card-3d::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0) 40%);
+  mix-blend-mode: overlay;
+}
+.card-3d:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-3);
+  border-color: var(--border-strong);
+}
+
+/* Surface helper for panels */
+.surface {
+  background: var(--background-alt);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+/* --------------------------------------------------- */
+
+
+/* accent hue overlay for cards */
+.card-hue {
+  position: relative;
+}
+.card-hue::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(120% 100% at 0% 0%, color-mix(in oklab, var(--accent) 30%, transparent) 0%, transparent 50%),
+              radial-gradient(120% 100% at 100% 100%, color-mix(in oklab, var(--accent) 20%, transparent) 0%, transparent 60%);
+  opacity: .06;
+  transition: opacity .2s ease;
+}
+.card-hue:hover::after { opacity: .12; }
