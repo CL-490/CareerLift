@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List, Dict, Any
 import asyncio
-from app.services.firecrawl_service import discover_links, extract_jobs_from_url
+from app.services.playwright import discover_links, extract_jobs_from_url
 from pathlib import Path
 import os, json
 

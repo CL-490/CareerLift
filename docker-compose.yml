@@ -29,6 +29,8 @@ services:
     container_name: ollama
     ports:
       - "11434:11434"
+    environment:
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
     volumes:
       - ollama_data:/root/.ollama
     networks:
@@ -54,8 +56,9 @@ services:
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=password123
       - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL}
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
       - PYTHONUNBUFFERED=1
-      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
     volumes:
       - ./backend:/app
       - backend_cache:/root/.cache
