@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased app-bg`}>        
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased app-bg`} suppressHydrationWarning>
         <div className="min-h-screen flex">
           <Sidebar />
           <div className="flex-1 min-w-0 px-10 py-12 fade-in"><PreferencesProvider>{children}</PreferencesProvider></div>
