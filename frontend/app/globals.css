@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Design tokens */
+/* Design tokens, dark (default) theme */
 :root {
   --background: #0b0f17;
   --background-alt: #0f1724;
@@ -149,3 +149,38 @@ body::-webkit-scrollbar-thumb:hover { background: #22394d; }
   60% { transform: rotate(0deg); }
   100% { transform: rotate(0deg); }
 }
+
+
+/* ------ Settings Page Additions: theme + font scale ------ */
+
+/* Scale all rem units app-wide */
+html {
+  font-size: calc(16px * var(--font-scale, 1));
+}
+
+/* Light theme overrides */
+:root[data-theme="light"] {
+  --background: #ffffff;
+  --background-alt: #f6f7f9;
+  --background-gradient: radial-gradient(circle at 20% 20%, #eef2f7, #ffffff 60%);
+  --foreground: #0a0e14;
+  --muted: #475569;
+  --border-color: rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.14);
+  --accent: #0ea5e9;
+  --accent-glow: 0 0 0 1px #0ea5e966, 0 0 14px -2px #0ea5e988;
+  --danger: #dc2626;
+}
+
+/* utility tokens used in existing UI */
+:root[data-theme="light"] .nav-item {
+  background: #ffffff;
+  border-color: rgba(0,0,0,0.08);
+  color: #0a0e14;
+}
+
+:root[data-theme="light"] .card {
+  background: #ffffff;
+  border-color: rgba(0,0,0,0.08);
+}
+/* --------------------------------------------------------- */
