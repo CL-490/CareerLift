@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
-/* Design tokens */
+/* Design tokens, dark (default) theme */
 :root {
   --background: #0b0f17;
   --background-alt: #0f1724;
   --background-gradient: radial-gradient(circle at 20% 20%, #132031, #0b0f17 60%);
   --foreground: #e6edf3;
   --muted: #7a8696;
-  --border-color: rgba(255,255,255,0.08);
+  --border-color: rgba(93, 197, 140, 0.236);
   --border-strong: rgba(255,255,255,0.14);
-  --accent: #0dd9a3;
+  --accent: #83d5bbb5;
   --accent-glow: 0 0 0 1px #0dd9a344, 0 0 14px -2px #0dd9a3aa;
   --danger: #ef4444;
   --radius-sm: 6px;
@@ -41,7 +41,7 @@ body::-webkit-scrollbar-thumb:hover { background: #22394d; }
 
 /* Card */
 .card {
-  background: linear-gradient(160deg, #141d29 0%, #0f161f 100%);
+  background: linear-gradient(160deg, #1c273c 0%, #0b0f17 100%);
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
   padding: 1.5rem;
@@ -148,4 +148,161 @@ body::-webkit-scrollbar-thumb:hover { background: #22394d; }
   50% { transform: rotate(10deg); }
   60% { transform: rotate(0deg); }
   100% { transform: rotate(0deg); }
+}
+
+
+/* ------ Settings Page Additions: theme + font scale ------ */
+
+/* Scale all rem units app-wide */
+html {
+  font-size: calc(16px * var(--font-scale, 1));
+}
+
+/* Light theme overrides */
+:root[data-theme="light"] {
+  --background: #ffffff;
+  --background-alt: #f6f7f9;
+  --background-gradient: radial-gradient(circle at 20% 20%, #eef2f7, #ffffff 60%);
+  --foreground: #0a0e14;
+  --muted: #475569;
+  --border-color: rgba(28, 71, 55, 0.485);
+  --border-strong: rgba(0,0,0,0.14);
+  --accent: #3ea080;
+  --accent-glow: 0 0 0 1px #0ea5e966, 0 0 14px -2px #0ea5e988;
+  --danger: #dc2626;
+}
+
+/* utility tokens used in existing UI */
+:root[data-theme="light"] .nav-item {
+  background: #ffffff;
+  border-color: rgba(0,0,0,0.08);
+  color: #0a0e14;
+}
+
+:root[data-theme="light"] .card {
+  background: #faf5e4;
+  border-color: rgba(0,0,0,0.08);
+}
+/* --------------------------------------------------------- */
+
+
+/* -------- Contrast utilities & elevation tokens ---------- */
+.text-foreground { color: var(--foreground); }
+.text-muted { color: var(--muted); }
+
+/* Heading gradient that adapts per theme */
+:root {
+  --heading-grad-from: #b4ffe8;
+  --heading-grad-via: #79ffe8;
+  --heading-grad-to: #39f3ff;
+}
+:root[data-theme="light"] {
+  /* deeper hues for contrast on white */
+  --heading-grad-from: #16a34a; /* emerald-600 */
+  --heading-grad-via: #0891b2;  /* cyan-700 */
+  --heading-grad-to: #2563eb;   /* blue-600 */
+}
+.heading-gradient {
+  background: linear-gradient(90deg,var(--heading-grad-from),var(--heading-grad-via),var(--heading-grad-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Elevation tokens for 3D cards */
+:root {
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.06) inset;
+  --shadow-2: 0 10px 25px -10px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.08) inset;
+  --shadow-3: 0 18px 50px -12px rgba(0,0,0,0.65), 0 1px 0 rgba(255,255,255,0.1) inset;
+}
+:root[data-theme="light"] {
+  --shadow-1: 0 1px 2px rgba(2,6,23,0.10), 0 1px 0 rgba(255,255,255,0.90) inset;
+  --shadow-2: 0 10px 25px -10px rgba(2,6,23,0.20), 0 1px 0 rgba(255,255,255,0.95) inset;
+  --shadow-3: 0 18px 50px -12px rgba(2,6,23,0.28), 0 1px 0 rgba(255,255,255,1) inset;
+}
+
+
+/* Global card tokens */
+:root {
+  /* greyish / navy tint for dark theme */
+  --card-navy: #0f20a2;                /* grey-navy(not saturated) */
+  --card-bg: color-mix(in oklab, var(--background-alt) 85%, var(--card-navy) 15%);
+  --card-border-tint: color-mix(in oklab, var(--card-navy) 20%, var(--border-color));
+}
+:root[data-theme="light"] {
+  /* greyish / cream tint for light theme */
+  --card-cream: #d1be76;               /* soft warm cream */
+  --card-bg: color-mix(in oklab, var(--background-alt) 85%, var(--card-cream) 15%);
+  --card-border-tint: color-mix(in oklab, #cdbf9f 35%, var(--border-color));
+}
+
+/* Reusable 3D card */
+.card-3d {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border-tint);
+  border-radius: 16px;
+  box-shadow: var(--shadow-2);
+  position: relative;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.card-3d::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0) 40%);
+  mix-blend-mode: overlay;
+}
+.card-3d:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-3);
+  border-color: var(--border-strong);
+}
+
+
+
+/* Surface helper for panels */
+.surface {
+  background: var(--background-alt);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+/* --------------------------------------------------- */
+
+
+/* accent hue overlay for cards */
+.card-hue {
+  position: relative;
+}
+.card-hue::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(120% 100% at 0% 0%, color-mix(in oklab, var(--accent) 30%, transparent) 0%, transparent 50%),
+              radial-gradient(120% 100% at 100% 100%, color-mix(in oklab, var(--accent) 20%, transparent) 0%, transparent 60%);
+  opacity: .06;
+  transition: opacity .2s ease;
+}
+.card-hue:hover::after { opacity: .12; }
+
+
+/* Tinted panel */
+:root {
+  /* dark theme: keep subtle, bias toward accent slightly */
+  --panel-bg: color-mix(in oklab, var(--background-alt) 85%, var(--accent) 15%);
+  --panel-border: color-mix(in oklab, var(--accent) 18%, var(--border-color));
+}
+:root[data-theme="light"] {
+  /* light theme: make it visible on white, lower saturation so it's soft */
+  --panel-bg: color-mix(in oklab, var(--background-alt) 94%, var(--accent) 6%);
+  --panel-border: color-mix(in oklab, var(--accent) 14%, var(--border-color));
+}
+
+.panel-tinted {
+  background: var(--panel-bg);
+  border-color: var(--panel-border);
 }

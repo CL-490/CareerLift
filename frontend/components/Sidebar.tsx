@@ -40,7 +40,7 @@ export function Sidebar() {
           })}
         </ul>
       </nav>
-      <div className="mt-auto text-[10px] tracking-wide uppercase text-[#546170]">Mock UI</div>
+      <div className="mt-auto text-[10px] tracking-wide uppercase text-muted">Mock UI</div>
     </aside>
   );
 }

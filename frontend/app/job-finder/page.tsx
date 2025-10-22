@@ -67,8 +67,8 @@ export default function JobFinderPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
       <header className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight">Job Finder</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-[40px] font-semibold tracking-tight heading-gradient mb-6">Job Finder</h1>
+        <p className="text-sm text-muted">
           Search your ingested postings (backend: <code>/jobs</code>).
         </p>
       </header>
@@ -78,17 +78,17 @@ export default function JobFinderPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Role or keyword (e.g., frontend, ML)"
-          className="w-full rounded-2xl border px-4 py-2 outline-none"
+          className="w-full rounded-2xl border border-[var(--border-color)] px-4 py-2 outline-none hover:opacity-80"
         />
         <input
           value={loc}
           onChange={(e) => setLoc(e.target.value)}
           placeholder="Location (e.g., Remote, NYC)"
-          className="w-full rounded-2xl border px-4 py-2 outline-none"
+          className="w-full rounded-2xl border border-[var(--border-color)] px-4 py-2 outline-none hover:opacity-80"
         />
         <button
           type="submit"
-          className="rounded-2xl border bg-black px-4 py-2 text-white hover:opacity-90"
+          className="nav-item nav-item-active !px-4 !py-2 hover:opacity-80"
           disabled={loading}
         >
           {loading ? "Searching..." : "Search"}
@@ -96,15 +96,15 @@ export default function JobFinderPage() {
       </form>
 
       {error && (
-        <div className="mb-4 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mb-4 rounded-2xl border border-[var(--border-color)] border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
       {jobs.length === 0 && !loading ? (
-        <div className="rounded-2xl border px-6 py-8 text-center">
+        <div className="rounded-2xl border border-[var(--border-color)] px-6 py-8 text-center surface">
           <p className="mb-2 font-medium">No results yet.</p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted">
             Try different keywords—or populate via <code>POST /jobs/ingest</code>.
           </p>
         </div>
@@ -113,15 +113,15 @@ export default function JobFinderPage() {
           {jobs.map((j, idx) => {
             const key = j.apply_url || j.source_url || String(idx);
             return (
-              <li key={key} className="rounded-2xl border p-5">
+              <li key={key} className="rounded-2xl border border-[var(--border-color)] p-5 card-3d panel-tinted">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
                   <h2 className="text-lg font-semibold">{j.title}</h2>
                   {j.salary_text ? (
-                    <span className="text-sm text-gray-600">{j.salary_text}</span>
+                    <span className="text-sm text-muted-strong">{j.salary_text}</span>
                   ) : null}
                 </div>
 
-                <div className="mt-1 text-sm text-gray-600">
+                <div className="mt-1 text-sm text-muted-strong">
                   {j.company && <span>{j.company}</span>}
                   {j.company && (j.location || j.employment_type) && <span> • </span>}
                   {j.location && <span>{j.location}</span>}
@@ -131,7 +131,7 @@ export default function JobFinderPage() {
                 </div>
 
                 {j.description && (
-                  <p className="mt-3 text-sm text-gray-700">
+                  <p className="mt-3 text-sm text-foreground">
                     {j.description.length > 300 ? j.description.slice(0, 300) + "…" : j.description}
                   </p>
                 )}
@@ -140,7 +140,7 @@ export default function JobFinderPage() {
                   {j.apply_url && (
                     <a
                       href={j.apply_url}
-                      className="rounded-2xl border px-3 py-1 text-sm hover:bg-gray-50"
+                      className="nav-item !px-3 !py-1 text-sm"
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -150,7 +150,7 @@ export default function JobFinderPage() {
                   {j.source_url && (
                     <a
                       href={j.source_url}
-                      className="rounded-2xl border px-3 py-1 text-sm hover:bg-gray-50"
+                      className="nav-item !px-3 !py-1 text-sm"
                       target="_blank"
                       rel="noreferrer"
                     >
