@@ -87,7 +87,8 @@ async def signin_ollama():
     Initiate Ollama Cloud signin process.
 
     Signs out first (if signed in), then runs 'ollama signin' command
-    in the container and returns the signin URL.
+    in the container and returns the signin URL. After the user signs in,
+    they should call the /pull endpoint to download the model.
     """
     try:
         # Connect to Docker daemon
@@ -129,7 +130,7 @@ async def signin_ollama():
 
         if signin_url:
             return {
-                "message": "Signin URL generated",
+                "message": "Signin URL generated. After signing in, call /api/ollama/pull to download the model.",
                 "signin_url": signin_url
             }
         else:
@@ -143,3 +144,51 @@ async def signin_ollama():
         raise HTTPException(status_code=500, detail=f"Docker error: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error running signin: {str(e)}")
+
+
+@router.post("/pull")
+async def pull_model():
+    """
+    Pull the configured Ollama model.
+
+    This should be called after the user has signed in to Ollama Cloud.
+    The model pull happens in the background and may take some time.
+    """
+    try:
+        # Connect to Docker daemon
+        client = docker.from_env()
+
+        # Get the Ollama container
+        try:
+            container = client.containers.get("ollama")
+        except docker.errors.NotFound:
+            raise HTTPException(status_code=404, detail="Ollama container not found")
+
+        # Get the model name from settings
+        model_name = settings.ollama_model
+
+        # Run 'ollama pull <model>' command
+        def run_pull():
+            exec_result = container.exec_run(f"ollama pull {model_name}", demux=True)
+            stdout, stderr = exec_result.output
+            exit_code = exec_result.exit_code
+            return exit_code, stdout.decode() if stdout else "", stderr.decode() if stderr else ""
+
+        # Run in thread pool since docker client is synchronous
+        exit_code, stdout, stderr = await asyncio.to_thread(run_pull)
+
+        if exit_code == 0:
+            return {
+                "message": f"Model {model_name} pulled successfully",
+                "model": model_name
+            }
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to pull model. Exit code: {exit_code}, Output: {stdout}, Error: {stderr}"
+            )
+
+    except docker.errors.DockerException as e:
+        raise HTTPException(status_code=500, detail=f"Docker error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error pulling model: {str(e)}")

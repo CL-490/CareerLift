@@ -16,6 +16,8 @@ export default function OllamaStatus() {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showSigninModal, setShowSigninModal] = useState(false);
   const [restarting, setRestarting] = useState(false);
+  const [pullingModel, setPullingModel] = useState(false);
+  const [waitingForSignin, setWaitingForSignin] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -56,17 +58,75 @@ export default function OllamaStatus() {
         window.open(signinUrl, '_blank');
       }
 
-      // Refresh status after signin
-      await fetchStatus();
-
+      // Start waiting for user to complete signin in browser
+      setWaitingForSignin(true);
       setRestarting(false);
+
+      // Poll status every 3 seconds to detect when signin is complete
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusResponse = await axios.get<OllamaStatusData>(`${API_URL}/api/ollama/status`);
+
+          // If no longer requires signin, user has completed authentication
+          if (!statusResponse.data.signin_required) {
+            clearInterval(pollInterval);
+            setWaitingForSignin(false);
+
+            // Now pull the model
+            await pullModel();
+          }
+        } catch (err) {
+          console.error("Failed to poll status:", err);
+        }
+      }, 3000);
+
+      // Stop polling after 5 minutes if signin not completed
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        setWaitingForSignin(false);
+      }, 300000);
+
     } catch (err) {
       console.error("Failed to initiate signin:", err);
       setRestarting(false);
     }
   };
 
+  const pullModel = async () => {
+    setPullingModel(true);
+    try {
+      await axios.post(`${API_URL}/api/ollama/pull`);
+
+      // Poll status until model becomes available
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusResponse = await axios.get<OllamaStatusData>(`${API_URL}/api/ollama/status`);
+          setStatus(statusResponse.data);
+
+          // If model is available, stop polling
+          if (statusResponse.data.model_available) {
+            clearInterval(pollInterval);
+            setPullingModel(false);
+          }
+        } catch (err) {
+          console.error("Failed to poll status:", err);
+        }
+      }, 2000);
+
+      // Stop polling after 10 minutes
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        setPullingModel(false);
+      }, 600000);
+
+    } catch (err) {
+      console.error("Failed to pull model:", err);
+      setPullingModel(false);
+    }
+  };
+
   const handleSignin = async () => {
+    setShowSigninModal(false);
     try {
       // Run 'ollama signin' command to get signin URL
       const response = await axios.post(`${API_URL}/api/ollama/signin`);
@@ -76,13 +136,38 @@ export default function OllamaStatus() {
         window.open(signinUrl, '_blank');
       }
 
-      setShowSigninModal(false);
+      // Start waiting for user to complete signin
+      setWaitingForSignin(true);
+
+      // Poll status every 3 seconds to detect when signin is complete
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusResponse = await axios.get<OllamaStatusData>(`${API_URL}/api/ollama/status`);
+
+          // If no longer requires signin, user has completed authentication
+          if (!statusResponse.data.signin_required) {
+            clearInterval(pollInterval);
+            setWaitingForSignin(false);
+
+            // Now pull the model
+            await pullModel();
+          }
+        } catch (err) {
+          console.error("Failed to poll status:", err);
+        }
+      }, 3000);
+
+      // Stop polling after 5 minutes if signin not completed
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        setWaitingForSignin(false);
+      }, 300000);
+
     } catch (err) {
       console.error("Failed to get signin URL:", err);
       // Fallback to existing signin_url if available
       if (status?.signin_url) {
         window.open(status.signin_url, '_blank');
-        setShowSigninModal(false);
       }
     }
   };
@@ -105,14 +190,14 @@ export default function OllamaStatus() {
   }
 
   const getStatusColor = () => {
-    if (restarting) return "bg-gray-500";
+    if (restarting || waitingForSignin || pullingModel) return "bg-blue-500";
     if (status.signin_required) return "bg-yellow-500";
     if (!status.model_available) return "bg-red-500";
     return "bg-green-500";
   };
 
   const getStatusIcon = () => {
-    if (restarting) {
+    if (restarting || waitingForSignin || pullingModel) {
       return (
         <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -195,17 +280,27 @@ export default function OllamaStatus() {
           {showTooltip && (
             <div className="absolute bottom-12 right-0 bg-gray-800 text-white px-3 py-2 rounded-lg text-[12px] whitespace-nowrap shadow-lg">
               <div className="mb-1 font-medium">{status.current_model}</div>
-              {status.signin_required && (
+              {waitingForSignin && (
+                <div className="text-blue-300 text-[11px]">⏳ Waiting for signin...</div>
+              )}
+              {pullingModel && (
+                <div className="text-blue-300 text-[11px]">⬇ Downloading model...</div>
+              )}
+              {!waitingForSignin && !pullingModel && status.signin_required && (
                 <div className="text-yellow-300 text-[11px]">⚠ Authentication required</div>
               )}
-              {!status.signin_required && status.model_available && (
+              {!waitingForSignin && !pullingModel && !status.signin_required && status.model_available && (
                 <div className="text-green-300 text-[11px]">✓ Ready</div>
               )}
-              {!status.model_available && !status.signin_required && (
+              {!waitingForSignin && !pullingModel && !status.model_available && !status.signin_required && (
                 <div className="text-red-300 text-[11px]">⚠ Model not available</div>
               )}
               {restarting ? (
                 <div className="mt-1 text-gray-400 text-[10px]">Getting signin URL...</div>
+              ) : waitingForSignin ? (
+                <div className="mt-1 text-gray-400 text-[10px]">Complete signin in browser</div>
+              ) : pullingModel ? (
+                <div className="mt-1 text-gray-400 text-[10px]">Please wait...</div>
               ) : (
                 <div className="mt-1 text-gray-400 text-[10px]">Click to sign in</div>
               )}
