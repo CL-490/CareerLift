@@ -95,9 +95,9 @@ Return JSON with this exact structure:
         Create a subgraph in Neo4j from structured resume data.
 
         This method is idempotent - uploading the same resume multiple times
-        will not create duplicates. Existing experiences and education for the
-        person are deleted before new ones are created. Skills use MERGE to
-        prevent duplicates.
+        will not create duplicates. All node types (Person, Skill, Experience,
+        Education) use MERGE based on their content to prevent duplicate nodes.
+        Existing relationships are deleted and recreated to ensure accuracy.
 
         Args:
             db: Neo4j database session
@@ -129,18 +129,19 @@ Return JSON with this exact structure:
         summary = await result.consume()
         nodes_created += summary.counters.nodes_created
 
-        # Delete existing experiences and education to prevent duplicates
-        delete_query = """
+        # Delete existing relationships (but not the nodes themselves)
+        # This allows shared experience/education nodes across people
+        delete_rel_query = """
         MATCH (p:Person {name: $person_name})-[r:HAS_EXPERIENCE]->(e:Experience)
-        DELETE r, e
+        DELETE r
         """
-        await db.run(delete_query, person_name=person_name)
+        await db.run(delete_rel_query, person_name=person_name)
 
-        delete_edu_query = """
+        delete_edu_rel_query = """
         MATCH (p:Person {name: $person_name})-[r:HAS_EDUCATION]->(ed:Education)
-        DELETE r, ed
+        DELETE r
         """
-        await db.run(delete_edu_query, person_name=person_name)
+        await db.run(delete_edu_rel_query, person_name=person_name)
 
         # Create Skill nodes and relationships
         skills = graph_data.get("skills", [])
@@ -161,20 +162,22 @@ Return JSON with this exact structure:
                 nodes_created += summary.counters.nodes_created
 
         # Create Experience nodes and relationships
+        # Use MERGE to prevent duplicate experiences based on content
         experiences = graph_data.get("experiences", [])
         for exp in experiences:
             if isinstance(exp, dict):
                 exp_query = """
-                CREATE (e:Experience {
+                MERGE (e:Experience {
                     title: $title,
                     company: $company,
                     duration: $duration,
-                    description: $description,
-                    created_at: datetime()
+                    description: $description
                 })
+                ON CREATE SET e.created_at = datetime()
                 WITH e
                 MATCH (p:Person {name: $person_name})
-                CREATE (p)-[r:HAS_EXPERIENCE]->(e)
+                MERGE (p)-[r:HAS_EXPERIENCE]->(e)
+                ON CREATE SET r.created_at = datetime()
                 RETURN e
                 """
                 result = await db.run(exp_query,
@@ -187,19 +190,21 @@ Return JSON with this exact structure:
                 nodes_created += summary.counters.nodes_created
 
         # Create Education nodes and relationships
+        # Use MERGE to prevent duplicate education based on content
         education = graph_data.get("education", [])
         for edu in education:
             if isinstance(edu, dict):
                 edu_query = """
-                CREATE (e:Education {
+                MERGE (e:Education {
                     degree: $degree,
                     institution: $institution,
-                    year: $year,
-                    created_at: datetime()
+                    year: $year
                 })
+                ON CREATE SET e.created_at = datetime()
                 WITH e
                 MATCH (p:Person {name: $person_name})
-                CREATE (p)-[r:HAS_EDUCATION]->(e)
+                MERGE (p)-[r:HAS_EDUCATION]->(e)
+                ON CREATE SET r.created_at = datetime()
                 RETURN e
                 """
                 result = await db.run(edu_query,
