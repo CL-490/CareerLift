@@ -43,6 +43,33 @@ export default function ResumeLabPage() {
   const allowedExtensions = [".txt", ".md", ".pdf", ".doc", ".docx"];
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+  // Load the last uploaded resume (if any) so navigating back from dashboard shows data
+  React.useEffect(() => {
+    try {
+      const raw = typeof window !== "undefined" ? localStorage.getItem("careerlift:lastResume") : null;
+      if (!raw) return;
+      const saved = JSON.parse(raw) as {
+        filename: string;
+        text_length: number;
+        graph_data: GraphData;
+        nodes_created?: number;
+        storedAt?: number;
+      };
+      if (saved && saved.graph_data && saved.graph_data.person) {
+        const reconstructed: UploadResult = {
+          message: "Loaded from previous upload",
+          filename: saved.filename,
+          text_length: saved.text_length,
+          nodes_created: saved.nodes_created ?? 0,
+          graph_data: saved.graph_data,
+        };
+        setResult(reconstructed);
+      }
+    } catch (_) {
+      // ignore parse errors
+    }
+  }, []);
+
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -98,6 +125,21 @@ export default function ResumeLabPage() {
       );
 
       setResult(response.data);
+      // Persist for dashboard quick view
+      try {
+        const payload = {
+          filename: response.data.filename,
+          text_length: response.data.text_length,
+          graph_data: response.data.graph_data,
+          nodes_created: response.data.nodes_created,
+          storedAt: Date.now(),
+        };
+        if (typeof window !== "undefined") {
+          localStorage.setItem("careerlift:lastResume", JSON.stringify(payload));
+        }
+      } catch (_) {
+        // non-fatal
+      }
       setFile(null);
     } catch (err: any) {
       const errorDetail = err.response?.data?.detail;
@@ -119,7 +161,26 @@ export default function ResumeLabPage() {
 
       {/* Upload Section */}
       <div className="card hover-ring mb-6 card-hue">
-        <h2 className="text-[20px] font-medium mb-4">Upload Resume</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-[20px] font-medium">Upload Resume</h2>
+          {result && (
+            <button
+              onClick={() => {
+                try {
+                  localStorage.removeItem("careerlift:lastResume");
+                } catch (_) {}
+                setResult(null);
+                setFile(null);
+                setError(null);
+              }}
+              className="text-[13px] text-muted hover:text-foreground underline-offset-2 hover:underline"
+              type="button"
+              title="Clear saved resume"
+            >
+              Clear resume
+            </button>
+          )}
+        </div>
         <p className="text-muted text-[14px] mb-4">
           Upload your resume to extract and visualize your career information as a knowledge graph.
         </p>
@@ -202,7 +263,24 @@ export default function ResumeLabPage() {
       {/* Results Section */}
       {result && (
         <div className="card hover-ring card-hue">
-          <h2 className="text-[20px] font-medium mb-4">Processing Results</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[20px] font-medium">Processing Results</h2>
+            <button
+              onClick={() => {
+                try {
+                  localStorage.removeItem("careerlift:lastResume");
+                } catch (_) {}
+                setResult(null);
+                setFile(null);
+                setError(null);
+              }}
+              className="text-[13px] text-muted hover:text-foreground underline-offset-2 hover:underline"
+              type="button"
+              title="Clear saved resume"
+            >
+              Clear resume
+            </button>
+          </div>
 
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
