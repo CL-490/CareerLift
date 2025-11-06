@@ -136,27 +136,32 @@ export default function JobFinderPage() {
                   </p>
                 )}
 
-                <div className="mt-4 flex flex-wrap gap-3">
-                  {j.apply_url && (
-                    <a
-                      href={j.apply_url}
-                      className="nav-item !px-3 !py-1 text-sm"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Apply
-                    </a>
-                  )}
-                  {j.source_url && (
-                    <a
-                      href={j.source_url}
-                      className="nav-item !px-3 !py-1 text-sm"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Source
-                    </a>
-                  )}
+                <div className="mt-4 flex flex-wrap justify-between items-center gap-3">
+                  <div className="flex gap-3">
+                    {j.apply_url && (
+                      <a
+                        href={j.apply_url}
+                        className="nav-item !px-3 !py-1 text-sm"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Apply
+                      </a>
+                    )}
+                    {j.source_url && (
+                      <a
+                        href={j.source_url}
+                        className="nav-item !px-3 !py-1 text-sm"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Source
+                      </a>
+                    )}
+                  </div>
+                <div className="text-sm font-medium text-green-700 bg-green-100 px-3 py-1 rounded-x1">
+                  ATS Score: 76%
+                </div>
                 </div>
               </li>
             );
