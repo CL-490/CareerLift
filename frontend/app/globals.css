@@ -306,3 +306,49 @@ html {
   background: var(--panel-bg);
   border-color: var(--panel-border);
 }
+
+/* -------------------------------
+   Select dropdown (theme-aware)
+-------------------------------- */
+select {
+  background: var(--background-alt);
+  color: var(--foreground);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  outline: none;
+  appearance: none; /* hide default arrow */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  font-size: 0.9rem;
+  transition: background .25s, border-color .25s;
+}
+
+/* Chevron icon simulation (optional) */
+select {
+  appearance: none;
+  -webkit-appearance: none; /* Safari / Chrome */
+  -moz-appearance: none;    /* Firefox */
+  background-image: none !important; /* Removes default arrow */
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) calc(50% - 3px),
+    calc(100% - 10px) calc(50% - 3px);
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+}
+
+select:hover {
+  border-color: var(--accent);
+}
+
+select:focus {
+  border-color: var(--accent);
+  box-shadow: var(--accent-glow);
+}
+
+/* Light theme override not required —
+   It auto-works because all colors come from variables */
+

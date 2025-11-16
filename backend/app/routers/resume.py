@@ -3,6 +3,7 @@ from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from app.core.database import get_db
 from app.services.resume_processor import resume_processor
 from app.services.knowledge_graph_service import knowledge_graph_service
+from app.services.ats_service import ats_service
 
 
 router = APIRouter(prefix="/api/resume", tags=["resume"])
@@ -110,3 +111,46 @@ async def get_resume_graph(person_name: str, db=Depends(get_db)):
         "experiences": experiences,
         "education": education
     }
+
+
+@router.get("/score/{person_name}")
+async def score_resume_against_jobs(person_name: str, db=Depends(get_db)):
+    # Pull resume graph
+    person_query = """
+    MATCH (p:Person {name: $person_name})
+    OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
+    OPTIONAL MATCH (p)-[:HAS_EXPERIENCE]->(e:Experience)
+    RETURN p,
+           collect(DISTINCT s.name) AS skills,
+           collect(DISTINCT e.description) AS experiences
+    """
+
+    record = await (await db.run(person_query, person_name=person_name)).single()
+    if not record:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    skills = record["skills"] or []
+    exp_text = " ".join(record["experiences"] or [])
+
+    # Get all jobs
+    job_query = """
+    MATCH (j:JobPosting)
+    RETURN j
+    """
+    result = await db.run(job_query)
+
+    jobs = []
+    async for row in result:
+        j = dict(row["j"])
+        score = ats_service.score_resume_to_job(skills, exp_text, j)
+        j["ats_score"] = score
+        jobs.append(j)
+
+    return {"jobs": jobs}
+
+
+@router.get("/list")
+async def list_resumes(db=Depends(get_db)):
+    result = await db.run("MATCH (p:Person) RETURN p.name AS name")
+    names = [record["name"] async for record in result]
+    return {"resumes": names}
