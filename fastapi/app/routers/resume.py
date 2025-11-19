@@ -109,7 +109,8 @@ async def upload_resume(
             "person_name": person_name,
             "filename": file.filename,
             "text_length": len(text),
-            "nodes_created": nodes_created
+            "nodes_created": nodes_created,
+            "graph_data": graph_data
         }
 
     except ValueError as e:

@@ -6,6 +6,8 @@ type Resume = {
   resume_id: string;
   resume_name: string;
   person_name: string;
+  created_at?: string;
+  updated_at?: string;
 };
 
 type Job = {
@@ -179,9 +181,27 @@ export default function JobFinderPage() {
           ))}
         </select>
         {selectedResume ? (
-          <p className="mt-2 text-xs text-muted">
-            Jobs will be scored against: <strong>{selectedResume.resume_name}</strong>
-          </p>
+          <div className="mt-3 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+            <p className="text-sm font-medium text-blue-300 mb-1">
+              Selected Resume: <strong>{selectedResume.resume_name}</strong>
+            </p>
+            <div className="flex items-center gap-4 text-xs text-muted">
+              <span>
+                👤 {selectedResume.person_name}
+              </span>
+              {selectedResume.created_at && (
+                <span>
+                  📅 Added: {new Date(selectedResume.created_at).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </span>
+              )}
+            </div>
+          </div>
         ) : (
           <p className="mt-2 text-xs text-muted">
             Select a resume to see ATS scores for each job posting
