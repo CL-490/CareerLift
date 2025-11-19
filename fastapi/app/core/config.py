@@ -35,5 +35,11 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8000"]
 
+    # Job Finder API Keys
+    usajobs_api_key: str = ""
+    usajobs_email: str = ""
+    adzuna_app_id: str = ""
+    adzuna_app_key: str = ""
+
 
 settings = Settings()

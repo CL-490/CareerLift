@@ -24,6 +24,8 @@ class Neo4jConnection:
                 max_connection_lifetime=3600,
                 max_connection_pool_size=50,
                 connection_acquisition_timeout=60.0,
+                notifications_min_severity="OFF",  # Disable informational warnings
+                notifications_disabled_categories=["UNRECOGNIZED", "HINT", "PERFORMANCE"]
             )
             # Verify connectivity
             await self._driver.verify_connectivity()
@@ -58,6 +60,12 @@ class Neo4jConnection:
                 FOR (p:Person) REQUIRE p.name IS UNIQUE
             """)
 
+            # Create constraint for Resume.id (unique identifier)
+            await session.run("""
+                CREATE CONSTRAINT resume_id_unique IF NOT EXISTS
+                FOR (r:Resume) REQUIRE r.id IS UNIQUE
+            """)
+
             # Create constraint for JobPosting.apply_url (unique identifier)
             await session.run("""
                 CREATE CONSTRAINT job_apply_url_unique IF NOT EXISTS
@@ -78,6 +86,21 @@ class Neo4jConnection:
             await session.run("""
                 CREATE INDEX education_degree_index IF NOT EXISTS
                 FOR (ed:Education) ON (ed.degree)
+            """)
+
+            await session.run("""
+                CREATE INDEX job_title_index IF NOT EXISTS
+                FOR (j:JobPosting) ON (j.title)
+            """)
+
+            await session.run("""
+                CREATE INDEX job_source_index IF NOT EXISTS
+                FOR (j:JobPosting) ON (j.source)
+            """)
+
+            await session.run("""
+                CREATE INDEX resume_person_name_index IF NOT EXISTS
+                FOR (r:Resume) ON (r.person_name)
             """)
 
             print("Neo4j schema initialized (constraints and indexes created)")

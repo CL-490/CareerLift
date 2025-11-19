@@ -61,6 +61,10 @@ services:
       - OLLAMA_URL=http://ollama:11434
       - OLLAMA_MODEL=${OLLAMA_MODEL}
       - OLLAMA_API_KEY=${OLLAMA_API_KEY}
+      - USAJOBS_API_KEY=${USAJOBS_API_KEY}
+      - USAJOBS_EMAIL=${USAJOBS_EMAIL}
+      - ADZUNA_APP_ID=${ADZUNA_APP_ID}
+      - ADZUNA_APP_KEY=${ADZUNA_APP_KEY}
       - PYTHONUNBUFFERED=1
     volumes:
       - ./fastapi:/app

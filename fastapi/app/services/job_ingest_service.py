@@ -1,19 +1,28 @@
 from __future__ import annotations
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Literal
 import asyncio
 from app.services.playwright import discover_links, extract_jobs_from_url
+from app.services.job_sources import (
+    USAJobsClient,
+    AdzunaClient,
+    RemotiveClient,
+    WeWorkRemotelyClient,
+)
+from app.core.config import settings
 from pathlib import Path
 import os, json
 
 COMMON_SOURCES = [
     # Major ATS / job-board hosts (generic):
-    # "https://careers.icims.com/",        
-    # company career roots that don’t use the above:
+    # "https://careers.icims.com/",
+    # company career roots that don't use the above:
     "https://stripe.com/jobs",
     # "https://openai.com/careers",
 ]
 
 SAMPLE_JOBS_PATH = os.getenv("JOBS_SAMPLE_PATH", "/app/app/data/sample_jobs.json")
+
+JobSourceType = Literal["usajobs", "adzuna", "remotive", "weworkremotely", "scraped"]
 
 # Changeable constant
 JOBS_INGEST_LIMIT = 30
@@ -83,6 +92,163 @@ async def ingest_from_seeds(db, seed_urls: list[str], max_jobs: int | None = Non
 
     return created_total
 
+async def ingest_from_usajobs(
+    db,
+    keyword: str = "",
+    location: str = "",
+    remote: bool = False,
+    limit: int = 100
+) -> int:
+    """
+    Ingest jobs from USAJOBS API.
+
+    Args:
+        db: Neo4j database session
+        keyword: Job title or keyword search
+        location: Location filter
+        remote: Filter for remote positions
+        limit: Maximum number of jobs to ingest
+
+    Returns:
+        Number of new jobs created
+    """
+    client = USAJobsClient(settings.usajobs_api_key, settings.usajobs_email)
+    try:
+        if not client.is_configured():
+            print("USAJOBS API key not configured. Skipping.")
+            return 0
+
+        jobs = await client.fetch_jobs(keyword, location, remote, limit)
+        created = 0
+        for job in jobs:
+            created += await _upsert_job(db, job)
+        return created
+    finally:
+        await client.close()
+
+
+async def ingest_from_adzuna(
+    db,
+    keyword: str = "",
+    location: str = "",
+    limit: int = 50
+) -> int:
+    """
+    Ingest jobs from Adzuna API.
+
+    Args:
+        db: Neo4j database session
+        keyword: Job title or keyword search
+        location: Location filter
+        limit: Maximum number of jobs to ingest
+
+    Returns:
+        Number of new jobs created
+    """
+    client = AdzunaClient(settings.adzuna_app_id, settings.adzuna_app_key)
+    try:
+        if not client.is_configured():
+            print("Adzuna API credentials not configured. Skipping.")
+            return 0
+
+        jobs = await client.fetch_jobs(keyword, location, results_per_page=limit)
+        created = 0
+        for job in jobs:
+            created += await _upsert_job(db, job)
+        return created
+    finally:
+        await client.close()
+
+
+async def ingest_from_remotive(
+    db,
+    category: str = None,
+    limit: int = 100
+) -> int:
+    """
+    Ingest jobs from Remotive API.
+
+    Args:
+        db: Neo4j database session
+        category: Job category filter
+        limit: Maximum number of jobs to ingest
+
+    Returns:
+        Number of new jobs created
+    """
+    client = RemotiveClient()
+    try:
+        jobs = await client.fetch_jobs(category=category, limit=limit)
+        created = 0
+        for job in jobs:
+            created += await _upsert_job(db, job)
+        return created
+    finally:
+        await client.close()
+
+
+async def ingest_from_weworkremotely(
+    db,
+    category: str = None,
+    limit: int = 100
+) -> int:
+    """
+    Ingest jobs from WeWorkRemotely RSS.
+
+    Args:
+        db: Neo4j database session
+        category: Job category (programming, design, devops, etc.)
+        limit: Maximum number of jobs to ingest
+
+    Returns:
+        Number of new jobs created
+    """
+    client = WeWorkRemotelyClient()
+    try:
+        jobs = await client.fetch_jobs(category=category, limit=limit)
+        created = 0
+        for job in jobs:
+            created += await _upsert_job(db, job)
+        return created
+    finally:
+        await client.close()
+
+
+async def ingest_all_sources(
+    db,
+    limit_per_source: int = 50
+) -> Dict[str, int]:
+    """
+    Ingest jobs from all configured sources.
+
+    Args:
+        db: Neo4j database session
+        limit_per_source: Maximum jobs to fetch from each source
+
+    Returns:
+        Dictionary with counts per source
+    """
+    results = {}
+
+    # USAJOBS - federal jobs
+    print("Fetching from USAJOBS...")
+    results["usajobs"] = await ingest_from_usajobs(db, limit=limit_per_source)
+
+    # Adzuna - commercial jobs
+    print("Fetching from Adzuna...")
+    results["adzuna"] = await ingest_from_adzuna(db, limit=limit_per_source)
+
+    # Remotive - remote jobs
+    print("Fetching from Remotive...")
+    results["remotive"] = await ingest_from_remotive(db, limit=limit_per_source)
+
+    # WeWorkRemotely - remote jobs
+    print("Fetching from WeWorkRemotely...")
+    results["weworkremotely"] = await ingest_from_weworkremotely(db, limit=limit_per_source)
+
+    return results
+
+
 async def _upsert_job(db, job: Dict[str, Any]) -> int:
     apply_url = job.get("apply_url")
     if not apply_url:
@@ -96,9 +262,11 @@ async def _upsert_job(db, job: Dict[str, Any]) -> int:
         "employment_type": job.get("employment_type"),
         "remote": job.get("remote"),
         "salary_text": job.get("salary_text"),
-        "posted_at": job.get("posted_at"),  # keep string; you can convert to datetime in Cypher if desired
+        "posted_at": job.get("posted_at"),
         "source_url": job.get("source_url"),
         "description": job.get("description"),
+        "source": job.get("source"),
+        "source_job_id": job.get("source_job_id"),
     }
 
     cypher = """
@@ -113,6 +281,8 @@ async def _upsert_job(db, job: Dict[str, Any]) -> int:
       j.posted_at = $posted_at,
       j.source_url = $source_url,
       j.description = $description,
+      j.source = $source,
+      j.source_job_id = $source_job_id,
       j.created_at = datetime()
     ON MATCH SET
       j.title = coalesce($title, j.title),
@@ -124,6 +294,8 @@ async def _upsert_job(db, job: Dict[str, Any]) -> int:
       j.posted_at = coalesce($posted_at, j.posted_at),
       j.source_url = coalesce($source_url, j.source_url),
       j.description = coalesce($description, j.description),
+      j.source = coalesce($source, j.source),
+      j.source_job_id = coalesce($source_job_id, j.source_job_id),
       j.updated_at = datetime()
     """
     result = await db.run(cypher, **params)
