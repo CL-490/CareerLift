@@ -23,8 +23,8 @@ router = APIRouter(prefix="/api/resume", tags=["resume"])
 @router.post("/upload")
 async def upload_resume(
     file: UploadFile = File(...),
-    person_name: str = "Unknown",
-    resume_name: str = "Default Resume",
+    person_name: Optional[str] = None,
+    resume_name: Optional[str] = None,
     db=Depends(get_db)
 ):
     """
@@ -61,6 +61,19 @@ async def upload_resume(
         # Generate unique resume ID
         resume_id = str(uuid.uuid4())
 
+        # Transform to knowledge graph structure first to extract person info
+        graph_data = await knowledge_graph_service.transform_resume_to_graph(text)
+
+        # Use extracted person name if not provided, fallback to "Unknown" if extraction failed
+        extracted_person_name = graph_data.get("person", {}).get("name", "Unknown")
+        final_person_name = person_name if person_name else extracted_person_name
+
+        # Use provided resume name or generate from filename
+        final_resume_name = resume_name if resume_name else file.filename.rsplit('.', 1)[0]
+
+        # Update graph_data with final person name
+        graph_data["person"]["name"] = final_person_name
+
         # Create Resume node in Neo4j
         resume_query = """
         CREATE (r:Resume {
@@ -78,18 +91,12 @@ async def upload_resume(
         result = await db.run(
             resume_query,
             resume_id=resume_id,
-            resume_name=resume_name,
-            person_name=person_name,
+            resume_name=final_resume_name,
+            person_name=final_person_name,
             text=text,
             filename=file.filename
         )
         await result.consume()
-
-        # Transform to knowledge graph structure
-        graph_data = await knowledge_graph_service.transform_resume_to_graph(text)
-
-        # Override person name with provided name
-        graph_data["person"]["name"] = person_name
 
         # Create subgraph in Neo4j and link to Resume
         nodes_created = await knowledge_graph_service.create_resume_subgraph(db, graph_data)
@@ -100,13 +107,13 @@ async def upload_resume(
         MATCH (p:Person {name: $person_name})
         MERGE (r)-[:BELONGS_TO]->(p)
         """
-        await db.run(link_query, resume_id=resume_id, person_name=person_name)
+        await db.run(link_query, resume_id=resume_id, person_name=final_person_name)
 
         return {
             "message": "Resume processed successfully",
             "resume_id": resume_id,
-            "resume_name": resume_name,
-            "person_name": person_name,
+            "resume_name": final_resume_name,
+            "person_name": final_person_name,
             "filename": file.filename,
             "text_length": len(text),
             "nodes_created": nodes_created,

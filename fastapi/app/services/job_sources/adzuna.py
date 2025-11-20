@@ -52,7 +52,7 @@ class AdzunaClient:
             List of job dictionaries in standardized format
         """
         if not self.is_configured():
-            print("Adzuna API credentials not configured")
+            print("Adzuna: API credentials not configured")
             return []
 
         params = {
@@ -79,10 +79,13 @@ class AdzunaClient:
             results = data.get("results", [])
             jobs = [self._parse_job(job_data) for job_data in results]
 
+            print(f"Adzuna: Fetched {len(jobs)} jobs")
             return jobs
 
         except httpx.HTTPError as e:
-            print(f"Adzuna API error: {e}")
+            import traceback
+            print(f"Adzuna: Error - {e}")
+            print(f"Traceback: {traceback.format_exc()}")
             return []
 
     def _parse_job(self, job_data: Dict[str, Any]) -> Dict[str, Any]:

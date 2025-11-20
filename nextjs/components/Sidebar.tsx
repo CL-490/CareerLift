@@ -15,8 +15,7 @@ const navItems: NavItem[] = [
   { label: "Job Finder", href: "/job-finder", icon: "💼" },
   { label: "Applications", href: "/applications", icon: "🗂️" },
   { label: "Coach Center", href: "/coach-center", icon: "🎯" },
-  { label: "Settings", href: "/settings", icon: "⚙️" },
-  { label: "Admin Ingest", href: "/admin/ingest-jobs", icon: "🛠️" }
+  { label: "Settings", href: "/settings", icon: "⚙️" }
 ];
 
 export function Sidebar() {

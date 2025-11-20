@@ -62,10 +62,13 @@ class WeWorkRemotelyClient:
                 if job:
                     jobs.append(job)
 
+            print(f"WeWorkRemotely: Fetched {len(jobs)} jobs")
             return jobs
 
         except (httpx.HTTPError, ET.ParseError) as e:
-            print(f"WeWorkRemotely RSS error: {e}")
+            import traceback
+            print(f"WeWorkRemotely: Error - {e}")
+            print(f"Traceback: {traceback.format_exc()}")
             return []
 
     def _parse_rss_item(self, item: ET.Element, category: Optional[str]) -> Optional[Dict[str, Any]]:
@@ -77,7 +80,8 @@ class WeWorkRemotelyClient:
             description_elem = item.find("description")
             pub_date_elem = item.find("pubDate")
 
-            if not title_elem or not link_elem:
+            # Check for None explicitly - ElementTree elements with no children evaluate to False!
+            if title_elem is None or link_elem is None:
                 return None
 
             title_text = title_elem.text or ""
@@ -125,12 +129,12 @@ class WeWorkRemotelyClient:
                     dt = datetime.strptime(pub_date, "%a, %d %b %Y %H:%M:%S %z")
                     posted_at = dt.isoformat()
                 except ValueError:
-                    pass
+                    pass 
 
             # Extract job ID from URL
             job_id = link.split("/")[-1] if "/" in link else link
 
-            return {
+            job_dict = {
                 "title": title,
                 "company": company,
                 "location": location_str,
@@ -145,8 +149,13 @@ class WeWorkRemotelyClient:
                 "source_job_id": job_id,
             }
 
+            return job_dict
+
         except Exception as e:
-            print(f"Error parsing WeWorkRemotely RSS item: {e}")
+            # Log detailed error for debugging
+            import traceback
+            print(f"WeWorkRemotely: Error parsing RSS item - {e}")
+            print(f"Traceback: {traceback.format_exc()}")
             return None
 
     @staticmethod
