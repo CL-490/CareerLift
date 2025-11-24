@@ -32,8 +32,14 @@ class Settings(BaseSettings):
     ollama_model: str = "gpt-oss:20b-cloud"
     ollama_api_key: str = ""
 
+    # JOBSUSA
+    usajobs_user_agent: str = "anthonyrodriguezz869@gmail.com"
+    usajobs_api_key: str = "uXzj9RVKArwd/ybZUJQuOYbHTg+h9yHnblmFpMqOEcY="
+
     # CORS
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8000"]
 
-
+class Config:
+    env_file = ".env"
+    
 settings = Settings()
