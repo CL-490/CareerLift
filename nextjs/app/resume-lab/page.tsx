@@ -81,6 +81,44 @@ export default function ResumeLabPage() {
     }
   }, []);
 
+  // Listen for updates from other parts of the app (e.g., Job Finder adds a saved job)
+  React.useEffect(() => {
+    const onResumeUpdated = async () => {
+      try {
+        const raw = localStorage.getItem("careerlift:lastResume");
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (saved && saved.graph_data && saved.graph_data.person) {
+          setResult({
+            message: "Loaded from previous upload",
+            filename: saved.filename,
+            text_length: saved.text_length,
+            nodes_created: saved.nodes_created ?? 0,
+            graph_data: saved.graph_data,
+            person_name: saved.person_name,
+            resume_name: saved.resume_name,
+          });
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    const storageHandler = (e: StorageEvent) => {
+      if (e.key === "careerlift:resume-updated" || e.key === "careerlift:lastResume") {
+        onResumeUpdated();
+      }
+    };
+
+    window.addEventListener("storage", storageHandler);
+    window.addEventListener("careerlift:resume-updated", onResumeUpdated as EventListener);
+
+    return () => {
+      window.removeEventListener("careerlift:resume-updated", onResumeUpdated as EventListener);
+      window.removeEventListener("storage", storageHandler);
+    };
+  }, []);
+
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -417,6 +455,23 @@ export default function ResumeLabPage() {
                       {edu.year && (
                         <p className="text-[13px] text-muted mt-1">{edu.year}</p>
                       )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Saved Jobs */}
+            {result.graph_data.saved_jobs && result.graph_data.saved_jobs.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-[16px] font-medium mb-3">Saved Jobs ({result.graph_data.saved_jobs.length})</h3>
+                <div className="space-y-3">
+                  {result.graph_data.saved_jobs.map((job, idx) => (
+                    <div key={idx} className="panel-tinted p-4 rounded-lg">
+                      <p className="text-[15px] font-medium">{job.title || job.company || 'Job'}</p>
+                      {job.company && (<p className="text-[14px] text-blue-400">{job.company}</p>)}
+                      {job.apply_url && (<a className="text-[13px] text-muted" href={job.apply_url} target="_blank" rel="noopener noreferrer">Open job</a>)}
+                      {job.description && (<p className="text-[13px] text-muted mt-2">{job.description}</p>)}
                     </div>
                   ))}
                 </div>

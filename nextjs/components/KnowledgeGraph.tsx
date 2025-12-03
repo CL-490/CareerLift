@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 // Import from the standalone entrypoint which is widely supported by bundlers and Turbopack
 import { DataSet, Network } from "vis-network/standalone";
 import type { Node as VNode, Edge as VEdge } from "vis-network";
@@ -27,6 +27,17 @@ interface GraphData {
     institution?: string;
     year?: string;
   }>;
+  saved_jobs?: Array<{
+    title?: string;
+    company?: string;
+    apply_url?: string;
+    description?: string;
+  }>;
+  resumes?: Array<{
+    id?: string;
+    name?: string;
+    resume_id?: string;
+  }>;
 }
 
 interface Props {
@@ -38,6 +49,7 @@ interface Props {
 export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_API_URL : undefined) || "http://localhost:8000" }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const networkRef = useRef<Network | null>(null);
+  const [selectedNode, setSelectedNode] = useState<{ id: string; label?: string; group?: string; properties?: any } | null>(null);
 
   // Build nodes/edges from the data
   const buildGraph = (d: GraphData) => {
@@ -72,6 +84,33 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
       nodes.push({ id: gid, label, group: "education", title });
       edges.push({ from: personId, to: gid, label: "HAS_EDUCATION", arrows: "to" });
     });
+
+    // Resumes
+    if (d.resumes && d.resumes.length > 0) {
+      d.resumes.forEach((r) => {
+        const rid = `resume:${r.id || r.resume_id || r.name}`;
+        nodes.push({ id: rid, label: r.name || r.resume_id || "Resume", group: "resume", title: `Resume: ${r.name || r.resume_id}` });
+        // connect person -> resume
+        edges.push({ from: personId, to: rid, label: "HAS_RESUME", arrows: "to" });
+      });
+    }
+
+    // Saved Jobs
+    if (d.saved_jobs && d.saved_jobs.length > 0) {
+      d.saved_jobs.forEach((job, idx) => {
+        const jid_safe = (job.apply_url || job.title || `job-${idx}`).replace(/https?:\/\//, "").replace(/[\/\s]+/g, "_");
+        const jid = `job:${jid_safe}`;
+        nodes.push({ id: jid, label: job.title || job.company || jid_safe, group: "job", title: `${job.title || ''}${job.company ? ` @ ${job.company}` : ''}` });
+        // attach to resume if available in nodes
+        if (d.resumes && d.resumes.length > 0) {
+          const rid = `resume:${d.resumes[0].id || d.resumes[0].resume_id || d.resumes[0].name}`;
+          edges.push({ from: rid, to: jid, label: "SAVED_JOB", arrows: "to" });
+        } else {
+          // fallback connect to person
+          edges.push({ from: personId, to: jid, label: "SAVED_JOB", arrows: "to" });
+        }
+      });
+    }
 
     return { nodes, edges };
   };
@@ -116,6 +155,9 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
         skill: { color: { background: "#0ea5e9", border: "#0369a1" } },
         experience: { color: { background: "#34d399", border: "#065f46" } },
         education: { color: { background: "#f472b6", border: "#831843" } }
+        ,
+        resume: { color: { background: "#a78bfa", border: "#7c3aed" } },
+        job: { color: { background: "#f59e0b", border: "#975a16" } }
       }
     };
 
@@ -123,9 +165,19 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
 
     networkRef.current.on("click", function (params) {
       if (params.nodes && params.nodes.length > 0) {
-        const clicked = params.nodes[0];
-        // Optionally: open a details panel
-        // We'll display a simple native tooltip via title on nodes
+        const clickedId = params.nodes[0];
+        // Retrieve node data
+        try {
+          const nodeData = (networkRef.current!.body.data.nodes.get(clickedId) as any) || null;
+          if (nodeData) {
+            setSelectedNode({ id: clickedId, label: nodeData.label, group: nodeData.group, properties: nodeData.properties || nodeData })
+          }
+        } catch (e) {
+          setSelectedNode(null);
+        }
+      } else {
+        // click on background
+        setSelectedNode(null);
       }
     });
   };
@@ -168,8 +220,55 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
   }, [graphData, personName]);
 
   return (
-    <div className="mt-4">
+    <div className="mt-4 relative">
       <div ref={containerRef} style={{ width: "100%", height: "600px", background: "transparent", borderRadius: 8 }} />
+
+      {/* Sidebar */}
+      <div
+        className={`absolute top-0 right-0 z-40 h-full transition-transform transform ${selectedNode ? 'translate-x-0' : 'translate-x-[110%]'}`}
+        style={{ width: 360, background: 'rgba(10, 11, 14, 0.95)', boxShadow: '0 8px 30px rgba(0,0,0,0.4)' }}
+      >
+        <div className="p-4 h-full overflow-y-auto">
+          {!selectedNode && (
+            <div className="text-sm text-muted">Click a node to view details</div>
+          )}
+          {selectedNode && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="text-[16px] font-semibold">{selectedNode.label}</div>
+                  <div className="text-[12px] text-muted">{selectedNode.group}</div>
+                </div>
+                <button
+                  onClick={() => setSelectedNode(null)}
+                  className="text-sm px-2 py-1 rounded-lg border border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.14)]"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {selectedNode.properties && Object.entries(selectedNode.properties).map(([k, v]) => (
+                  <div key={k} className="text-[13px] text-muted">
+                    <div className="font-medium text-[13px] text-foreground">{k}</div>
+                    <div className="text-[13px] text-muted">{typeof v === 'string' ? v : JSON.stringify(v)}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Actions */}
+              <div className="mt-4">
+                {/* Open job URL if present */}
+                {selectedNode.properties?.apply_url && (
+                  <a className="inline-block mb-2 text-xs px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white" href={selectedNode.properties.apply_url} target="_blank" rel="noopener noreferrer">Open job URL</a>
+                )}
+                {/* Open Neo4j Browser */}
+                <a className="inline-block text-xs px-3 py-1 rounded-lg border border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.14)] text-muted" href="http://localhost:7474" target="_blank" rel="noopener noreferrer">Open Neo4j Browser</a>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

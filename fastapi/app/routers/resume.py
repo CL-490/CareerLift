@@ -147,16 +147,19 @@ async def get_resume_graph(person_name: str, db=Depends(get_db)):
 
     Returns the person node and all related skills, experiences, and education.
     """
-    query = """
+        query = """
     MATCH (p:Person {name: $person_name})
     OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
     OPTIONAL MATCH (p)-[:HAS_EXPERIENCE]->(e:Experience)
     OPTIONAL MATCH (p)-[:HAS_EDUCATION]->(ed:Education)
+    OPTIONAL MATCH (p)<-[:BELONGS_TO]-(r:Resume)-[:SAVED_JOB]->(j:JobPosting)
     RETURN p,
            collect(DISTINCT s) as skills,
            collect(DISTINCT e) as experiences,
-           collect(DISTINCT ed) as education
-    """
+           collect(DISTINCT ed) as education,
+           collect(DISTINCT j) as saved_jobs,
+           collect(DISTINCT r) as resumes
+        """
 
     result = await db.run(query, person_name=person_name)
     record = await result.single()
@@ -183,14 +186,17 @@ async def get_resume_graph_raw(person_name: str, db=Depends(get_db)):
     Retrieve the resume subgraph for a person and return simple nodes/edges JSON usable by graph visualizers.
     """
     query = """
-    MATCH (p:Person {name: $person_name})
-    OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
-    OPTIONAL MATCH (p)-[:HAS_EXPERIENCE]->(e:Experience)
-    OPTIONAL MATCH (p)-[:HAS_EDUCATION]->(ed:Education)
-    RETURN p,
-           collect(DISTINCT s) as skills,
-           collect(DISTINCT e) as experiences,
-           collect(DISTINCT ed) as education
+MATCH (p:Person {name: $person_name})
+OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
+OPTIONAL MATCH (p)-[:HAS_EXPERIENCE]->(e:Experience)
+OPTIONAL MATCH (p)-[:HAS_EDUCATION]->(ed:Education)
+OPTIONAL MATCH (p)<-[:BELONGS_TO]-(r:Resume)-[:SAVED_JOB]->(j:JobPosting)
+RETURN p,
+       collect(DISTINCT s) as skills,
+       collect(DISTINCT e) as experiences,
+       collect(DISTINCT ed) as education,
+       collect(DISTINCT j) as saved_jobs,
+       collect(DISTINCT r) as resumes
     """
 
     result = await db.run(query, person_name=person_name)
@@ -199,10 +205,12 @@ async def get_resume_graph_raw(person_name: str, db=Depends(get_db)):
     if not record:
         raise HTTPException(status_code=404, detail=f"Person '{person_name}' not found")
 
-    person = dict(record["p"]) if record["p"] else {}
-    skills = [dict(s) for s in record["skills"] if s is not None]
-    experiences = [dict(e) for e in record["experiences"] if e is not None]
-    education = [dict(ed) for ed in record["education"] if ed is not None]
+    person = dict(record["p"]) if record.get("p") else {}
+    skills = [dict(s) for s in record.get("skills", []) if s is not None]
+    experiences = [dict(e) for e in record.get("experiences", []) if e is not None]
+    education = [dict(ed) for ed in record.get("education", []) if ed is not None]
+    saved_jobs = [dict(j) for j in record.get("saved_jobs", []) if j is not None]
+    resumes = [dict(r) for r in record.get("resumes", []) if r is not None]
 
     # Build nodes and edges
     nodes = []
@@ -216,27 +224,57 @@ async def get_resume_graph_raw(person_name: str, db=Depends(get_db)):
         "properties": person
     })
 
+    # Skills
     for s in skills:
         sid = f"skill:{s.get('name') or s.get('label') or s.get('skill')}"
         nodes.append({"id": sid, "label": s.get("name"), "group": "skill", "properties": s})
         edges.append({"from": person_id, "to": sid, "label": "HAS_SKILL"})
 
+    # Experiences
     for idx, e in enumerate(experiences):
         eid = f"exp:{idx}:{e.get('company') or e.get('title')}"
         label = f"{e.get('title') or ''}{(' @ ' + (e.get('company') or '')) if e.get('company') else ''}"
         nodes.append({"id": eid, "label": label, "group": "experience", "properties": e})
         edges.append({"from": person_id, "to": eid, "label": "HAS_EXPERIENCE"})
 
+    # Education
     for idx, ed in enumerate(education):
         gid = f"edu:{idx}:{ed.get('institution') or ed.get('degree')}"
         label = f"{ed.get('degree') or ''}{(' — ' + (ed.get('institution') or '')) if ed.get('institution') else ''}"
         nodes.append({"id": gid, "label": label, "group": "education", "properties": ed})
         edges.append({"from": person_id, "to": gid, "label": "HAS_EDUCATION"})
 
+    # Resumes and saved jobs
+    resume_id_map = {}
+    for r in resumes:
+        rid = f"resume:{r.get('id') or r.get('resume_id') or r.get('name') or 'unknown'}"
+        resume_id_map[r.get('id') or r.get('resume_id') or rid] = rid
+        nodes.append({"id": rid, "label": r.get('name') or r.get('resume_name') or 'Resume', "group": "resume", "properties": r})
+        # Link person -> resume (visual link)
+        edges.append({"from": person_id, "to": rid, "label": "HAS_RESUME"})
+
+    for j in saved_jobs:
+        # Sanitize apply_url for id
+        apply_url = j.get('apply_url') or j.get('source_url') or j.get('source_job_id') or j.get('title')
+        # Fallback for id if no URL
+        jid_safe = str(apply_url).replace('http://', '').replace('https://', '').replace('/', '_')
+        jid = f"job:{jid_safe}"
+        nodes.append({"id": jid, "label": j.get('title') or j.get('company') or jid_safe, "group": "job", "properties": j})
+        # Find the resume that links to this job
+        # If multiple resumes exist, search resumes by id or name
+        linked = False
+        for r in resumes:
+            # Use resume id match if available
+            r_id_val = r.get('id') or r.get('resume_id')
+            if r_id_val and resume_id_map.get(r_id_val):
+                edges.append({"from": resume_id_map.get(r_id_val), "to": jid, "label": "SAVED_JOB"})
+                linked = True
+                break
+        if not linked and resumes:
+            # Default to connecting to the first resume
+            edges.append({"from": resume_id_map[next(iter(resume_id_map))], "to": jid, "label": "SAVED_JOB"})
+
     return {"nodes": nodes, "edges": edges}
-
-
-@router.get("/score/{person_name}")
 async def score_resume_against_jobs(person_name: str, db=Depends(get_db)):
     # Pull resume graph
     person_query = """
