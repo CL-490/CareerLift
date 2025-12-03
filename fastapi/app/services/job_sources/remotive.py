@@ -53,10 +53,13 @@ class RemotiveClient:
             jobs_data = data.get("jobs", [])
             jobs = [self._parse_job(job_data) for job_data in jobs_data[:limit]]
 
+            print(f"Remotive: Fetched {len(jobs)} jobs")
             return jobs
 
         except httpx.HTTPError as e:
-            print(f"Remotive API error: {e}")
+            import traceback
+            print(f"Remotive: Error - {e}")
+            print(f"Traceback: {traceback.format_exc()}")
             return []
 
     def _parse_job(self, job_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -142,5 +145,7 @@ class RemotiveClient:
             return sorted(list(categories))
 
         except httpx.HTTPError as e:
-            print(f"Remotive API error: {e}")
+            import traceback
+            print(f"Remotive: Error fetching categories - {e}")
+            print(f"Traceback: {traceback.format_exc()}")
             return []

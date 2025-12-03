@@ -69,7 +69,7 @@ class USAJobsClient:
             params["RemoteIndicator"] = "True"
 
         if not self.is_configured():
-            print("USAJOBS API key not configured. Skipping.")
+            print("USAJOBS: API key not configured")
             return []
 
         try:
@@ -95,10 +95,13 @@ class USAJobsClient:
                 job_data = item.get("MatchedObjectDescriptor", {})
                 jobs.append(self._parse_job(job_data))
 
+            print(f"USAJOBS: Fetched {len(jobs)} jobs")
             return jobs
 
         except httpx.HTTPError as e:
-            print(f"USAJOBS API error: {e}")
+            import traceback
+            print(f"USAJOBS: Error - {e}")
+            print(f"Traceback: {traceback.format_exc()}")
             return []
 
     def _parse_job(self, job_data: Dict[str, Any]) -> Dict[str, Any]:

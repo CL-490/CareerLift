@@ -231,20 +231,20 @@ async def ingest_all_sources(
     results = {}
 
     # USAJOBS - federal jobs
-    print("Fetching from USAJOBS...")
     results["usajobs"] = await ingest_from_usajobs(db, limit=limit_per_source)
 
     # Adzuna - commercial jobs
-    print("Fetching from Adzuna...")
     results["adzuna"] = await ingest_from_adzuna(db, limit=limit_per_source)
 
     # Remotive - remote jobs
-    print("Fetching from Remotive...")
     results["remotive"] = await ingest_from_remotive(db, limit=limit_per_source)
 
     # WeWorkRemotely - remote jobs
-    print("Fetching from WeWorkRemotely...")
     results["weworkremotely"] = await ingest_from_weworkremotely(db, limit=limit_per_source)
+
+    # Print summary
+    for source, count in results.items():
+        print(f"{source.upper()}: Ingested {count} jobs to database")
 
     return results
 
