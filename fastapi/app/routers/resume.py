@@ -147,7 +147,7 @@ async def get_resume_graph(person_name: str, db=Depends(get_db)):
 
     Returns the person node and all related skills, experiences, and education.
     """
-        query = """
+    query = """
     MATCH (p:Person {name: $person_name})
     OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
     OPTIONAL MATCH (p)-[:HAS_EXPERIENCE]->(e:Experience)
@@ -167,16 +167,20 @@ async def get_resume_graph(person_name: str, db=Depends(get_db)):
     if not record:
         raise HTTPException(status_code=404, detail=f"Person '{person_name}' not found")
 
-    person = dict(record["p"])
-    skills = [dict(s) for s in record["skills"] if s is not None]
-    experiences = [dict(e) for e in record["experiences"] if e is not None]
-    education = [dict(ed) for ed in record["education"] if ed is not None]
+    person = dict(record["p"]) if record.get("p") else {}
+    skills = [dict(s) for s in record.get("skills", []) if s is not None]
+    experiences = [dict(e) for e in record.get("experiences", []) if e is not None]
+    education = [dict(ed) for ed in record.get("education", []) if ed is not None]
+    saved_jobs = [dict(j) for j in record.get("saved_jobs", []) if j is not None]
+    resumes = [dict(r) for r in record.get("resumes", []) if r is not None]
 
     return {
         "person": person,
         "skills": skills,
         "experiences": experiences,
-        "education": education
+        "education": education,
+        "saved_jobs": saved_jobs,
+        "resumes": resumes
     }
 
 

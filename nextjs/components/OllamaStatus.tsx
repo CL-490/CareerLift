@@ -30,6 +30,56 @@ export default function OllamaStatus() {
   };
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Attempt to GET a list of possible URLs (relative + absolute) until one succeeds
+  const tryGet = async (path: string) => {
+    const urls = [] as string[];
+    // Prefer relative path first when no explicit base provided (so rewrites proxy).
+    urls.push(path);
+    // Add explicit base-based URL as fallback
+    if (REQUEST_BASE && REQUEST_BASE.length > 0) {
+      urls.push(`${REQUEST_BASE.replace(/\/$/, "")}${path}`);
+      // Also try the API_URL env if different
+      if (API_URL !== REQUEST_BASE) {
+        urls.push(`${API_URL.replace(/\/$/, "")}${path}`);
+      }
+    } else {
+      urls.push(`${API_URL.replace(/\/$/, "")}${path}`);
+    }
+
+    let lastErr: any = null;
+    for (const url of urls) {
+      try {
+        const resp = await axios.get(url);
+        return resp;
+      } catch (e) {
+        lastErr = e;
+        // continue to next
+      }
+    }
+    throw lastErr;
+  };
+
+  const tryPost = async (path: string, body?: any) => {
+    const urls = [] as string[];
+    urls.push(path);
+    if (REQUEST_BASE && REQUEST_BASE.length > 0) {
+      urls.push(`${REQUEST_BASE.replace(/\/$/, "")}${path}`);
+      if (API_URL !== REQUEST_BASE) urls.push(`${API_URL.replace(/\/$/, "")}${path}`);
+    } else {
+      urls.push(`${API_URL.replace(/\/$/, "")}${path}`);
+    }
+    let lastErr: any = null;
+    for (const url of urls) {
+      try {
+        const resp = await axios.post(url, body);
+        return resp;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr;
+  };
+
   useEffect(() => {
     fetchStatus();
     const interval = setInterval(fetchStatus, 30000); // Refresh every 30 seconds
@@ -45,8 +95,7 @@ export default function OllamaStatus() {
 
   const fetchStatus = async () => {
     try {
-      const url = buildUrl('/api/ollama/status');
-      const response = await axios.get<OllamaStatusData>(url);
+      const response = await tryGet('/api/ollama/status');
       setStatus(response.data);
       setErrorMsg(null);
     } catch (err) {
@@ -54,7 +103,10 @@ export default function OllamaStatus() {
       // Provide more helpful error for dev users
       let msg = "Failed to connect to the backend for Ollama status.";
       if ((err as any)?.message === 'Network Error' || (err as any)?.code === 'ERR_NETWORK') {
-        msg = `Network Error - Is the backend running at ${REQUEST_BASE || 'http://localhost:8000'}?`;
+        const attempts = REQUEST_BASE && REQUEST_BASE.length > 0
+          ? ["/api/ollama/status", `${REQUEST_BASE.replace(/\/$/, "")}/api/ollama/status`, `${API_URL.replace(/\/$/, "")}/api/ollama/status`]
+          : ["/api/ollama/status", `${API_URL.replace(/\/$/, "")}/api/ollama/status`];
+        msg = `Network Error - tried: ${attempts.join(' and ')}. Is the backend running?`;
       }
       setErrorMsg(msg);
     }
@@ -67,7 +119,7 @@ export default function OllamaStatus() {
     setShowTooltip(false);
     try {
       // Run 'ollama signin' command to get signin URL
-        const response = await axios.post(buildUrl('/api/ollama/signin'));
+        const response = await tryPost('/api/ollama/signin');
       const signinUrl = response.data.signin_url;
 
       // Automatically open browser to signin URL
@@ -82,7 +134,7 @@ export default function OllamaStatus() {
       // Poll status every 3 seconds to detect when signin is complete
       const pollInterval = setInterval(async () => {
         try {
-          const statusResponse = await axios.get<OllamaStatusData>(buildUrl('/api/ollama/status'));
+          const statusResponse = await tryGet('/api/ollama/status');
 
           // If no longer requires signin, user has completed authentication
           if (!statusResponse.data.signin_required) {
@@ -112,12 +164,12 @@ export default function OllamaStatus() {
   const pullModel = async () => {
     setPullingModel(true);
     try {
-      await axios.post(buildUrl('/api/ollama/pull'));
+      await tryPost('/api/ollama/pull');
 
       // Poll status until model becomes available
       const pollInterval = setInterval(async () => {
         try {
-          const statusResponse = await axios.get<OllamaStatusData>(buildUrl('/api/ollama/status'));
+          const statusResponse = await tryGet('/api/ollama/status');
           setStatus(statusResponse.data);
 
           // If model is available, stop polling
@@ -146,7 +198,7 @@ export default function OllamaStatus() {
     setShowSigninModal(false);
     try {
       // Run 'ollama signin' command to get signin URL
-      const response = await axios.post(buildUrl('/api/ollama/signin'));
+      const response = await tryPost('/api/ollama/signin');
       const signinUrl = response.data.signin_url;
 
       if (signinUrl) {
@@ -159,7 +211,7 @@ export default function OllamaStatus() {
       // Poll status every 3 seconds to detect when signin is complete
       const pollInterval = setInterval(async () => {
         try {
-          const statusResponse = await axios.get<OllamaStatusData>(buildUrl('/api/ollama/status'));
+          const statusResponse = await tryGet('/api/ollama/status');
 
           // If no longer requires signin, user has completed authentication
           if (!statusResponse.data.signin_required) {
@@ -326,6 +378,19 @@ export default function OllamaStatus() {
               )}
               {showErrorIndicator && (
                 <div className="mt-2 text-red-400 text-[12px]">{errorMsg}</div>
+              )}
+              {showErrorIndicator && (
+                <div className="mt-2">
+                  <button
+                    onClick={() => {
+                      setErrorMsg(null);
+                      fetchStatus();
+                    }}
+                    className="mt-2 text-xs px-3 py-1 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30"
+                  >
+                    Retry
+                  </button>
+                </div>
               )}
             </div>
           )}
