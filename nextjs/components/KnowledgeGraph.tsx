@@ -51,27 +51,41 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
   const networkRef = useRef<Network | null>(null);
   const [selectedNode, setSelectedNode] = useState<{ id: string; label?: string; group?: string; properties?: any } | null>(null);
 
+  // Safely convert possible nested values into readable strings
+  const asString = (val: any) => {
+    if (val == null) return "";
+    if (typeof val === 'string') return val;
+    if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+    if (typeof val === 'object') {
+      // Try common properties that might be used by external APIs
+      return val.name || val.label || val.title || JSON.stringify(val);
+    }
+    return String(val);
+  };
+
   // Build nodes/edges from the data
   const buildGraph = (d: GraphData) => {
     const nodes: VNode[] = [];
     const edges: VEdge[] = [];
 
     // Person node
-    const personId = `person:${d.person.name}`;
-    nodes.push({ id: personId, label: d.person.name, group: "person", title: `Person: ${d.person.name}` });
+    const personNameLabel = asString(d.person?.name ?? d.person);
+    const personId = `person:${personNameLabel}`;
+    nodes.push({ id: personId, label: personNameLabel, group: "person", title: `Person: ${personNameLabel}`, properties: d.person } as any);
 
     // Skills
     d.skills.forEach((skill, idx) => {
-      const sid = `skill:${skill}`;
-      nodes.push({ id: sid, label: skill, group: "skill", title: `Skill: ${skill}` });
+      const sid = `skill:${asString(skill)}`;
+      nodes.push({ id: sid, label: asString(skill), group: "skill", title: `Skill: ${asString(skill)}` });
       edges.push({ from: personId, to: sid, label: "HAS_SKILL", arrows: "to" });
     });
 
     // Experiences
     d.experiences.forEach((exp, idx) => {
       const eid = `exp:${idx}`;
-      const label = exp.company ? `${exp.title} @ ${exp.company}` : exp.title;
-      const title = `${exp.title}${exp.company ? ` @ ${exp.company}` : ""}${exp.description ? `\n\n${exp.description}` : ""}`;
+      const expTitle = asString(exp.title || exp.company || "");
+      const label = exp.company ? `${asString(exp.title)} @ ${asString(exp.company)}` : asString(exp.title);
+      const title = `${asString(exp.title)}${exp.company ? ` @ ${asString(exp.company)}` : ""}${exp.description ? `\n\n${asString(exp.description)}` : ""}`;
       nodes.push({ id: eid, label, group: "experience", title });
       edges.push({ from: personId, to: eid, label: "HAS_EXPERIENCE", arrows: "to" });
     });
@@ -79,8 +93,8 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
     // Education
     d.education.forEach((edu, idx) => {
       const gid = `edu:${idx}`;
-      const label = edu.degree || edu.institution || "Education";
-      const title = `${edu.degree ? edu.degree + " — " : ""}${edu.institution || ""}${edu.year ? `\n${edu.year}` : ""}`;
+      const label = asString(edu.degree || edu.institution || "Education");
+      const title = `${asString(edu.degree) ? asString(edu.degree) + " — " : ""}${asString(edu.institution)}${edu.year ? `\n${edu.year}` : ""}`;
       nodes.push({ id: gid, label, group: "education", title });
       edges.push({ from: personId, to: gid, label: "HAS_EDUCATION", arrows: "to" });
     });
@@ -88,8 +102,9 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
     // Resumes
     if (d.resumes && d.resumes.length > 0) {
       d.resumes.forEach((r) => {
-        const rid = `resume:${r.id || r.resume_id || r.name}`;
-        nodes.push({ id: rid, label: r.name || r.resume_id || "Resume", group: "resume", title: `Resume: ${r.name || r.resume_id}` });
+        const rid = `resume:${asString(r.id || r.resume_id || r.name)}`;
+        const rLabel = asString(r.name || r.resume_id || "Resume");
+        nodes.push({ id: rid, label: rLabel, group: "resume", title: `Resume: ${rLabel}`, properties: r } as any);
         // connect person -> resume
         edges.push({ from: personId, to: rid, label: "HAS_RESUME", arrows: "to" });
       });
@@ -98,9 +113,10 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
     // Saved Jobs
     if (d.saved_jobs && d.saved_jobs.length > 0) {
       d.saved_jobs.forEach((job, idx) => {
-        const jid_safe = (job.apply_url || job.title || `job-${idx}`).replace(/https?:\/\//, "").replace(/[\/\s]+/g, "_");
+        const jid_safe = (asString(job.apply_url || job.title || `job-${idx}`)).replace(/https?:\/\//, "").replace(/[\/\s]+/g, "_");
         const jid = `job:${jid_safe}`;
-        nodes.push({ id: jid, label: job.title || job.company || jid_safe, group: "job", title: `${job.title || ''}${job.company ? ` @ ${job.company}` : ''}` });
+        const jobLabel = asString(job.title || job.company || jid_safe);
+        nodes.push({ id: jid, label: jobLabel, group: "job", title: `${asString(job.title || '')}${job.company ? ` @ ${asString(job.company)}` : ''}`, properties: job } as any);
         // attach to resume if available in nodes
         if (d.resumes && d.resumes.length > 0) {
           const rid = `resume:${d.resumes[0].id || d.resumes[0].resume_id || d.resumes[0].name}`;
@@ -168,9 +184,10 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
         const clickedId = params.nodes[0];
         // Retrieve node data
         try {
-          const nodeData = (networkRef.current!.body.data.nodes.get(clickedId) as any) || null;
+          const nodeData = ((networkRef.current as any).body.data.nodes.get(clickedId) as any) || null;
           if (nodeData) {
-            setSelectedNode({ id: clickedId, label: nodeData.label, group: nodeData.group, properties: nodeData.properties || nodeData })
+              const labelVal = typeof nodeData.label === 'string' ? nodeData.label : (nodeData.properties?.name ? asString(nodeData.properties.name) : asString(nodeData.label));
+              setSelectedNode({ id: clickedId, label: labelVal, group: nodeData.group, properties: nodeData.properties || nodeData })
           }
         } catch (e) {
           setSelectedNode(null);
@@ -251,7 +268,7 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
                 {selectedNode.properties && Object.entries(selectedNode.properties).map(([k, v]) => (
                   <div key={k} className="text-[13px] text-muted">
                     <div className="font-medium text-[13px] text-foreground">{k}</div>
-                    <div className="text-[13px] text-muted">{typeof v === 'string' ? v : JSON.stringify(v)}</div>
+                    <div className="text-[13px] text-muted">{asString(v)}</div>
                   </div>
                 ))}
               </div>
@@ -260,7 +277,7 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
               <div className="mt-4">
                 {/* Open job URL if present */}
                 {selectedNode.properties?.apply_url && (
-                  <a className="inline-block mb-2 text-xs px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white" href={selectedNode.properties.apply_url} target="_blank" rel="noopener noreferrer">Open job URL</a>
+                  <a className="inline-block mb-2 text-xs px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white" href={asString(selectedNode.properties.apply_url)} target="_blank" rel="noopener noreferrer">Open job URL</a>
                 )}
                 {/* Open Neo4j Browser */}
                 <a className="inline-block text-xs px-3 py-1 rounded-lg border border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.14)] text-muted" href="http://localhost:7474" target="_blank" rel="noopener noreferrer">Open Neo4j Browser</a>

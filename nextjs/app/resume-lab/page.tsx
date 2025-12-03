@@ -24,6 +24,17 @@ interface GraphData {
     institution: string;
     year?: string;
   }>;
+  saved_jobs?: Array<{
+    title?: any;
+    company?: any;
+    apply_url?: string;
+    description?: any;
+  }>;
+  resumes?: Array<{
+    id?: string;
+    name?: any;
+    resume_id?: string;
+  }>;
 }
 
 interface UploadResult {
@@ -45,6 +56,15 @@ export default function ResumeLabPage() {
   const [dragActive, setDragActive] = useState(false);
   const [personNameInput, setPersonNameInput] = useState<string>("");
   const [resumeNameInput, setResumeNameInput] = useState<string>("Default Resume");
+  const asString = (val: any) => {
+    if (val == null) return "";
+    if (typeof val === 'string') return val;
+    if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+    if (typeof val === 'object') {
+      return val.name || val.label || val.title || JSON.stringify(val);
+    }
+    return String(val);
+  };
 
   const allowedExtensions = [".txt", ".md", ".pdf", ".doc", ".docx"];
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -63,7 +83,7 @@ export default function ResumeLabPage() {
         resume_name?: string;
         storedAt?: number;
       };
-      if (saved && saved.graph_data && saved.graph_data.person) {
+        if (saved && saved.graph_data && saved.graph_data.person) {
         const reconstructed: UploadResult = {
           message: "Loaded from previous upload",
           filename: saved.filename,
@@ -73,8 +93,8 @@ export default function ResumeLabPage() {
         };
         setResult(reconstructed);
         // Restore saved names into inputs
-        if (saved.person_name) setPersonNameInput(saved.person_name);
-        if (saved.resume_name) setResumeNameInput(saved.resume_name);
+        if (saved.person_name) setPersonNameInput(asString(saved.person_name));
+        if (saved.resume_name) setResumeNameInput(asString(saved.resume_name));
       }
     } catch (_) {
       // ignore parse errors
@@ -95,8 +115,8 @@ export default function ResumeLabPage() {
             text_length: saved.text_length,
             nodes_created: saved.nodes_created ?? 0,
             graph_data: saved.graph_data,
-            person_name: saved.person_name,
-            resume_name: saved.resume_name,
+            person_name: asString(saved.person_name),
+            resume_name: asString(saved.resume_name),
           });
         }
       } catch (e) {
@@ -413,7 +433,7 @@ export default function ResumeLabPage() {
                       key={idx}
                       className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-[13px]"
                     >
-                      {skill}
+                      {asString(skill)}
                     </span>
                   ))}
                 </div>
@@ -427,8 +447,8 @@ export default function ResumeLabPage() {
                 <div className="space-y-3">
                   {result.graph_data.experiences.map((exp, idx) => (
                     <div key={idx} className="panel-tinted p-4 rounded-lg">
-                      <p className="text-[15px] font-medium">{exp.title}</p>
-                      <p className="text-[14px] text-blue-400">{exp.company}</p>
+                      <p className="text-[15px] font-medium">{asString(exp.title)}</p>
+                      <p className="text-[14px] text-blue-400">{asString(exp.company)}</p>
                       {exp.duration && (
                         <p className="text-[13px] text-muted mt-1">
                           {exp.duration}
@@ -450,8 +470,8 @@ export default function ResumeLabPage() {
                 <div className="space-y-3">
                   {result.graph_data.education.map((edu, idx) => (
                     <div key={idx} className="panel-tinted p-4 rounded-lg">
-                      <p className="text-[15px] font-medium">{edu.degree}</p>
-                      <p className="text-[14px] text-blue-400">{edu.institution}</p>
+                      <p className="text-[15px] font-medium">{asString(edu.degree)}</p>
+                      <p className="text-[14px] text-blue-400">{asString(edu.institution)}</p>
                       {edu.year && (
                         <p className="text-[13px] text-muted mt-1">{edu.year}</p>
                       )}
@@ -468,9 +488,9 @@ export default function ResumeLabPage() {
                 <div className="space-y-3">
                   {result.graph_data.saved_jobs.map((job, idx) => (
                     <div key={idx} className="panel-tinted p-4 rounded-lg">
-                      <p className="text-[15px] font-medium">{job.title || job.company || 'Job'}</p>
-                      {job.company && (<p className="text-[14px] text-blue-400">{job.company}</p>)}
-                      {job.apply_url && (<a className="text-[13px] text-muted" href={job.apply_url} target="_blank" rel="noopener noreferrer">Open job</a>)}
+                      <p className="text-[15px] font-medium">{asString(job.title) || asString(job.company) || 'Job'}</p>
+                      {job.company && (<p className="text-[14px] text-blue-400">{asString(job.company)}</p>)}
+                      {job.apply_url && (<a className="text-[13px] text-muted" href={asString(job.apply_url)} target="_blank" rel="noopener noreferrer">Open job</a>)}
                       {job.description && (<p className="text-[13px] text-muted mt-2">{job.description}</p>)}
                     </div>
                   ))}
