@@ -20,6 +20,15 @@ export default function OllamaStatus() {
   const [waitingForSignin, setWaitingForSignin] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const REQUEST_BASE = process.env.NEXT_PUBLIC_API_URL || ""; // empty => use relative path
+  const buildUrl = (path: string) => {
+    // If REQUEST_BASE is provided, use it; otherwise use relative path for dev proxy
+    if (REQUEST_BASE && REQUEST_BASE.length > 0) {
+      return `${REQUEST_BASE.replace(/\/$/, "")}${path}`;
+    }
+    return path; // '/api/ollama/status' will be proxied by Next in dev rewrites
+  };
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStatus();
@@ -36,10 +45,18 @@ export default function OllamaStatus() {
 
   const fetchStatus = async () => {
     try {
-      const response = await axios.get<OllamaStatusData>(`${API_URL}/api/ollama/status`);
+      const url = buildUrl('/api/ollama/status');
+      const response = await axios.get<OllamaStatusData>(url);
       setStatus(response.data);
+      setErrorMsg(null);
     } catch (err) {
       console.error("Failed to fetch Ollama status:", err);
+      // Provide more helpful error for dev users
+      let msg = "Failed to connect to the backend for Ollama status.";
+      if ((err as any)?.message === 'Network Error' || (err as any)?.code === 'ERR_NETWORK') {
+        msg = `Network Error - Is the backend running at ${REQUEST_BASE || 'http://localhost:8000'}?`;
+      }
+      setErrorMsg(msg);
     }
   };
 
@@ -50,7 +67,7 @@ export default function OllamaStatus() {
     setShowTooltip(false);
     try {
       // Run 'ollama signin' command to get signin URL
-      const response = await axios.post(`${API_URL}/api/ollama/signin`);
+        const response = await axios.post(buildUrl('/api/ollama/signin'));
       const signinUrl = response.data.signin_url;
 
       // Automatically open browser to signin URL
@@ -65,7 +82,7 @@ export default function OllamaStatus() {
       // Poll status every 3 seconds to detect when signin is complete
       const pollInterval = setInterval(async () => {
         try {
-          const statusResponse = await axios.get<OllamaStatusData>(`${API_URL}/api/ollama/status`);
+          const statusResponse = await axios.get<OllamaStatusData>(buildUrl('/api/ollama/status'));
 
           // If no longer requires signin, user has completed authentication
           if (!statusResponse.data.signin_required) {
@@ -95,12 +112,12 @@ export default function OllamaStatus() {
   const pullModel = async () => {
     setPullingModel(true);
     try {
-      await axios.post(`${API_URL}/api/ollama/pull`);
+      await axios.post(buildUrl('/api/ollama/pull'));
 
       // Poll status until model becomes available
       const pollInterval = setInterval(async () => {
         try {
-          const statusResponse = await axios.get<OllamaStatusData>(`${API_URL}/api/ollama/status`);
+          const statusResponse = await axios.get<OllamaStatusData>(buildUrl('/api/ollama/status'));
           setStatus(statusResponse.data);
 
           // If model is available, stop polling
@@ -129,7 +146,7 @@ export default function OllamaStatus() {
     setShowSigninModal(false);
     try {
       // Run 'ollama signin' command to get signin URL
-      const response = await axios.post(`${API_URL}/api/ollama/signin`);
+      const response = await axios.post(buildUrl('/api/ollama/signin'));
       const signinUrl = response.data.signin_url;
 
       if (signinUrl) {
@@ -142,7 +159,7 @@ export default function OllamaStatus() {
       // Poll status every 3 seconds to detect when signin is complete
       const pollInterval = setInterval(async () => {
         try {
-          const statusResponse = await axios.get<OllamaStatusData>(`${API_URL}/api/ollama/status`);
+          const statusResponse = await axios.get<OllamaStatusData>(buildUrl('/api/ollama/status'));
 
           // If no longer requires signin, user has completed authentication
           if (!statusResponse.data.signin_required) {
@@ -188,6 +205,9 @@ export default function OllamaStatus() {
       </div>
     );
   }
+
+  // Show small inline error if we couldn't reach backend
+  const showErrorIndicator = !!errorMsg;
 
   const getStatusColor = () => {
     if (restarting || waitingForSignin || pullingModel) return "bg-blue-500";
@@ -303,6 +323,9 @@ export default function OllamaStatus() {
                 <div className="mt-1 text-gray-400 text-[10px]">Please wait...</div>
               ) : (
                 <div className="mt-1 text-gray-400 text-[10px]">Click to sign in</div>
+              )}
+              {showErrorIndicator && (
+                <div className="mt-2 text-red-400 text-[12px]">{errorMsg}</div>
               )}
             </div>
           )}

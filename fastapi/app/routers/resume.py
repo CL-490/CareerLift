@@ -1,5 +1,5 @@
 """Resume processing API endpoints."""
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Body
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Body, Form
 from app.core.database import get_db
 from app.services.resume_processor import resume_processor
 from app.services.knowledge_graph_service import knowledge_graph_service
@@ -23,8 +23,8 @@ router = APIRouter(prefix="/api/resume", tags=["resume"])
 @router.post("/upload")
 async def upload_resume(
     file: UploadFile = File(...),
-    person_name: str = "Unknown",
-    resume_name: str = "Default Resume",
+    person_name: str = Form("") ,
+    resume_name: str = Form("Default Resume"),
     db=Depends(get_db)
 ):
     """
@@ -58,10 +58,25 @@ async def upload_resume(
                 detail="Could not extract meaningful text from the file"
             )
 
+
         # Generate unique resume ID
         resume_id = str(uuid.uuid4())
 
-        # Create Resume node in Neo4j
+        # Transform to knowledge graph structure (use LLM to extract person name)
+        graph_data = await knowledge_graph_service.transform_resume_to_graph(text)
+
+        # Decide which person name to use: prefer provided person_name (if non-empty),
+        # otherwise fallback to LLM extracted name in graph_data.
+        extracted_person_name = graph_data.get("person", {}).get("name") if graph_data.get("person") else None
+        final_person_name = person_name.strip() if person_name and person_name.strip() else (extracted_person_name or "Unknown")
+
+        # Ensure graph_data person object exists and has the final name
+        if not graph_data.get("person"):
+            graph_data["person"] = {"name": final_person_name}
+        else:
+            graph_data["person"]["name"] = final_person_name
+
+        # Create Resume node in Neo4j using the resolved person name
         resume_query = """
         CREATE (r:Resume {
             id: $resume_id,
@@ -79,17 +94,11 @@ async def upload_resume(
             resume_query,
             resume_id=resume_id,
             resume_name=resume_name,
-            person_name=person_name,
+            person_name=final_person_name,
             text=text,
             filename=file.filename
         )
         await result.consume()
-
-        # Transform to knowledge graph structure
-        graph_data = await knowledge_graph_service.transform_resume_to_graph(text)
-
-        # Override person name with provided name
-        graph_data["person"]["name"] = person_name
 
         # Create subgraph in Neo4j and link to Resume
         nodes_created = await knowledge_graph_service.create_resume_subgraph(db, graph_data)
@@ -100,13 +109,13 @@ async def upload_resume(
         MATCH (p:Person {name: $person_name})
         MERGE (r)-[:BELONGS_TO]->(p)
         """
-        await db.run(link_query, resume_id=resume_id, person_name=person_name)
+        await db.run(link_query, resume_id=resume_id, person_name=final_person_name)
 
         return {
             "message": "Resume processed successfully",
             "resume_id": resume_id,
             "resume_name": resume_name,
-            "person_name": person_name,
+            "person_name": final_person_name,
             "filename": file.filename,
             "text_length": len(text),
             "nodes_created": nodes_created,
@@ -166,6 +175,65 @@ async def get_resume_graph(person_name: str, db=Depends(get_db)):
         "experiences": experiences,
         "education": education
     }
+
+
+@router.get("/graph/raw/{person_name}")
+async def get_resume_graph_raw(person_name: str, db=Depends(get_db)):
+    """
+    Retrieve the resume subgraph for a person and return simple nodes/edges JSON usable by graph visualizers.
+    """
+    query = """
+    MATCH (p:Person {name: $person_name})
+    OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
+    OPTIONAL MATCH (p)-[:HAS_EXPERIENCE]->(e:Experience)
+    OPTIONAL MATCH (p)-[:HAS_EDUCATION]->(ed:Education)
+    RETURN p,
+           collect(DISTINCT s) as skills,
+           collect(DISTINCT e) as experiences,
+           collect(DISTINCT ed) as education
+    """
+
+    result = await db.run(query, person_name=person_name)
+    record = await result.single()
+
+    if not record:
+        raise HTTPException(status_code=404, detail=f"Person '{person_name}' not found")
+
+    person = dict(record["p"]) if record["p"] else {}
+    skills = [dict(s) for s in record["skills"] if s is not None]
+    experiences = [dict(e) for e in record["experiences"] if e is not None]
+    education = [dict(ed) for ed in record["education"] if ed is not None]
+
+    # Build nodes and edges
+    nodes = []
+    edges = []
+
+    person_id = f"person:{person.get('name', 'Unknown')}"
+    nodes.append({
+        "id": person_id,
+        "label": person.get("name"),
+        "group": "person",
+        "properties": person
+    })
+
+    for s in skills:
+        sid = f"skill:{s.get('name') or s.get('label') or s.get('skill')}"
+        nodes.append({"id": sid, "label": s.get("name"), "group": "skill", "properties": s})
+        edges.append({"from": person_id, "to": sid, "label": "HAS_SKILL"})
+
+    for idx, e in enumerate(experiences):
+        eid = f"exp:{idx}:{e.get('company') or e.get('title')}"
+        label = f"{e.get('title') or ''}{(' @ ' + (e.get('company') or '')) if e.get('company') else ''}"
+        nodes.append({"id": eid, "label": label, "group": "experience", "properties": e})
+        edges.append({"from": person_id, "to": eid, "label": "HAS_EXPERIENCE"})
+
+    for idx, ed in enumerate(education):
+        gid = f"edu:{idx}:{ed.get('institution') or ed.get('degree')}"
+        label = f"{ed.get('degree') or ''}{(' — ' + (ed.get('institution') or '')) if ed.get('institution') else ''}"
+        nodes.append({"id": gid, "label": label, "group": "education", "properties": ed})
+        edges.append({"from": person_id, "to": gid, "label": "HAS_EDUCATION"})
+
+    return {"nodes": nodes, "edges": edges}
 
 
 @router.get("/score/{person_name}")

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
 import axios from "axios";
 
 interface GraphData {
@@ -31,6 +32,8 @@ interface UploadResult {
   text_length: number;
   nodes_created: number;
   graph_data: GraphData;
+  person_name?: string;
+  resume_name?: string;
 }
 
 export default function ResumeLabPage() {
@@ -38,7 +41,10 @@ export default function ResumeLabPage() {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showGraph, setShowGraph] = useState(true);
   const [dragActive, setDragActive] = useState(false);
+  const [personNameInput, setPersonNameInput] = useState<string>("");
+  const [resumeNameInput, setResumeNameInput] = useState<string>("Default Resume");
 
   const allowedExtensions = [".txt", ".md", ".pdf", ".doc", ".docx"];
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -53,6 +59,8 @@ export default function ResumeLabPage() {
         text_length: number;
         graph_data: GraphData;
         nodes_created?: number;
+        person_name?: string;
+        resume_name?: string;
         storedAt?: number;
       };
       if (saved && saved.graph_data && saved.graph_data.person) {
@@ -64,6 +72,9 @@ export default function ResumeLabPage() {
           graph_data: saved.graph_data,
         };
         setResult(reconstructed);
+        // Restore saved names into inputs
+        if (saved.person_name) setPersonNameInput(saved.person_name);
+        if (saved.resume_name) setResumeNameInput(saved.resume_name);
       }
     } catch (_) {
       // ignore parse errors
@@ -112,6 +123,12 @@ export default function ResumeLabPage() {
 
     const formData = new FormData();
     formData.append("file", file);
+    if (personNameInput && personNameInput.trim().length > 0) {
+      formData.append("person_name", personNameInput.trim());
+    }
+    if (resumeNameInput && resumeNameInput.trim().length > 0) {
+      formData.append("resume_name", resumeNameInput.trim());
+    }
 
     try {
       const response = await axios.post<UploadResult>(
@@ -125,6 +142,13 @@ export default function ResumeLabPage() {
       );
 
       setResult(response.data);
+      // Update form inputs with resolved names so user can re-use them
+      if ((!personNameInput || personNameInput.trim().length === 0) && response.data.graph_data?.person?.name) {
+        setPersonNameInput(response.data.graph_data.person.name);
+      }
+      if ((!resumeNameInput || resumeNameInput.trim().length === 0) && response.data.resume_name) {
+        setResumeNameInput(response.data.resume_name);
+      }
       // Persist for dashboard quick view
       try {
         const payload = {
@@ -132,6 +156,8 @@ export default function ResumeLabPage() {
           text_length: response.data.text_length,
           graph_data: response.data.graph_data,
           nodes_created: response.data.nodes_created,
+          person_name: personNameInput || response.data.graph_data.person?.name || "",
+          resume_name: resumeNameInput || response.data.filename,
           storedAt: Date.now(),
         };
         if (typeof window !== "undefined") {
@@ -223,7 +249,24 @@ export default function ResumeLabPage() {
                   accept={allowedExtensions.join(",")}
                   onChange={(e) => e.target.files?.[0] && handleFileChange(e.target.files[0])}
                 />
-              </label>
+                </label>
+            </div>
+
+            <div className="w-full mt-2">
+              <input
+                type="text"
+                className="w-full p-2 bg-[#0b1220] rounded-lg border border-[rgba(255,255,255,0.04)]"
+                placeholder="Person name (optional, leave blank to use extracted name)"
+                value={personNameInput}
+                onChange={(e) => setPersonNameInput(e.target.value)}
+              />
+              <input
+                type="text"
+                className="w-full mt-2 p-2 bg-[#0b1220] rounded-lg border border-[rgba(255,255,255,0.04)]"
+                placeholder="Resume name"
+                value={resumeNameInput}
+                onChange={(e) => setResumeNameInput(e.target.value)}
+              />
             </div>
 
             <p className="text-[13px] text-muted">
@@ -391,9 +434,38 @@ export default function ResumeLabPage() {
                 localhost:7474
               </a>
             </div>
+
+            {/* Graph visualization toggle */}
+            <div className="mt-4 flex gap-3 items-center">
+              <label className="flex items-center gap-2 text-[14px]">
+                <input
+                  type="checkbox"
+                  checked={showGraph}
+                  onChange={() => setShowGraph((s) => !s)}
+                  className="w-4 h-4"
+                />
+                <span className="text-[13px] text-muted">Show interactive knowledge graph</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Render graph visualization */}
+      {result && showGraph && (
+        <div className="card hover-ring card-hue mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[20px] font-medium">Knowledge Graph</h2>
+          </div>
+          <div className="p-4">
+            {/* Dynamically import to avoid SSR issues */}
+            <DynamicKnowledgeGraph graphData={result.graph_data} />
           </div>
         </div>
       )}
     </div>
   );
 }
+
+// Dynamic import for client-side-only visualization component
+const DynamicKnowledgeGraph = dynamic(() => import("../../components/KnowledgeGraph"), { ssr: false });

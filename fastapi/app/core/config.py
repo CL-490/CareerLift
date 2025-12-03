@@ -32,8 +32,15 @@ class Settings(BaseSettings):
     ollama_model: str = "gpt-oss:20b-cloud"
     ollama_api_key: str = ""
 
-    # CORS
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8000"]
+    # CORS - include all likely dev ports for Next.js (3000 / 3001) and backend
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
 
     # Job Finder API Keys
     usajobs_api_key: str = ""
