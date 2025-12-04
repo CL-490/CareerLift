@@ -18,6 +18,7 @@ export default function OllamaStatus() {
   const [restarting, setRestarting] = useState(false);
   const [pullingModel, setPullingModel] = useState(false);
   const [waitingForSignin, setWaitingForSignin] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -38,8 +39,14 @@ export default function OllamaStatus() {
     try {
       const response = await axios.get<OllamaStatusData>(`${API_URL}/api/ollama/status`);
       setStatus(response.data);
-    } catch (err) {
+      setErrorMsg(null);
+    } catch (err: any) {
       console.error("Failed to fetch Ollama status:", err);
+      let msg = "Failed to connect to the backend for Ollama status.";
+      if (err?.message === 'Network Error' || err?.code === 'ERR_NETWORK') {
+        msg = `Network Error - tried ${API_URL}/api/ollama/status. Is the backend running?`;
+      }
+      setErrorMsg(msg);
     }
   };
 
@@ -190,6 +197,7 @@ export default function OllamaStatus() {
   }
 
   const getStatusColor = () => {
+    if (errorMsg) return "bg-red-500";
     if (restarting || waitingForSignin || pullingModel) return "bg-blue-500";
     if (status.signin_required) return "bg-yellow-500";
     if (!status.model_available) return "bg-red-500";
@@ -303,6 +311,21 @@ export default function OllamaStatus() {
                 <div className="mt-1 text-gray-400 text-[10px]">Please wait...</div>
               ) : (
                 <div className="mt-1 text-gray-400 text-[10px]">Click to sign in</div>
+              )}
+              {errorMsg && (
+                <>
+                  <div className="mt-2 text-red-400 text-[11px]">{errorMsg}</div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setErrorMsg(null);
+                      fetchStatus();
+                    }}
+                    className="mt-2 text-[10px] px-2 py-1 rounded bg-blue-500/20 text-blue-300 hover:bg-blue-500/30"
+                  >
+                    Retry
+                  </button>
+                </>
               )}
             </div>
           )}

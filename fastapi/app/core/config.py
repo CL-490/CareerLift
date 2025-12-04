@@ -33,7 +33,13 @@ class Settings(BaseSettings):
     ollama_api_key: str = ""
 
     # CORS
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8000"]
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "http://localhost:8000",
+    ]
 
     # Job Finder API Keys
     usajobs_api_key: str = ""

@@ -1,5 +1,5 @@
 """Resume processing API endpoints."""
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Body
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Body, Form
 from app.core.database import get_db
 from app.services.resume_processor import resume_processor
 from app.services.knowledge_graph_service import knowledge_graph_service
@@ -23,8 +23,8 @@ router = APIRouter(prefix="/api/resume", tags=["resume"])
 @router.post("/upload")
 async def upload_resume(
     file: UploadFile = File(...),
-    person_name: Optional[str] = None,
-    resume_name: Optional[str] = None,
+    person_name: str = Form(""),
+    resume_name: str = Form("Default Resume"),
     db=Depends(get_db)
 ):
     """
@@ -64,15 +64,19 @@ async def upload_resume(
         # Transform to knowledge graph structure first to extract person info
         graph_data = await knowledge_graph_service.transform_resume_to_graph(text)
 
-        # Use extracted person name if not provided, fallback to "Unknown" if extraction failed
-        extracted_person_name = graph_data.get("person", {}).get("name", "Unknown")
-        final_person_name = person_name if person_name else extracted_person_name
+        # Decide which person name to use: prefer provided person_name (if non-empty),
+        # otherwise fallback to LLM extracted name in graph_data.
+        extracted_person_name = graph_data.get("person", {}).get("name") if graph_data.get("person") else None
+        final_person_name = person_name.strip() if person_name and person_name.strip() else (extracted_person_name or "Unknown")
 
-        # Use provided resume name or generate from filename
-        final_resume_name = resume_name if resume_name else file.filename.rsplit('.', 1)[0]
+        # Ensure graph_data person object exists and has the final name
+        if not graph_data.get("person"):
+            graph_data["person"] = {"name": final_person_name}
+        else:
+            graph_data["person"]["name"] = final_person_name
 
-        # Update graph_data with final person name
-        graph_data["person"]["name"] = final_person_name
+        # Use provided resume name
+        final_resume_name = resume_name
 
         # Create Resume node in Neo4j
         resume_query = """
@@ -143,17 +147,20 @@ async def get_resume_graph(person_name: str, db=Depends(get_db)):
     """
     Retrieve the resume subgraph for a person from Neo4j.
 
-    Returns the person node and all related skills, experiences, and education.
+    Returns the person node and all related skills, experiences, education, saved_jobs, and resumes.
     """
     query = """
     MATCH (p:Person {name: $person_name})
     OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
     OPTIONAL MATCH (p)-[:HAS_EXPERIENCE]->(e:Experience)
     OPTIONAL MATCH (p)-[:HAS_EDUCATION]->(ed:Education)
+    OPTIONAL MATCH (p)<-[:BELONGS_TO]-(r:Resume)-[:SAVED_JOB]->(j:JobPosting)
     RETURN p,
            collect(DISTINCT s) as skills,
            collect(DISTINCT e) as experiences,
-           collect(DISTINCT ed) as education
+           collect(DISTINCT ed) as education,
+           collect(DISTINCT j) as saved_jobs,
+           collect(DISTINCT r) as resumes
     """
 
     result = await db.run(query, person_name=person_name)
@@ -162,16 +169,20 @@ async def get_resume_graph(person_name: str, db=Depends(get_db)):
     if not record:
         raise HTTPException(status_code=404, detail=f"Person '{person_name}' not found")
 
-    person = dict(record["p"])
-    skills = [dict(s) for s in record["skills"] if s is not None]
-    experiences = [dict(e) for e in record["experiences"] if e is not None]
-    education = [dict(ed) for ed in record["education"] if ed is not None]
+    person = dict(record["p"]) if record.get("p") else {}
+    skills = [dict(s) for s in record.get("skills", []) if s is not None]
+    experiences = [dict(e) for e in record.get("experiences", []) if e is not None]
+    education = [dict(ed) for ed in record.get("education", []) if ed is not None]
+    saved_jobs = [dict(j) for j in record.get("saved_jobs", []) if j is not None]
+    resumes = [dict(r) for r in record.get("resumes", []) if r is not None]
 
     return {
         "person": person,
         "skills": skills,
         "experiences": experiences,
-        "education": education
+        "education": education,
+        "saved_jobs": saved_jobs,
+        "resumes": resumes
     }
 
 

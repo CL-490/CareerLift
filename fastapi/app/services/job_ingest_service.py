@@ -9,8 +9,6 @@ from app.services.job_sources import (
     WeWorkRemotelyClient,
 )
 from app.core.config import settings
-from pathlib import Path
-import os, json
 
 COMMON_SOURCES = [
     # Major ATS / job-board hosts (generic):
@@ -20,29 +18,13 @@ COMMON_SOURCES = [
     # "https://openai.com/careers",
 ]
 
-SAMPLE_JOBS_PATH = os.getenv("JOBS_SAMPLE_PATH", "/app/app/data/sample_jobs.json")
-
 JobSourceType = Literal["usajobs", "adzuna", "remotive", "weworkremotely", "scraped"]
 
 # Changeable constant
 JOBS_INGEST_LIMIT = 30
 
-def _load_sample_jobs() -> list[dict]:
-    p = Path(SAMPLE_JOBS_PATH)
-    if not p.exists():
-        return []
-    try:
-        data = json.loads(p.read_text(encoding="utf-8"))
-    except Exception:
-        return []
-    if isinstance(data, dict) and isinstance(data.get("jobs"), list):
-        return [j for j in data["jobs"] if isinstance(j, dict)]
-    if isinstance(data, list):
-        return [j for j in data if isinstance(j, dict)]
-    return []
 
-
-async def ingest_from_seeds(db, seed_urls: list[str], max_jobs: int | None = None, offline: bool = False) -> int:
+async def ingest_from_seeds(db, seed_urls: list[str], max_jobs: int | None = None) -> int:
     """
     db is your async Neo4j session from get_db().
     Returns count of NEW job nodes created (updates not counted).
@@ -52,18 +34,6 @@ async def ingest_from_seeds(db, seed_urls: list[str], max_jobs: int | None = Non
 
     seen_urls: set[str] = set()
     created_total = 0
-    # Optionally, cap "attempted" jobs instead of "created" by tracking a seen counter
-    # seen_jobs = 0
-    
-    # --- Offline/sample-first path ---
-    sample = _load_sample_jobs() if (offline or Path(SAMPLE_JOBS_PATH).exists()) else []
-    if sample:
-        created = 0
-        for job in sample:
-            if created >= limit:
-                break
-            created += await _upsert_job(db, job)
-        return created
 
     for seed in seed_urls:
         links = await asyncio.to_thread(discover_links, seed)

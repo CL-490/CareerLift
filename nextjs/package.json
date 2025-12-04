@@ -18,7 +18,8 @@
     "axios": "latest",
     "next": "latest",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "vis-network": "^9.1.9"
   },
   "devDependencies": {
     "@capacitor/cli": "latest",

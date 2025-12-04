@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
 import axios from "axios";
 
 interface GraphData {
@@ -23,6 +24,17 @@ interface GraphData {
     institution: string;
     year?: string;
   }>;
+  saved_jobs?: Array<{
+    title?: any;
+    company?: any;
+    apply_url?: string;
+    description?: any;
+  }>;
+  resumes?: Array<{
+    id?: string;
+    name?: any;
+    resume_id?: string;
+  }>;
 }
 
 interface UploadResult {
@@ -31,6 +43,8 @@ interface UploadResult {
   text_length: number;
   nodes_created: number;
   graph_data: GraphData;
+  person_name?: string;
+  resume_name?: string;
 }
 
 export default function ResumeLabPage() {
@@ -38,7 +52,19 @@ export default function ResumeLabPage() {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showGraph, setShowGraph] = useState(true);
   const [dragActive, setDragActive] = useState(false);
+  const [personNameInput, setPersonNameInput] = useState<string>("");
+  const [resumeNameInput, setResumeNameInput] = useState<string>("Default Resume");
+  const asString = (val: any) => {
+    if (val == null) return "";
+    if (typeof val === 'string') return val;
+    if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+    if (typeof val === 'object') {
+      return val.name || val.label || val.title || JSON.stringify(val);
+    }
+    return String(val);
+  };
 
   const allowedExtensions = [".txt", ".md", ".pdf", ".doc", ".docx"];
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -53,9 +79,11 @@ export default function ResumeLabPage() {
         text_length: number;
         graph_data: GraphData;
         nodes_created?: number;
+        person_name?: string;
+        resume_name?: string;
         storedAt?: number;
       };
-      if (saved && saved.graph_data && saved.graph_data.person) {
+        if (saved && saved.graph_data && saved.graph_data.person) {
         const reconstructed: UploadResult = {
           message: "Loaded from previous upload",
           filename: saved.filename,
@@ -64,10 +92,51 @@ export default function ResumeLabPage() {
           graph_data: saved.graph_data,
         };
         setResult(reconstructed);
+        // Restore saved names into inputs
+        if (saved.person_name) setPersonNameInput(asString(saved.person_name));
+        if (saved.resume_name) setResumeNameInput(asString(saved.resume_name));
       }
     } catch (_) {
       // ignore parse errors
     }
+  }, []);
+
+  // Listen for updates from other parts of the app (e.g., Job Finder adds a saved job)
+  React.useEffect(() => {
+    const onResumeUpdated = async () => {
+      try {
+        const raw = localStorage.getItem("careerlift:lastResume");
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (saved && saved.graph_data && saved.graph_data.person) {
+          setResult({
+            message: "Loaded from previous upload",
+            filename: saved.filename,
+            text_length: saved.text_length,
+            nodes_created: saved.nodes_created ?? 0,
+            graph_data: saved.graph_data,
+            person_name: asString(saved.person_name),
+            resume_name: asString(saved.resume_name),
+          });
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    const storageHandler = (e: StorageEvent) => {
+      if (e.key === "careerlift:resume-updated" || e.key === "careerlift:lastResume") {
+        onResumeUpdated();
+      }
+    };
+
+    window.addEventListener("storage", storageHandler);
+    window.addEventListener("careerlift:resume-updated", onResumeUpdated as EventListener);
+
+    return () => {
+      window.removeEventListener("careerlift:resume-updated", onResumeUpdated as EventListener);
+      window.removeEventListener("storage", storageHandler);
+    };
   }, []);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -112,6 +181,12 @@ export default function ResumeLabPage() {
 
     const formData = new FormData();
     formData.append("file", file);
+    if (personNameInput && personNameInput.trim().length > 0) {
+      formData.append("person_name", personNameInput.trim());
+    }
+    if (resumeNameInput && resumeNameInput.trim().length > 0) {
+      formData.append("resume_name", resumeNameInput.trim());
+    }
 
     try {
       const response = await axios.post<UploadResult>(
@@ -125,6 +200,13 @@ export default function ResumeLabPage() {
       );
 
       setResult(response.data);
+      // Update form inputs with resolved names so user can re-use them
+      if ((!personNameInput || personNameInput.trim().length === 0) && response.data.graph_data?.person?.name) {
+        setPersonNameInput(response.data.graph_data.person.name);
+      }
+      if ((!resumeNameInput || resumeNameInput.trim().length === 0) && response.data.resume_name) {
+        setResumeNameInput(response.data.resume_name);
+      }
       // Persist for dashboard quick view
       try {
         const payload = {
@@ -132,6 +214,8 @@ export default function ResumeLabPage() {
           text_length: response.data.text_length,
           graph_data: response.data.graph_data,
           nodes_created: response.data.nodes_created,
+          person_name: personNameInput || response.data.graph_data.person?.name || "",
+          resume_name: resumeNameInput || response.data.filename,
           storedAt: Date.now(),
         };
         if (typeof window !== "undefined") {
@@ -223,7 +307,24 @@ export default function ResumeLabPage() {
                   accept={allowedExtensions.join(",")}
                   onChange={(e) => e.target.files?.[0] && handleFileChange(e.target.files[0])}
                 />
-              </label>
+                </label>
+            </div>
+
+            <div className="w-full mt-2">
+              <input
+                type="text"
+                className="w-full p-2 bg-[#0b1220] rounded-lg border border-[rgba(255,255,255,0.04)]"
+                placeholder="Person name (optional, leave blank to use extracted name)"
+                value={personNameInput}
+                onChange={(e) => setPersonNameInput(e.target.value)}
+              />
+              <input
+                type="text"
+                className="w-full mt-2 p-2 bg-[#0b1220] rounded-lg border border-[rgba(255,255,255,0.04)]"
+                placeholder="Resume name"
+                value={resumeNameInput}
+                onChange={(e) => setResumeNameInput(e.target.value)}
+              />
             </div>
 
             <p className="text-[13px] text-muted">
@@ -298,7 +399,7 @@ export default function ResumeLabPage() {
               </div>
               <div className="panel-tinted p-4 rounded-lg">
                 <p className="text-[13px] text-muted mb-1">Status</p>
-                <p className="text-[15px] font-medium text-green-400">✓ Success</p>
+                <p className="text-[15px] font-medium text-green-400">Success</p>
               </div>
             </div>
 
@@ -332,7 +433,7 @@ export default function ResumeLabPage() {
                       key={idx}
                       className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-[13px]"
                     >
-                      {skill}
+                      {asString(skill)}
                     </span>
                   ))}
                 </div>
@@ -346,8 +447,8 @@ export default function ResumeLabPage() {
                 <div className="space-y-3">
                   {result.graph_data.experiences.map((exp, idx) => (
                     <div key={idx} className="panel-tinted p-4 rounded-lg">
-                      <p className="text-[15px] font-medium">{exp.title}</p>
-                      <p className="text-[14px] text-blue-400">{exp.company}</p>
+                      <p className="text-[15px] font-medium">{asString(exp.title)}</p>
+                      <p className="text-[14px] text-blue-400">{asString(exp.company)}</p>
                       {exp.duration && (
                         <p className="text-[13px] text-muted mt-1">
                           {exp.duration}
@@ -369,8 +470,8 @@ export default function ResumeLabPage() {
                 <div className="space-y-3">
                   {result.graph_data.education.map((edu, idx) => (
                     <div key={idx} className="panel-tinted p-4 rounded-lg">
-                      <p className="text-[15px] font-medium">{edu.degree}</p>
-                      <p className="text-[14px] text-blue-400">{edu.institution}</p>
+                      <p className="text-[15px] font-medium">{asString(edu.degree)}</p>
+                      <p className="text-[14px] text-blue-400">{asString(edu.institution)}</p>
                       {edu.year && (
                         <p className="text-[13px] text-muted mt-1">{edu.year}</p>
                       )}
@@ -380,8 +481,25 @@ export default function ResumeLabPage() {
               </div>
             )}
 
+            {/* Saved Jobs */}
+            {result.graph_data.saved_jobs && result.graph_data.saved_jobs.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-[16px] font-medium mb-3">Saved Jobs ({result.graph_data.saved_jobs.length})</h3>
+                <div className="space-y-3">
+                  {result.graph_data.saved_jobs.map((job, idx) => (
+                    <div key={idx} className="panel-tinted p-4 rounded-lg">
+                      <p className="text-[15px] font-medium">{asString(job.title) || asString(job.company) || 'Job'}</p>
+                      {job.company && (<p className="text-[14px] text-blue-400">{asString(job.company)}</p>)}
+                      {job.apply_url && (<a className="text-[13px] text-muted" href={asString(job.apply_url)} target="_blank" rel="noopener noreferrer">Open job</a>)}
+                      {job.description && (<p className="text-[13px] text-muted mt-2">{job.description}</p>)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mt-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-[14px]">
-              ✓ Knowledge graph created successfully. View it in Neo4j Browser at{" "}
+              Knowledge graph created successfully. View it in Neo4j Browser at{" "}
               <a
                 href="http://localhost:7474"
                 target="_blank"
@@ -391,9 +509,38 @@ export default function ResumeLabPage() {
                 localhost:7474
               </a>
             </div>
+
+            {/* Graph visualization toggle */}
+            <div className="mt-4 flex gap-3 items-center">
+              <label className="flex items-center gap-2 text-[14px]">
+                <input
+                  type="checkbox"
+                  checked={showGraph}
+                  onChange={() => setShowGraph((s) => !s)}
+                  className="w-4 h-4"
+                />
+                <span className="text-[13px] text-muted">Show interactive knowledge graph</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Render graph visualization */}
+      {result && showGraph && (
+        <div className="card hover-ring card-hue mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[20px] font-medium">Knowledge Graph</h2>
+          </div>
+          <div className="p-4">
+            {/* Dynamically import to avoid SSR issues */}
+            <DynamicKnowledgeGraph graphData={result.graph_data} />
           </div>
         </div>
       )}
     </div>
   );
 }
+
+// Dynamic import for client-side-only visualization component
+const DynamicKnowledgeGraph = dynamic(() => import("../../components/KnowledgeGraph"), { ssr: false });

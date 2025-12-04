@@ -5,7 +5,7 @@ import { ReactNode, useEffect, useState, useRef } from "react";
 type Resume = {
   resume_id: string;
   resume_name: string;
-  person_name: string;
+  person_name: any;
   created_at?: string;
   updated_at?: string;
 };
@@ -124,6 +124,15 @@ export default function JobFinderPage() {
   const [availableResumes, setAvailableResumes] = useState<Resume[]>([]);
   const [addedToGraph, setAddedToGraph] = useState<Set<string>>(new Set());
   const [addingToGraph, setAddingToGraph] = useState<Set<string>>(new Set());
+  const asString = (val: any) => {
+    if (val == null) return "";
+    if (typeof val === 'string') return val;
+    if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+    if (typeof val === 'object') {
+      return val.name || val.label || val.title || JSON.stringify(val);
+    }
+    return String(val);
+  };
 
   const progressIntervalsRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
@@ -403,6 +412,44 @@ export default function JobFinderPage() {
       const result = await addJobToGraph(job);
       if (result.success) {
         setAddedToGraph((prev) => new Set(prev).add(jobUrl));
+        // If a resume is selected, save this job to that resume too
+        if (selectedResume) {
+          try {
+            const base = getApiBase();
+            const res = await fetch(`${base}/api/resume/save-job`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ resume_id: selectedResume.resume_id, job_apply_url: jobUrl, notes: "" }),
+            });
+              if (res.ok) {
+                // Refresh the resume graph for the selected resume and store it in localStorage
+                try {
+                  const personNameForFetch = typeof selectedResume.person_name === 'string' ? selectedResume.person_name : (selectedResume.person_name?.name || String(selectedResume.person_name));
+                  const graphRes = await fetch(`${base}/api/resume/graph/${encodeURIComponent(personNameForFetch)}`);
+                if (graphRes.ok) {
+                  const graphJson = await graphRes.json();
+                  const payload = {
+                    filename: selectedResume.resume_name,
+                    text_length: 0,
+                    graph_data: graphJson,
+                    nodes_created: 0,
+                    person_name: selectedResume.person_name,
+                    resume_name: selectedResume.resume_name,
+                    storedAt: Date.now(),
+                  };
+                  localStorage.setItem("careerlift:lastResume", JSON.stringify(payload));
+                  // Trigger an update event for other tabs/components to refresh
+                  localStorage.setItem("careerlift:resume-updated", String(Date.now()));
+                  window.dispatchEvent(new Event("careerlift:resume-updated"));
+                }
+              } catch (e) {
+                // ignore errors
+              }
+            }
+          } catch (err) {
+            // ignore save-job error for now
+          }
+        }
       } else {
         alert(result.message || "Failed to add job to knowledge graph");
       }
@@ -460,7 +507,7 @@ export default function JobFinderPage() {
           </option>
           {availableResumes.map((resume) => (
             <option key={resume.resume_id} value={resume.resume_id}>
-              {resume.resume_name} ({resume.person_name})
+              {resume.resume_name} ({asString(resume.person_name)})
             </option>
           ))}
         </select>
@@ -471,7 +518,7 @@ export default function JobFinderPage() {
             </p>
             <div className="flex items-center gap-4 text-xs text-muted">
               <span>
-                👤 {selectedResume.person_name}
+                {asString(selectedResume.person_name)}
               </span>
               {selectedResume.created_at && (
                 <span>
