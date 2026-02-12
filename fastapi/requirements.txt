@@ -1,0 +1,42 @@
+# FastAPI
+fastapi[standard]
+uvicorn[standard]
+pydantic
+pydantic-settings
+
+# Neo4j
+neo4j
+
+# LangChain
+langchain
+langchain-community
+langchain-core
+langchain-ollama
+
+# Playwright
+playwright
+
+# HTTP Client
+httpx
+aiohttp
+
+# Docker
+docker
+
+# Utilities
+python-dotenv
+python-multipart
+
+# Document Processing
+pypdf
+python-docx
+
+# Testing
+pytest
+pytest-asyncio
+pytest-cov
+
+# Development
+black
+ruff
+mypy

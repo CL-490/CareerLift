@@ -199,7 +199,12 @@ out/
 .docker/
 
 # Electron
-electron/dist/
+electronjs/dist/
+
+# Capacitor
+android/
+ios/
+.capacitor/
 
 # OS
 .DS_Store

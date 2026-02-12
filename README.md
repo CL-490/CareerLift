@@ -1,7 +1,7 @@
 CareerLift
 
-Backend
-- Python 3.12 with FastAPI - High-performance async API framework
+Backend (FastAPI)
+- Python (Latest) with FastAPI - High-performance async API framework
 - Pydantic - Data validation and settings management
 - LangChain - LLM orchestration and LLM workflows
 - Playwright - Web scraping and automation
@@ -10,15 +10,19 @@ Backend
 Database
 - Neo4j (Latest) - Graph database for career relationships and paths
 
-Frontend
-- Next.js 15 - React framework with App Router
-- React 19 - Latest React with new features
-- TypeScript - Type-safe development
-- Tailwind CSS 3 - Utility-first CSS framework
-- Axios - HTTP client for API calls
+Frontend (Next.js)
+- Next.js (Latest) - React framework with App Router
+- React (Latest) - Latest React with new features
+- TypeScript (Latest) - Type-safe development
+- Tailwind CSS (Latest) - Utility-first CSS framework
+- Axios (Latest) - HTTP client for API calls
 
-Desktop
+Desktop (Electron)
 - Electron (Latest) - Cross-platform desktop application wrapper
+
+Mobile (Capacitor)
+- Capacitor (Latest) - Cross-platform native runtime for web apps
+- Supports iOS and Android builds
 
 Infrastructure
 - Docker with BuildKit - Containerization with latest build features
@@ -27,8 +31,10 @@ Infrastructure
 Prerequisites
 
 - Docker Desktop (with BuildKit enabled)
-- Node.js 22+ (for Electron desktop app)
+- Node.js (Latest) - for Electron desktop app and Capacitor mobile builds
 - Git
+- (Optional) Android Studio - for Android builds
+- (Optional) Xcode - for iOS builds (macOS only)
 
 Quick Start
 
@@ -85,43 +91,68 @@ docker compose up -d
 
 2. Install and run Electron:
 ```bash
-cd electron
+cd electronjs
 npm install
 npm run dev
 ```
 
 For production builds:
 ```bash
-cd electron
+cd electronjs
 npm run build        # Current platform
 npm run build:mac    # macOS
 npm run build:win    # Windows
 npm run build:linux  # Linux
 ```
 
+Mobile Application (Capacitor)
+
+1. Ensure Docker services are running:
+```bash
+docker compose up -d
+```
+
+2. Build the Next.js app and initialize Capacitor:
+```bash
+cd nextjs
+npm install
+npm run build
+npm run cap:init
+```
+
+3. Add platforms:
+```bash
+npm run cap:sync
+```
+
+4. Open in native IDE:
+```bash
+npm run cap:android  # For Android Studio
+npm run cap:ios      # For Xcode (macOS only)
+```
+
 Project Structure
 
 ```
 CareerLift/
-├── backend/                 # FastAPI backend
+├── fastapi/                # FastAPI backend
 │   ├── app/
-│   │   ├── core/           # Configuration and database
-│   │   ├── models/         # Pydantic models
-│   │   ├── routers/        # API endpoints
-│   │   ├── services/       # Business logic
-│   │   └── main.py         # FastAPI application
+│   │   ├── core/          # Configuration and database
+│   │   ├── models/        # Pydantic models
+│   │   ├── routers/       # API endpoints
+│   │   ├── services/      # Business logic
+│   │   └── main.py        # FastAPI application
 │   ├── Dockerfile
 │   └── requirements.txt
-├── frontend/               # Next.js frontend
-│   ├── src/
-│   │   ├── app/           # Next.js App Router
-│   │   ├── components/    # React components
-│   │   └── lib/           # Utilities and API client
+├── nextjs/                # Next.js frontend + Capacitor
+│   ├── app/               # Next.js App Router
+│   ├── components/        # React components
 │   ├── public/
+│   ├── capacitor.config.ts # Capacitor configuration
 │   ├── Dockerfile
 │   ├── package.json
 │   └── next.config.ts
-├── electron/              # Electron desktop app
+├── electronjs/            # Electron desktop app
 │   ├── main.js           # Electron main process
 │   ├── preload.js        # Preload script
 │   └── package.json
@@ -140,24 +171,24 @@ docker compose watch
 ```
 
 This will:
-- Sync backend Python files to the container automatically
-- Sync frontend files to the container automatically
-- Rebuild backend when requirements.txt changes
-- Rebuild frontend when package.json changes
+- Sync FastAPI Python files to the container automatically
+- Sync Next.js files to the container automatically
+- Rebuild FastAPI when requirements.txt changes
+- Rebuild Next.js when package.json changes
 
 View Logs
 
 ```bash
 docker compose logs -f              # All services
-docker compose logs -f backend      # Backend only
-docker compose logs -f frontend     # Frontend only
+docker compose logs -f fastapi      # FastAPI only
+docker compose logs -f nextjs       # Next.js only
 ```
 
 Access Container Shells
 
 ```bash
-docker compose exec backend sh
-docker compose exec frontend sh
+docker compose exec fastapi bash
+docker compose exec nextjs sh
 ```
 
 Testing
@@ -165,13 +196,13 @@ Testing
 Backend Tests
 
 ```bash
-docker compose exec backend pytest
+docker compose exec fastapi pytest
 ```
 
 Frontend Tests
 
 ```bash
-docker compose exec frontend npm test
+docker compose exec nextjs npm test
 ```
 
 Cleanup

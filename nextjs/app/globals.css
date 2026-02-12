@@ -1,0 +1,354 @@
+@import "tailwindcss";
+
+/* Design tokens, dark (default) theme */
+:root {
+  --background: #0b0f17;
+  --background-alt: #0f1724;
+  --background-gradient: radial-gradient(circle at 20% 20%, #132031, #0b0f17 60%);
+  --foreground: #e6edf3;
+  --muted: #7a8696;
+  --border-color: rgba(93, 197, 140, 0.236);
+  --border-strong: rgba(255,255,255,0.14);
+  --accent: #83d5bbb5;
+  --accent-glow: 0 0 0 1px #0dd9a344, 0 0 14px -2px #0dd9a3aa;
+  --danger: #ef4444;
+  --radius-sm: 6px;
+  --radius: 14px;
+  --radius-lg: 22px;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --shadow-card: 0 4px 18px -6px rgba(0,0,0,0.55), 0 1px 0 0 rgba(255,255,255,0.04) inset, 0 0 0 1px rgba(255,255,255,0.05) inset;
+  --shadow-glow: 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 1px #0dd9a366 inset, 0 0 32px -4px #0dd9a377;
+}
+
+body {
+  background: var(--background-gradient), var(--background);
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Scrollbar (Webkit) */
+body::-webkit-scrollbar { width: 10px; }
+body::-webkit-scrollbar-track { background: #0b0f17; }
+body::-webkit-scrollbar-thumb { background: #1f2b3a; border-radius: 20px; }
+body::-webkit-scrollbar-thumb:hover { background: #22394d; }
+
+/* Layout helpers */
+.app-bg { background: var(--background-gradient), var(--background); }
+
+/* Card */
+.card {
+  background: linear-gradient(160deg, #1c273c 0%, #0b0f17 100%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+.card::before { /* subtle texture */
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 85% 10%, rgba(255,255,255,0.08), transparent 60%);
+  mix-blend-mode: overlay;
+}
+.card-header { font-weight: 600; font-size: 1.05rem; letter-spacing: .3px; }
+.card p.meta { color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .1em; }
+
+/* Interactive states */
+.hover-ring { transition: box-shadow .3s, transform .35s cubic-bezier(.16,.8,.24,1); }
+.hover-ring:hover { box-shadow: var(--shadow-glow); transform: translateY(-2px); }
+
+/* Progress (ATS) */
+.progress-shell {
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(145deg,#101923,#0d141c);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 2px 8px -2px rgba(0,0,0,.55);
+  position: relative;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 1.25rem;
+  font-weight: 600;
+  font-size: 1.15rem;
+  letter-spacing: .5px;
+  color: #0b1015;
+  background: linear-gradient(90deg,#13ffa9,#0dd9a3 40%,#01bfb2 68%,#0094c7 90%);
+  position: relative;
+}
+.progress-fill::after { /* glossy overlay */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(255,255,255,0.55), rgba(255,255,255,0) 35%);
+  mix-blend-mode: overlay;
+  opacity: .6;
+}
+
+/* Upload drop area */
+.dropzone {
+  border: 1.5px dashed var(--border-strong);
+  background: linear-gradient(180deg,#121c27 0%,#0e151d 100%);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: .85rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color .25s, background .35s;
+}
+.dropzone:hover { border-color: var(--accent); color: #e9fdf8; box-shadow: var(--accent-glow); }
+
+/* Job list bullets */
+.job-bullet { color: var(--accent); filter: drop-shadow(0 0 4px #0dd9a388); }
+
+/* Accent text */
+.text-accent { color: var(--accent); }
+
+/* Glass (sidebar) */
+.glass {
+  background: linear-gradient(165deg, rgba(34,51,69,.55) 0%, rgba(18,28,39,.65) 60%, rgba(12,19,28,.9) 100%);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  box-shadow: 0 4px 22px -6px #000, 0 0 0 1px rgba(255,255,255,0.05) inset;
+}
+.nav-item { display:flex; align-items:center; gap:.75rem; padding:.6rem .85rem; border-radius:10px; font-size:.85rem; font-weight:500; color:var(--muted); letter-spacing:.3px; transition:background .28s,color .28s; }
+.nav-item:hover { color:#fff; background:rgba(255,255,255,0.06); }
+.nav-item-active { background:linear-gradient(90deg,#0dd9a320,#0dd9a30d); color:#fff; box-shadow:0 0 0 1px rgba(255,255,255,0.05),0 0 0 1px #0dd9a355 inset; }
+.brand { font-weight:600; font-size:1.15rem; letter-spacing:.5px; background:linear-gradient(90deg,#0dd9a3,#4bd2ff); background-clip:text; -webkit-background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+/* Animations / transitions */
+.fade-in { animation: fade .5s ease; }
+@keyframes fade { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform: translateY(0);} }
+
+/* Custom utilities */
+.animate-wave {
+  display: inline-block;
+  animation: wave 2.2s infinite ease-in-out;
+  transform-origin: 70% 70%;
+}
+
+@keyframes wave {
+  0% { transform: rotate(0deg); }
+  10% { transform: rotate(14deg); }
+  20% { transform: rotate(-8deg); }
+  30% { transform: rotate(14deg); }
+  40% { transform: rotate(-4deg); }
+  50% { transform: rotate(10deg); }
+  60% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+
+
+/* ------ Settings Page Additions: theme + font scale ------ */
+
+/* Scale all rem units app-wide */
+html {
+  font-size: calc(16px * var(--font-scale, 1));
+}
+
+/* Light theme overrides */
+:root[data-theme="light"] {
+  --background: #ffffff;
+  --background-alt: #f6f7f9;
+  --background-gradient: radial-gradient(circle at 20% 20%, #eef2f7, #ffffff 60%);
+  --foreground: #0a0e14;
+  --muted: #475569;
+  --border-color: rgba(28, 71, 55, 0.485);
+  --border-strong: rgba(0,0,0,0.14);
+  --accent: #3ea080;
+  --accent-glow: 0 0 0 1px #0ea5e966, 0 0 14px -2px #0ea5e988;
+  --danger: #dc2626;
+}
+
+/* utility tokens used in existing UI */
+:root[data-theme="light"] .nav-item {
+  background: #ffffff;
+  border-color: rgba(0,0,0,0.08);
+  color: #0a0e14;
+}
+
+:root[data-theme="light"] .card {
+  background: #faf5e4;
+  border-color: rgba(0,0,0,0.08);
+}
+/* --------------------------------------------------------- */
+
+
+/* -------- Contrast utilities & elevation tokens ---------- */
+.text-foreground { color: var(--foreground); }
+.text-muted { color: var(--muted); }
+
+/* Heading gradient that adapts per theme */
+:root {
+  --heading-grad-from: #b4ffe8;
+  --heading-grad-via: #79ffe8;
+  --heading-grad-to: #39f3ff;
+}
+:root[data-theme="light"] {
+  /* deeper hues for contrast on white */
+  --heading-grad-from: #16a34a; /* emerald-600 */
+  --heading-grad-via: #0891b2;  /* cyan-700 */
+  --heading-grad-to: #2563eb;   /* blue-600 */
+}
+.heading-gradient {
+  background: linear-gradient(90deg,var(--heading-grad-from),var(--heading-grad-via),var(--heading-grad-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Elevation tokens for 3D cards */
+:root {
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.06) inset;
+  --shadow-2: 0 10px 25px -10px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.08) inset;
+  --shadow-3: 0 18px 50px -12px rgba(0,0,0,0.65), 0 1px 0 rgba(255,255,255,0.1) inset;
+}
+:root[data-theme="light"] {
+  --shadow-1: 0 1px 2px rgba(2,6,23,0.10), 0 1px 0 rgba(255,255,255,0.90) inset;
+  --shadow-2: 0 10px 25px -10px rgba(2,6,23,0.20), 0 1px 0 rgba(255,255,255,0.95) inset;
+  --shadow-3: 0 18px 50px -12px rgba(2,6,23,0.28), 0 1px 0 rgba(255,255,255,1) inset;
+}
+
+
+/* Global card tokens */
+:root {
+  /* greyish / navy tint for dark theme */
+  --card-navy: #0f20a2;                /* grey-navy(not saturated) */
+  --card-bg: color-mix(in oklab, var(--background-alt) 85%, var(--card-navy) 15%);
+  --card-border-tint: color-mix(in oklab, var(--card-navy) 20%, var(--border-color));
+}
+:root[data-theme="light"] {
+  /* greyish / cream tint for light theme */
+  --card-cream: #d1be76;               /* soft warm cream */
+  --card-bg: color-mix(in oklab, var(--background-alt) 85%, var(--card-cream) 15%);
+  --card-border-tint: color-mix(in oklab, #cdbf9f 35%, var(--border-color));
+}
+
+/* Reusable 3D card */
+.card-3d {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border-tint);
+  border-radius: 16px;
+  box-shadow: var(--shadow-2);
+  position: relative;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.card-3d::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0) 40%);
+  mix-blend-mode: overlay;
+}
+.card-3d:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-3);
+  border-color: var(--border-strong);
+}
+
+
+
+/* Surface helper for panels */
+.surface {
+  background: var(--background-alt);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+/* --------------------------------------------------- */
+
+
+/* accent hue overlay for cards */
+.card-hue {
+  position: relative;
+}
+.card-hue::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(120% 100% at 0% 0%, color-mix(in oklab, var(--accent) 30%, transparent) 0%, transparent 50%),
+              radial-gradient(120% 100% at 100% 100%, color-mix(in oklab, var(--accent) 20%, transparent) 0%, transparent 60%);
+  opacity: .06;
+  transition: opacity .2s ease;
+}
+.card-hue:hover::after { opacity: .12; }
+
+
+/* Tinted panel */
+:root {
+  /* dark theme: keep subtle, bias toward accent slightly */
+  --panel-bg: color-mix(in oklab, var(--background-alt) 85%, var(--accent) 15%);
+  --panel-border: color-mix(in oklab, var(--accent) 18%, var(--border-color));
+}
+:root[data-theme="light"] {
+  /* light theme: make it visible on white, lower saturation so it's soft */
+  --panel-bg: color-mix(in oklab, var(--background-alt) 94%, var(--accent) 6%);
+  --panel-border: color-mix(in oklab, var(--accent) 14%, var(--border-color));
+}
+
+.panel-tinted {
+  background: var(--panel-bg);
+  border-color: var(--panel-border);
+}
+
+/* -------------------------------
+   Select dropdown (theme-aware)
+-------------------------------- */
+select {
+  background: var(--background-alt);
+  color: var(--foreground);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  outline: none;
+  appearance: none; /* hide default arrow */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  font-size: 0.9rem;
+  transition: background .25s, border-color .25s;
+}
+
+/* Chevron icon simulation (optional) */
+select {
+  appearance: none;
+  -webkit-appearance: none; /* Safari / Chrome */
+  -moz-appearance: none;    /* Firefox */
+  background-image: none !important; /* Removes default arrow */
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) calc(50% - 3px),
+    calc(100% - 10px) calc(50% - 3px);
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+}
+
+select:hover {
+  border-color: var(--accent);
+}
+
+select:focus {
+  border-color: var(--accent);
+  box-shadow: var(--accent-glow);
+}
+
+/* Light theme override not required —
+   It auto-works because all colors come from variables */
+

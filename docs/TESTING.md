@@ -1,7 +1,5 @@
 # Testing Guide for CareerLift
 
-This guide provides comprehensive instructions for testing all components of the CareerLift stack.
-
 Prerequisites
 
 Ensure Docker is running:
@@ -193,18 +191,18 @@ Step 6: Test Backend with pytest
 Run all tests
 
 ```bash
-docker compose exec backend pytest -v
+docker compose exec fastapi pytest -v
 ```
 
 Run tests with coverage
 
 ```bash
-docker compose exec backend pytest --cov=app --cov-report=html
+docker compose exec fastapi pytest --cov=app --cov-report=html
 ```
 
 View coverage report
 
-Coverage HTML report will be in `backend/htmlcov/index.html`
+Coverage HTML report will be in `fastapi/htmlcov/index.html`
 
 Step 7: Test Electron Desktop App
 
@@ -216,7 +214,7 @@ Prerequisites
 Install Electron dependencies
 
 ```bash
-cd electron
+cd electronjs
 npm install
 ```
 
@@ -296,8 +294,8 @@ docker stats
 Check logs for errors
 
 ```bash
-docker compose logs -f backend
-docker compose logs -f frontend
+docker compose logs -f fastapi
+docker compose logs -f nextjs
 docker compose logs -f neo4j
 docker compose logs -f ollama
 ```
@@ -334,7 +332,7 @@ Troubleshooting Tests
 Backend fails to start
 
 ```bash
-docker compose logs backend
+docker compose logs fastapi
 # Check for Python errors or missing dependencies
 ```
 
@@ -357,7 +355,7 @@ Frontend cannot connect to backend
 
 ```bash
 # Check environment variables
-docker compose exec frontend env | grep NEXT_PUBLIC_API_URL
+docker compose exec nextjs env | grep NEXT_PUBLIC_API_URL
 # Should be http://localhost:8000
 ```
 
@@ -421,9 +419,9 @@ curl -s -f http://localhost:3000 > /dev/null
 test_service "Frontend homepage"
 
 echo ""
-echo "5. Testing Backend pytest..."
-docker compose exec -T backend pytest -v
-test_service "Backend unit tests"
+echo "5. Testing FastAPI pytest..."
+docker compose exec -T fastapi pytest -v
+test_service "FastAPI unit tests"
 
 echo ""
 echo -e "${GREEN}=================================="

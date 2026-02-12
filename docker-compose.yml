@@ -1,3 +1,5 @@
+name: careerlift
+
 services:
   neo4j:
     image: neo4j:latest
@@ -9,15 +11,15 @@ services:
       - NEO4J_AUTH=neo4j/password123
       - NEO4J_PLUGINS=["apoc"]
       - NEO4J_dbms_security_procedures_unrestricted=apoc.*
-      - NEO4J_dbms_memory_heap_initial__size=512m
-      - NEO4J_dbms_memory_heap_max__size=2G
+      - NEO4J_server_memory_heap_initial__size=512m
+      - NEO4J_server_memory_heap_max__size=2G
     volumes:
       - neo4j_data:/data
       - neo4j_logs:/logs
       - neo4j_import:/var/lib/neo4j/import
       - neo4j_plugins:/plugins
     networks:
-      - careerlift-network
+      - network
     healthcheck:
       test: ["CMD-SHELL", "cypher-shell -u neo4j -p password123 'RETURN 1'"]
       interval: 10s
@@ -34,7 +36,7 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     networks:
-      - careerlift-network
+      - network
     healthcheck:
       test: ["CMD-SHELL", "ollama list || exit 0"]
       interval: 30s
@@ -42,13 +44,14 @@ services:
       retries: 5
       start_period: 30s
 
-  backend:
+  fastapi:
     build:
-      context: ./backend
+      context: ./fastapi
       dockerfile: Dockerfile
       args:
         BUILDKIT_INLINE_CACHE: 1
-    container_name: backend
+    image: fastapi:latest
+    container_name: fastapi
     ports:
       - "8000:8000"
     environment:
@@ -58,14 +61,18 @@ services:
       - OLLAMA_URL=http://ollama:11434
       - OLLAMA_MODEL=${OLLAMA_MODEL}
       - OLLAMA_API_KEY=${OLLAMA_API_KEY}
+      - USAJOBS_API_KEY=${USAJOBS_API_KEY}
+      - USAJOBS_EMAIL=${USAJOBS_EMAIL}
+      - ADZUNA_APP_ID=${ADZUNA_APP_ID}
+      - ADZUNA_APP_KEY=${ADZUNA_APP_KEY}
       - PYTHONUNBUFFERED=1
     volumes:
-      - ./backend:/app
-      - backend_cache:/root/.cache
-      - ./backend/app/data:/app/app/data
+      - ./fastapi:/app
+      - fastapi_cache:/root/.cache
+      - ./fastapi/app/data:/app/app/data
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
-      - careerlift-network
+      - network
     depends_on:
       neo4j:
         condition: service_healthy
@@ -75,48 +82,49 @@ services:
     develop:
       watch:
         - action: sync
-          path: ./backend
+          path: ./fastapi
           target: /app
           ignore:
             - __pycache__/
             - "*.pyc"
         - action: rebuild
-          path: ./backend/requirements.txt
+          path: ./fastapi/requirements.txt
 
-  frontend:
+  nextjs:
     build:
-      context: ./frontend
+      context: ./nextjs
       dockerfile: Dockerfile
       args:
         BUILDKIT_INLINE_CACHE: 1
-    container_name: frontend
+    image: nextjs:latest
+    container_name: nextjs
     ports:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
       - NODE_ENV=development
     volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
-      - frontend_next:/app/.next
+      - ./nextjs:/app
+      - nextjs_node_modules:/app/node_modules
+      - nextjs_next:/app/.next
     networks:
-      - careerlift-network
+      - network
     depends_on:
-      - backend
+      - fastapi
     command: npm run dev
     develop:
       watch:
         - action: sync
-          path: ./frontend
+          path: ./nextjs
           target: /app
           ignore:
             - node_modules/
             - .next/
         - action: rebuild
-          path: ./frontend/package.json
+          path: ./nextjs/package.json
 
 networks:
-  careerlift-network:
+  network:
     driver: bridge
 
 volumes:
@@ -125,6 +133,6 @@ volumes:
   neo4j_import:
   neo4j_plugins:
   ollama_data:
-  backend_cache:
-  frontend_node_modules:
-  frontend_next:
+  fastapi_cache:
+  nextjs_node_modules:
+  nextjs_next:
