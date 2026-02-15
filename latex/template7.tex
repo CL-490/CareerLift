@@ -1,0 +1,258 @@
+\documentclass[10pt]{article}
+
+%-------------------------
+% Packages & layout
+%-------------------------
+\usepackage[letterpaper,margin=0.3in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage{palatino}
+\usepackage{tabularx}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{xcolor}
+
+\fontfamily{SansSerif}\selectfont
+\definecolor{mygrey}{gray}{0.82}
+\textheight=9.75in
+\raggedbottom
+
+\setlength{\tabcolsep}{0in}
+\newcommand{\isep}{-2 pt}
+\newcommand{\lsep}{-0.5cm}
+\newcommand{\psep}{-0.6cm}
+\renewcommand{\labelitemii}{$\circ$}
+
+\setlist[itemize]{leftmargin=*}
+\pagestyle{empty}
+
+%-------------------------
+% Custom heading commands
+%-------------------------
+\newcommand{\resitem}[1]{\item #1 \vspace{-2pt}}
+
+\newcommand{\resheading}[1]{%
+  {\small \colorbox{mygrey}{%
+    \begin{minipage}{0.99\textwidth}\centering\textbf{#1 \vphantom{p\^{E}}}\end{minipage}}}%
+}
+
+\newcommand{\ressubheading}[3]{%
+  \begin{tabular*}{6.62in}{l @{\extracolsep{\fill}} r}
+    \textsc{\textbf{#1}} & \rightline\textsc{\textit{[#2]}}\\
+  \end{tabular*}\vspace{-8pt}%
+}
+
+%-------------------------
+% USER SCALARS (header)
+%-------------------------
+\newcommand{\userName}{}
+\newcommand{\userDegree}{}
+\newcommand{\userInstitution}{}
+\newcommand{\userPhone}{}
+\newcommand{\userEmail}{}
+\newcommand{\userLogoPath}{Logo.png} % can be empty to hide
+
+%-------------------------
+% BUFFERS FOR REPEATABLE CONTENT
+%-------------------------
+\newcommand{\EducationTableRows}{}
+\newcommand{\AchievementsList}{}
+\newcommand{\ExperienceList}{}
+\newcommand{\SkillsList}{}
+\newcommand{\ProjectsList}{}
+\newcommand{\CoursesList}{}
+\newcommand{\PositionsList}{}
+\newcommand{\ExtracurricularList}{}
+\newcommand{\SummaryList}{}
+
+\newcommand{\AppendTo}[2]{%
+  \expandafter\gdef\expandafter#1\expandafter{#1#2}%
+}
+
+%-------------------------
+% APP-FACING MACROS
+%-------------------------
+
+% Summary bullet
+% \summaryitem{text}
+\newcommand{\summaryitem}[1]{%
+  \AppendTo{\SummaryList}{%
+    \item \footnotesize #1%
+  }%
+}
+
+% Education table row
+% \educationrow{Course}{College}{Year}{CGPA}
+\newcommand{\educationrow}[4]{%
+  \AppendTo{\EducationTableRows}{%
+    #1 & #2 & #3 & #4\\
+  }%
+}
+
+% Achievement
+% \achievement{text}{year in [YYYY]}
+\newcommand{\achievement}[2]{%
+  \AppendTo{\AchievementsList}{%
+    \item #1 \hfill {#2}%
+  }%
+}
+
+% Experience
+% \experience{Role | Org}{Period}{items=\item ...}
+\newcommand{\experience}[3]{%
+  \AppendTo{\ExperienceList}{%
+    \item \textbf{#1}\hfill {#2}%
+    \begin{itemize}[noitemsep,nolistsep]
+      #3
+    \end{itemize}
+  }%
+}
+
+% Skill category
+% \skillcat{Label}{Text}
+\newcommand{\skillcat}[2]{%
+  \AppendTo{\SkillsList}{%
+    \item \textbf{#1}: #2\\[-0.7cm]%
+  }%
+}
+
+% Project
+% \project{Title | Instructor}{Period}{DemoURL}{RepoURL}{items=\item ...}
+\newcommand{\project}[5]{%
+  \AppendTo{\ProjectsList}{%
+    \item \textbf{#1}\hfill {#2}%
+    {\footnotesize
+      \hspace{2em}%
+      \if\relax\detokenize{#3}\relax\else\href{#3}{Link}\fi
+      \hspace{2em}%
+      \if\relax\detokenize{#4}\relax\else\href{#4}{Github}\fi
+    }%
+    \begin{itemize}[noitemsep,nolistsep]
+      #5
+    \end{itemize}
+  }%
+}
+
+% Courses block
+% \coursesblock{Label}{Text}{Tag}
+\newcommand{\coursesblock}[3]{%
+  \AppendTo{\CoursesList}{%
+    \item \textbf{#1}\hfill {#3}\\[-0.4cm]\\
+    \textbf{#2}\\[-0.2cm]%
+  }%
+}
+
+% Position of responsibility
+% \position{Title | Body}{Period}{items=\item ...}
+\newcommand{\position}[3]{%
+  \AppendTo{\PositionsList}{%
+    \item \textbf{#1}\hfill {#2}%
+    \begin{itemize}[noitemsep,nolistsep]
+      #3
+    \end{itemize}
+  }%
+}
+
+% Extracurricular
+% \extra{text}
+\newcommand{\extra}[1]{%
+  \AppendTo{\ExtracurricularList}{%
+    \item #1%
+  }%
+}
+
+%-------------------------
+% DOCUMENT
+%-------------------------
+\begin{document}
+\noindent
+\begin{table}
+  \begin{minipage}{0\linewidth}
+    \centering
+    \if\relax\detokenize{\userLogoPath}\relax\else
+      \includegraphics[height =1in]{\userLogoPath}
+    \fi
+  \end{minipage}
+  \begin{minipage}{0.9\linewidth}
+    \setlength{\tabcolsep}{70pt}
+    \def\arraystretch{1.1}
+    \begin{tabular}{ll}
+      \textbf{\Large \userName}  &  {Mob. \userPhone} \\
+      \textbf{\userDegree} &    {\userEmail} \\
+      {\userInstitution}  \\
+    \end{tabular}
+  \end{minipage}\hfill
+\end{table}
+
+% Education table
+\setlength{\tabcolsep}{32pt}
+\begin{table}
+\centering
+\begin{tabular}{lllll}
+\toprule
+\toprule
+\textbf{Course} & \textbf{College/University} & \textbf{Year} & \textbf{CGPA/\%} \\
+\toprule
+\EducationTableRows
+\bottomrule
+\bottomrule \\[-0.9cm]
+\end{tabular}
+\end{table}
+
+% Summary
+\noindent
+\resheading{\textbf{SCHOLASTIC ACHIEVEMENTS}}\\[-0.5cm]
+\begin{itemize}
+  \setlength\itemsep{-0.45em}
+  \AchievementsList
+\end{itemize}
+
+% Work experience
+\noindent
+\resheading{\textbf{WORK EXPERIENCE}}\\[-0.45cm]
+\begin{itemize}
+  \setlength\itemsep{-0.2em}
+  \ExperienceList
+\end{itemize}
+
+% Skills & interests
+\noindent
+\resheading{\textbf{SKILLS \& INTERESTS}}\\[-0.5cm]
+\begin{itemize}
+  \SkillsList
+\end{itemize}
+
+% Projects
+\noindent
+\resheading{\textbf{PROJECTS}}\\[-0.5cm]
+\begin{itemize}
+  \setlength\itemsep{-0.5em}
+  \ProjectsList
+\end{itemize}
+
+% Relevant courses
+\noindent
+\resheading{\textbf{RELEVANT COURSES}}\\[-0.2cm]
+\begin{itemize}[noitemsep,nolistsep]
+  \CoursesList
+\end{itemize}
+
+% Positions of responsibility
+\noindent
+\resheading{\textbf{POSITIONS OF RESPONSIBILITY}}\\[-0.5cm]
+\begin{itemize}
+  \setlength\itemsep{-0.5em}
+  \PositionsList
+\end{itemize}
+
+% Extracurricular
+\noindent
+\resheading{\textbf{EXTRACURRICULAR ACTIVITIES}}\\[-0.45cm]
+\begin{itemize}
+  \setlength\itemsep{-0.4em}
+  \ExtracurricularList
+\end{itemize}
+
+\end{document}

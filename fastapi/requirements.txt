@@ -30,6 +30,7 @@ python-multipart
 # Document Processing
 pypdf
 python-docx
+pymupdf
 
 # Testing
 pytest

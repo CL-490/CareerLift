@@ -1,0 +1,198 @@
+\documentclass[11pt,a4paper]{article}
+
+%----------------------------------------------------------------------------------------
+% PACKAGES
+%----------------------------------------------------------------------------------------
+\usepackage[left=0.8in,top=0.8in,right=0.8in,bottom=0.8in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[default]{sourcesanspro}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{parskip}
+%\usepackage{minipage}
+
+%----------------------------------------------------------------------------------------
+% COLORS & STYLES
+%----------------------------------------------------------------------------------------
+\definecolor{titleblue}{HTML}{00199e}
+\definecolor{subtitleblue}{HTML}{2ec1e0}
+\definecolor{darktext}{HTML}{222222}
+
+\color{darktext}
+\linespread{0.9}
+\setlength{\parskip}{0.1em}
+
+\titleformat{\section}{\Large\bfseries\color{titleblue}}{}{0em}{}
+\titlespacing*{\section}{0pt}{0.7em}{0.15em}
+
+\newcommand{\blueitem}[1]{\textcolor{subtitleblue}{\textbf{#1}}}
+
+\setlist[itemize]{label=\textbullet, leftmargin=*, noitemsep, topsep=0pt, parsep=0pt}
+
+%----------------------------------------------------------------------------------------
+% USER FIELDS (scalar values your app fills)
+%----------------------------------------------------------------------------------------
+\newcommand{\userName}{Your Name}
+\newcommand{\userCityCountry}{City, Country}
+\newcommand{\userPhone}{+00 00 000 0000}
+\newcommand{\userEmail}{your.email@example.com}
+\newcommand{\userLinkedIn}{xxx.com/in/yourprofile}
+\newcommand{\userGithub}{xxx.com/yourusername}
+\newcommand{\userScholar}{Scholar Profile}
+\newcommand{\userNationality}{Your Nationality}
+
+\newcommand{\userProfile}{your user profile
+}
+
+%----------------------------------------------------------------------------------------
+% BUFFERS FOR REPEATABLE CONTENT
+%----------------------------------------------------------------------------------------
+\newcommand{\EducationList}{}
+\newcommand{\ExperienceList}{}
+\newcommand{\PublicationList}{}
+\newcommand{\ProjectList}{}
+\newcommand{\SkillsLine}{}
+\newcommand{\LanguagesLine}{}
+\newcommand{\ReferenceLeft}{}
+\newcommand{\ReferenceRight}{}
+
+\newcommand{\AppendTo}[2]{%
+  \expandafter\gdef\expandafter#1\expandafter{#1#2}%
+}
+
+%----------------------------------------------------------------------------------------
+% APP-FACING MACROS
+%----------------------------------------------------------------------------------------
+
+% Education entry
+% \education{Years}{Degree}{Institution}{Location}{Details block}
+% {Details block} = plain text with \\ line breaks as needed.
+\newcommand{\education}[5]{%
+  \AppendTo{\EducationList}{%
+    \blueitem{#1: #2}\\
+    \textit{#3, #4}\\
+    #5
+    \vspace{0.3em}\\
+  }%
+}
+
+% Experience entry
+% \experience{Dates}{Title}{Org}{Location}{items}
+% {items} = \item ... \item ...
+\newcommand{\experience}[5]{%
+  \AppendTo{\ExperienceList}{%
+    \blueitem{#1: #2}\\
+    \textit{#3, #4}
+    \begin{itemize}
+      #5
+    \end{itemize}
+    \vspace{0.3em}
+  }%
+}
+
+% Publication entry
+% \publication{Title}{Venue/Status}{Authors line}
+\newcommand{\publication}[3]{%
+  \AppendTo{\PublicationList}{%
+    \blueitem{#1} #2\\
+    \textit{#3}\\[0.2em]
+  }%
+}
+
+% Project entry
+% \project{Title}{Context}{items}
+% {items} = \item ...
+\newcommand{\project}[3]{%
+  \AppendTo{\ProjectList}{%
+    \blueitem{#1}\\
+    \textit{#2}
+    \begin{itemize}
+      #3
+    \end{itemize}
+    \vspace{0.3em}
+  }%
+}
+
+% Skills and languages: single-line fields
+% you can just overwrite \SkillsLine, \LanguagesLine directly,
+% or use these helpers once.
+\newcommand{\setskills}[1]{\renewcommand{\SkillsLine}{#1}}
+\newcommand{\setlanguages}[1]{\renewcommand{\LanguagesLine}{#1}}
+
+% References: left and right blocks
+% \refleft{Name}{Role}{Group}{Institution}{Email}
+\newcommand{\refleft}[5]{%
+  \renewcommand{\ReferenceLeft}{%
+    \textbf{#1}\\
+    #2\\
+    #3\\
+    #4\\
+    Email: #5%
+  }%
+}
+% \refright{Name}{Role}{Group}{Institution}{Email}
+\newcommand{\refright}[5]{%
+  \renewcommand{\ReferenceRight}{%
+    \textbf{#1}\\
+    #2\\
+    #3\\
+    #4\\
+    Email: #5%
+  }%
+}
+
+%----------------------------------------------------------------------------------------
+% DOCUMENT CONTENT
+%----------------------------------------------------------------------------------------
+\begin{document}
+
+%--- HEADER ---
+{\Huge \textbf{\textcolor{titleblue}{\userName}}} \vspace{0.2em}
+
+\userCityCountry\\
+Mobile: \userPhone\\
+Email: \userEmail\\
+LinkedIn: \userLinkedIn\\
+GitHub: \userGithub\\
+Scholar: \userScholar\\
+Nationality: \userNationality
+
+\vspace{0.4em}
+
+%--- PERSONAL PROFILE ---
+\section*{Personal Profile}
+\userProfile
+
+%--- EDUCATION ---
+\section*{Education}
+\EducationList
+
+%--- EXPERIENCE ---
+\section*{Experience}
+\ExperienceList
+
+%--- ACADEMIC PUBLICATIONS ---
+\section*{Academic Publications}
+\PublicationList
+
+%--- PROJECTS / RESEARCH ---
+\section*{Projects/Research}
+\ProjectList
+
+%--- SKILLS ---
+\section*{Skills}
+\SkillsLine
+
+%--- REFERENCES ---
+\section*{References}
+\begin{minipage}[t]{0.48\textwidth}
+  \ReferenceLeft
+\end{minipage}%
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \ReferenceRight
+\end{minipage}
+
+\end{document}

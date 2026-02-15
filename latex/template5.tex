@@ -1,0 +1,265 @@
+\documentclass[]{article} % Use article so you can compile directly; keep styles from Deedy
+
+%----------------------------------------------------------------------------------------
+% PACKAGES & LAYOUT
+%----------------------------------------------------------------------------------------
+\usepackage[hmargin=1.25cm, vmargin=0.7cm]{geometry}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
+\usepackage[absolute]{textpos}
+\usepackage[UKenglish]{babel}
+\usepackage[UKenglish]{isodate}
+\usepackage{fontspec,xltxtra,xunicode}
+%\usepackage{minipage}
+\usepackage{enumitem}
+
+%----------------------------------------------------------------------------------------
+% COLORS & FONTS
+%----------------------------------------------------------------------------------------
+\definecolor{date}{HTML}{666666}
+\definecolor{primary}{HTML}{2b2b2b}
+\definecolor{headings}{HTML}{6A6A6A}
+\definecolor{subheadings}{HTML}{333333}
+
+\defaultfontfeatures{Mapping=tex-text}
+% Adjust font paths or replace with system fonts as needed
+\setmainfont[Color=primary]{Lato} % fallback: any installed Lato
+\setsansfont[Scale=MatchLowercase,Mapping=tex-text]{Raleway}
+\newcommand{\custombold}[1]{\color{subheadings}\fontspec{Lato}\selectfont #1 \normalfont}
+
+%----------------------------------------------------------------------------------------
+% DATE BLOCK
+%----------------------------------------------------------------------------------------
+\setlength{\TPHorizModule}{1mm}
+\setlength{\TPVertModule}{1mm}
+\textblockorigin{0mm}{5mm}
+\newcommand{\lastupdated}{%
+  \begin{textblock}{60}(165,0)
+    \color{date}\sffamily\fontsize{8pt}{10pt}\selectfont
+    Last Updated on \today
+  \end{textblock}%
+}
+
+%----------------------------------------------------------------------------------------
+% NAME BLOCK
+%----------------------------------------------------------------------------------------
+\newcommand{\namesection}[3]{%
+  \centering{%
+    \sffamily
+    \fontspec{Lato}\fontsize{40pt}{10cm}\selectfont #1
+    \fontspec{Lato}\selectfont #2
+  }\\[5pt]
+  \centering{\color{headings}\sffamily\fontsize{11pt}{14pt}\selectfont #3}
+  \noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}
+  \vspace{-15pt}
+}
+
+\titlespacing{\section}{0pt}{0pt}{0pt}
+\titleformat{\section}{\color{headings}\scshape\sffamily\fontsize{16pt}{24pt}\selectfont\raggedright\uppercase}{}{0em}{}
+\titleformat{\subsection}{\color{subheadings}\sffamily\bfseries\fontsize{12pt}{12pt}\selectfont\uppercase}{}{0em}{}
+\titlespacing{\subsection}{0pt}{\parskip}{-\parskip}
+\titlespacing{\subsubsection}{0pt}{\parskip}{-\parskip}
+
+\newcommand{\runsubsection}[1]{\color{subheadings}\sffamily\bfseries\fontsize{12pt}{12pt}\selectfont\uppercase{#1}\normalfont}
+\newcommand{\descript}[1]{\color{subheadings}\raggedright\sffamily\fontsize{11pt}{13pt}\selectfont #1\\ \normalfont}
+\newcommand{\location}[1]{\color{headings}\raggedright\sffamily\fontsize{10pt}{12pt}\selectfont #1\\ \normalfont}
+\newcommand{\sectionsep}{\vspace{8pt}}
+
+\newenvironment{tightemize}{%
+  \vspace{-\topsep}\begin{itemize}\itemsep1pt \parskip0pt \parsep0pt%
+}{\end{itemize}\vspace{-\topsep}}
+
+\setlist[itemize]{leftmargin=*,nosep}
+
+%----------------------------------------------------------------------------------------
+% USER SCALARS (fillable from your app)
+%----------------------------------------------------------------------------------------
+\newcommand{\userFirstName}{}
+\newcommand{\userLastName}{}
+\newcommand{\userTagline}{} % e.g., URL + email + phone line or a tagline
+
+% Left-column simple scalars (optional; you can just use list buffers too)
+\newcommand{\userObjective}{}
+
+%----------------------------------------------------------------------------------------
+% BUFFERS FOR REPEATABLE CONTENT
+%----------------------------------------------------------------------------------------
+\newcommand{\EducationList}{}
+\newcommand{\LinksList}{}
+\newcommand{\PGCourseworkList}{}
+\newcommand{\UGCourseworkList}{}
+\newcommand{\ProgSkillsLine}{}
+\newcommand{\SoftwareSkillsLine}{}
+\newcommand{\LanguageSkillsLine}{}
+
+\newcommand{\ExperienceList}{}
+\newcommand{\ProjectList}{}
+\newcommand{\TrainingList}{}
+\newcommand{\PublicationList}{}
+
+\newcommand{\AppendTo}[2]{%
+  \expandafter\gdef\expandafter#1\expandafter{#1#2}%
+}
+
+%----------------------------------------------------------------------------------------
+% APP-FACING MACROS
+%----------------------------------------------------------------------------------------
+
+% Education entry (left column)
+% \education{Institution}{Degree}{Location}{Details line 1}{Details line 2 (optional)}
+\newcommand{\education}[5]{%
+  \AppendTo{\EducationList}{%
+    \subsection{#1}%
+    \descript{#2}%
+    \location{#3}%
+    #4\\
+    #5\\
+    \sectionsep
+  }%
+}
+
+% Links (left column)
+% \linkitem{Label}{URL}{DisplayText}
+\newcommand{\linkitem}[3]{%
+  \AppendTo{\LinksList}{%
+    #1://~\href{#2}{\custombold{#3}}\\
+  }%
+}
+
+% Coursework
+% postgraduate: \pgcourse{Course name}
+\newcommand{\pgcourse}[1]{%
+  \AppendTo{\PGCourseworkList}{#1\\}%
+}
+% undergraduate: \ugcourse{Course name}
+\newcommand{\ugcourse}[1]{%
+  \AppendTo{\UGCourseworkList}{#1\\}%
+}
+
+% Skills: set whole lines
+\newcommand{\setprogskills}[1]{\renewcommand{\ProgSkillsLine}{#1}}
+\newcommand{\setsoftskills}[1]{\renewcommand{\SoftwareSkillsLine}{#1}}
+\newcommand{\setlangskills}[1]{\renewcommand{\LanguageSkillsLine}{#1}}
+
+% Experience (right column)
+% \experience{Org}{Role}{Dates | Location}{items = \item ...}
+\newcommand{\experience}[4]{%
+  \AppendTo{\ExperienceList}{%
+    \runsubsection{#1}%
+    \descript{| #2}%
+    \location{#3}%
+    \vspace{\topsep}%
+    \begin{tightemize}
+      #4
+    \end{tightemize}
+    \sectionsep
+  }%
+}
+
+% Projects (right column)
+% \project{Title}{Dates | Org/Location}{Description paragraph}
+\newcommand{\project}[3]{%
+  \AppendTo{\ProjectList}{%
+    \subsection{#1}%
+    \location{#2}%
+    #3\\
+    \sectionsep
+  }%
+}
+
+% Training (right column)
+% \training{Title}{Location}{Description}
+\newcommand{\training}[3]{%
+  \AppendTo{\TrainingList}{%
+    \subsection{#1}%
+    \location{#2}%
+    #3\\
+    \sectionsep
+  }%
+}
+
+% Publication (right column)
+% \publication{Title}{Venue/Details}
+\newcommand{\publication}[2]{%
+  \AppendTo{\PublicationList}{%
+    \subsection{#1}%
+    #2\\
+    \sectionsep
+  }%
+}
+
+%----------------------------------------------------------------------------------------
+% DOCUMENT
+%----------------------------------------------------------------------------------------
+\begin{document}
+
+\lastupdated
+
+% Name block
+\namesection{\userFirstName}{\userLastName}{\userTagline}
+
+% Columns
+\begin{minipage}[t]{0.33\textwidth}
+
+  % OBJECTIVE
+  \section{Objective}
+  \userObjective
+  \sectionsep
+
+  % EDUCATION
+  \section{Education}
+  \EducationList
+
+  % LINKS
+  \section{Links}
+  \LinksList
+  \sectionsep
+
+  % COURSEWORK
+  \section{Coursework}
+  \subsection{PostGraduate}
+  \PGCourseworkList
+  \sectionsep
+
+  \subsection{Undergraduate}
+  \UGCourseworkList
+  \sectionsep
+
+  % SKILLS
+  \section{Skills}
+  \subsection{Programming}
+  \ProgSkillsLine\\
+  \sectionsep
+
+  \subsection{Software}
+  \SoftwareSkillsLine\\
+  \sectionsep
+
+  \subsection{Language}
+  \LanguageSkillsLine\\
+  \sectionsep
+
+\end{minipage}%
+\hfill
+\begin{minipage}[t]{0.66\textwidth}
+
+  % EXPERIENCE
+  \section{Experience}
+  \ExperienceList
+
+  % PROJECTS
+  \section{Projects}
+  \ProjectList
+
+  % TRAINING
+  \section{Training}
+  \TrainingList
+
+  % PUBLICATION
+  \section{Publication}
+  \PublicationList
+
+\end{minipage}
+
+\end{document}

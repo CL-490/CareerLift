@@ -8,7 +8,7 @@ from .routers import job as jobs_router
 from app.core.config import settings
 from app.core.database import neo4j_db
 from app.services.scraper_service import scraper_service
-from app.routers import career, scraper, resume, ollama
+from app.routers import career, scraper, resume, ollama, latex
 
 
 @asynccontextmanager
@@ -43,6 +43,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Page-Count"],
 )
 
 # Include routers
@@ -51,6 +52,7 @@ app.include_router(scraper.router)
 app.include_router(jobs_router.router)
 app.include_router(resume.router)
 app.include_router(ollama.router)
+app.include_router(latex.router)
 
 
 @app.get("/")

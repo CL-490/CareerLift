@@ -1,0 +1,296 @@
+\documentclass[10pt]{article}
+
+%-------------------------
+% Packages & layout
+%-------------------------
+\usepackage{ifthen}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper,left=0.5in,top=0.4in,right=0.5in,bottom=0.4in]{geometry}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xltabular}
+\usepackage{graphicx}
+\usepackage{outlines}
+\usepackage{tabularx}
+\usepackage{tikz}
+\setlength{\unitlength}{1mm}
+
+\setlist[itemize]{leftmargin=*}
+\linespread{1.15}
+\pagenumbering{gobble}
+
+\newcommand\clink[1]{{\usefont{T1}{lmtt}{m}{n} #1 }}
+
+\newenvironment{csection}[2]{%
+  \vspace{0.001cm}%
+  \textbf{#1}\\[-0.35cm]%
+  \hrule\\[-0.5cm]%
+  {#2}%
+}{}
+
+\newenvironment{frcontent}[4]{%
+  {\textbf{#1} \leavevmode\newline
+   {\footnotesize
+     \ifthenelse{\equal{#2}{}}{}{{#2 \leavevmode\newline}}
+     \ifthenelse{\equal{#3}{}}{}{{#3 \leavevmode\newline}}
+     \ifthenelse{\equal{#4}{}}{}{{\textit{#4}}}
+   }%
+  }%
+}{}
+
+%-------------------------
+% USER-FILLABLE SCALARS
+%-------------------------
+\newcommand{\userName}{}
+\newcommand{\userTagline}{}
+\newcommand{\userAddress}{}
+\newcommand{\userPortfolioURL}{}
+\newcommand{\userPortfolioText}{Portfolio}
+\newcommand{\userEmail}{}
+\newcommand{\userPhoneTelLink}{}
+\newcommand{\userPhoneLabel}{Mobile}
+\newcommand{\userGithubURL}{}
+\newcommand{\userLinkedInURL}{}
+\newcommand{\userCodingProfilesURL}{}
+\newcommand{\userVideoResumeURL}{}
+\newcommand{\userPhotoPath}{mypic.png} % empty -> no photo
+
+%-------------------------
+% BUFFERS
+%-------------------------
+\newcommand{\SummaryList}{}
+\newcommand{\EducationList}{}
+\newcommand{\SkillsList}{}
+\newcommand{\ProjectsList}{}
+\newcommand{\RolesList}{}
+\newcommand{\ExperienceList}{}
+\newcommand{\CertificationsList}{}
+\newcommand{\ReferencesList}{}
+
+\newcommand{\AppendTo}[2]{%
+  \expandafter\gdef\expandafter#1\expandafter{#1#2}%
+}
+
+%-------------------------
+% APP-FACING MACROS
+%-------------------------
+
+% Summary
+\newcommand{\summaryitem}[1]{%
+  \AppendTo{\SummaryList}{%
+    \item \footnotesize #1%
+  }%
+}
+
+% Education
+% \education{Level}{Institution}{Marks}{RightText (e.g. Years)}
+\newcommand{\education}[4]{%
+  \AppendTo{\EducationList}{%
+    \item
+    \begin{tabular*}{\linewidth}{@{}l@{\extracolsep{\fill}}r@{}}
+      \textbf{#1} & #4\\
+    \end{tabular*}\\[-0.1cm]
+    {#2}\\
+    {Marks/CGPA: #3}%
+  }%
+}
+
+% Skill category
+% \skillcat{Category}{Text}
+\newcommand{\skillcat}[2]{%
+  \AppendTo{\SkillsList}{%
+    \item \textbf{#1}\\[-0.05cm]
+    {\footnotesize #2}%
+  }%
+}
+
+% Project
+% \project{Title}{LeftSubtitle}{RightInfo (e.g. dates / "Valid through ...")}{DemoURL}{RepoURL}
+\newcommand{\project}[5]{%
+  \AppendTo{\ProjectsList}{%
+    \item
+    \begin{tabular*}{\linewidth}{@{}l@{\extracolsep{\fill}}r@{}}
+      \textbf{#1} & {\footnotesize #3}%
+    \end{tabular*}\\[-0.05cm]
+    {\footnotesize #2}\\[-0.1cm]
+    {\footnotesize
+      \ifthenelse{\equal{#4}{}}{}{ \href{#4}{Demo}}
+      \ifthenelse{\equal{#4#5}{}}{}{\hspace{1.5em}}
+      \ifthenelse{\equal{#5}{}}{}{ \href{#5}{GitHub}}
+    }%
+  }%
+}
+
+% Significant role
+% \role{RoleName}{Org/location}{RightInfo (dates)}
+\newcommand{\role}[3]{%
+  \AppendTo{\RolesList}{%
+    \item
+    \begin{tabular*}{\linewidth}{@{}l@{\extracolsep{\fill}}r@{}}
+      \textbf{#1} & #3\\
+    \end{tabular*}\\[-0.1cm]
+    {#2}%
+  }%
+}
+
+% Experience
+% \experience{Title}{Org/location}{RightInfo (dates)}{items = \item ...}
+\newcommand{\experience}[4]{%
+  \AppendTo{\ExperienceList}{%
+    \item
+    \begin{tabular*}{\linewidth}{@{}l@{\extracolsep{\fill}}r@{}}
+      \textbf{#1} & #3\\
+    \end{tabular*}\\[-0.1cm]
+    {#2}%
+    \begin{itemize}[noitemsep,nolistsep]
+      #4
+    \end{itemize}
+  }%
+}
+
+% Global certification
+% \certification{Name}{RightInfo (e.g. "Valid through 2027")}{ExtraLine (optional)}
+\newcommand{\certification}[3]{%
+  \AppendTo{\CertificationsList}{%
+    \item
+    \begin{tabular*}{\linewidth}{@{}l@{\extracolsep{\fill}}r@{}}
+      \textbf{#1} & {\footnotesize #2}%
+    \end{tabular*}%
+    \ifthenelse{\equal{#3}{}}{}{{\\[-0.05cm]{\footnotesize #3}}}%
+  }%
+}
+
+% Reference
+% \refitem{Name}{Designation}{RightInfo (e.g. Contact link)}
+\newcommand{\refitem}[3]{%
+  \AppendTo{\ReferencesList}{%
+    \item
+    \begin{tabular*}{\linewidth}{@{}l@{\extracolsep{\fill}}r@{}}
+      \textbf{#1} & {\footnotesize #3}%
+    \end{tabular*}\\[-0.1cm]
+    {\footnotesize #2}%
+  }%
+}
+
+
+
+%-------------------------
+% DOCUMENT
+%-------------------------
+\begin{document}
+\fontfamily{ppl}\selectfont
+
+% Header (name/tagline center; photo top-right)
+\noindent
+\begin{tabularx}{\linewidth}{@{}X@{}}
+  \centering
+  {\large \userName}\\[0.1em]
+  {\small \userTagline}\\[0.2em]
+  \ifthenelse{\equal{\userAddress}{}}{}{{\small \userAddress \textbf{·}}\\[0.1em]}
+  {\small
+    \clink{%
+      \ifthenelse{\equal{\userPortfolioURL}{}}{}{%
+        \href{\userPortfolioURL}{\userPortfolioText} \textbf{·}%
+      }%
+      \ifthenelse{\equal{\userEmail}{}}{}{%
+        \href{mailto:\userEmail}{Mail} \textbf{·}%
+      }%
+      \ifthenelse{\equal{\userPhoneTelLink}{}}{}{%
+        \href{\userPhoneTelLink}{\userPhoneLabel} \textbf{·}%
+      }%
+      \ifthenelse{\equal{\userGithubURL}{}}{}{%
+        \href{\userGithubURL}{GitHub}%
+      }%
+    }\\[0.1em]
+    \clink{%
+      \ifthenelse{\equal{\userLinkedInURL}{}}{}{%
+        \href{\userLinkedInURL}{LinkedIn} \textbf{·}%
+      }%
+      \ifthenelse{\equal{\userCodingProfilesURL}{}}{}{%
+        \href{\userCodingProfilesURL}{Coding Profiles} \textbf{·}%
+      }%
+      \ifthenelse{\equal{\userVideoResumeURL}{}}{}{%
+        \href{\userVideoResumeURL}{Video Resume}%
+      }%
+    }%
+  }
+\end{tabularx}
+
+\ifthenelse{\equal{\userPhotoPath}{}}{}{%
+  \begin{picture}(0,0)
+    % tweak (180,275) as needed for your page size
+    \put(180,275){%
+      \begin{tikzpicture}
+        \clip (0,0) circle (1.9cm);
+        \node at (0,0) {\includegraphics[width=4cm]{\userPhotoPath}};
+      \end{tikzpicture}%
+    }
+  \end{picture}%
+}
+
+% Summary
+\csection{Summary}{\small
+  \begin{itemize}
+    \SummaryList
+  \end{itemize}
+}
+
+% Education
+\csection{EDUCATION}{\small
+  \begin{itemize}
+    \EducationList
+  \end{itemize}
+}
+
+% Skills
+\csection{SKILLS}{\small
+  \begin{itemize}
+    \SkillsList
+  \end{itemize}
+}
+
+% Projects
+\csection{PROJECTS}{\small
+  \begin{itemize}
+    \ProjectsList
+  \end{itemize}
+}
+
+% Significant Roles
+\csection{Significant Roles}{\small
+  \begin{itemize}
+    \RolesList
+  \end{itemize}
+}
+
+% Experience
+\csection{EXPERIENCE}{\small
+  \begin{itemize}
+    \ExperienceList
+  \end{itemize}
+}
+
+% Global Certifications
+\csection{Global Certifications}{\small
+  \begin{itemize}
+    \CertificationsList
+  \end{itemize}
+}
+
+% References
+\csection{References}{\small
+  \begin{itemize}
+    \ReferencesList
+  \end{itemize}
+}
+
+% Declaration
+\csection{Declaration}{\small
+  \begin{itemize}
+    \item \footnotesize I hereby declare that the above mentioned information is correct to the best of my knowledge.
+  \end{itemize}
+}
+
+\end{document}

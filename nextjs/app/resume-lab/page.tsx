@@ -1,8 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import axios from "axios";
+import type { ResumeData, TemplateInfo } from "../../types/resume";
+import {
+  graphDataToResumeData,
+  createEmptyResumeData,
+} from "../../lib/resumeDataMapper";
+import { useAutoCompile } from "../../hooks/useAutoCompile";
+import TemplateSelector from "../../components/resume-builder/TemplateSelector";
+import PdfViewer from "../../components/resume-builder/PdfViewer";
+import ResumeEditor from "../../components/resume-builder/ResumeEditor";
 
 interface GraphData {
   person: {
@@ -55,24 +64,83 @@ export default function ResumeLabPage() {
   const [showGraph, setShowGraph] = useState(true);
   const [dragActive, setDragActive] = useState(false);
   const [personNameInput, setPersonNameInput] = useState<string>("");
-  const [resumeNameInput, setResumeNameInput] = useState<string>("Default Resume");
+  const [resumeNameInput, setResumeNameInput] = useState<string>(
+    "Default Resume"
+  );
+
+  // Resume builder state
+  const [resumeData, setResumeData] = useState<ResumeData | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<TemplateInfo[]>([]);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
   const asString = (val: any) => {
     if (val == null) return "";
-    if (typeof val === 'string') return val;
-    if (typeof val === 'number' || typeof val === 'boolean') return String(val);
-    if (typeof val === 'object') {
+    if (typeof val === "string") return val;
+    if (typeof val === "number" || typeof val === "boolean") return String(val);
+    if (typeof val === "object") {
       return val.name || val.label || val.title || JSON.stringify(val);
     }
     return String(val);
   };
 
   const allowedExtensions = [".txt", ".md", ".pdf", ".doc", ".docx"];
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+  // Auto-compile hook
+  const { previewImageUrl, pageCount, compiling, compileError, isRecompiling, triggerCompile, lastCompileTime } =
+    useAutoCompile({ resumeData, selectedTemplate, apiUrl: API_URL, debounceMs: 1500 });
+
+  // Whether the builder (editor + PDF) is active
+  const builderActive =
+    !!resumeData && !!selectedTemplate && selectedTemplate !== "uploaded";
+
+  // Fetch templates on mount
+  useEffect(() => {
+    axios
+      .get<TemplateInfo[]>(`${API_URL}/api/latex/templates`)
+      .then((res) => setTemplates(res.data))
+      .catch(() => {});
+  }, [API_URL]);
+
+  // Load saved resumeData from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("careerlift:resumeBuilder");
+      if (raw) {
+        const parsed = JSON.parse(raw) as ResumeData;
+        if (parsed && parsed.person) {
+          setResumeData(parsed);
+        }
+      }
+    } catch (_) {}
+  }, []);
+
+  // Persist resumeData to localStorage (debounced)
+  useEffect(() => {
+    if (!resumeData) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem(
+          "careerlift:resumeBuilder",
+          JSON.stringify(resumeData)
+        );
+      } catch (_) {}
+    }, 500);
+  }, [resumeData]);
 
   // Load the last uploaded resume (if any) so navigating back from dashboard shows data
-  React.useEffect(() => {
+  useEffect(() => {
     try {
-      const raw = typeof window !== "undefined" ? localStorage.getItem("careerlift:lastResume") : null;
+      const raw =
+        typeof window !== "undefined"
+          ? localStorage.getItem("careerlift:lastResume")
+          : null;
       if (!raw) return;
       const saved = JSON.parse(raw) as {
         filename: string;
@@ -83,7 +151,7 @@ export default function ResumeLabPage() {
         resume_name?: string;
         storedAt?: number;
       };
-        if (saved && saved.graph_data && saved.graph_data.person) {
+      if (saved && saved.graph_data && saved.graph_data.person) {
         const reconstructed: UploadResult = {
           message: "Loaded from previous upload",
           filename: saved.filename,
@@ -92,17 +160,20 @@ export default function ResumeLabPage() {
           graph_data: saved.graph_data,
         };
         setResult(reconstructed);
-        // Restore saved names into inputs
-        if (saved.person_name) setPersonNameInput(asString(saved.person_name));
-        if (saved.resume_name) setResumeNameInput(asString(saved.resume_name));
+        if (saved.person_name)
+          setPersonNameInput(asString(saved.person_name));
+        if (saved.resume_name)
+          setResumeNameInput(asString(saved.resume_name));
+        // Auto-populate resume data if not already loaded
+        if (!localStorage.getItem("careerlift:resumeBuilder")) {
+          setResumeData(graphDataToResumeData(saved.graph_data));
+        }
       }
-    } catch (_) {
-      // ignore parse errors
-    }
+    } catch (_) {}
   }, []);
 
-  // Listen for updates from other parts of the app (e.g., Job Finder adds a saved job)
-  React.useEffect(() => {
+  // Listen for updates from other parts of the app
+  useEffect(() => {
     const onResumeUpdated = async () => {
       try {
         const raw = localStorage.getItem("careerlift:lastResume");
@@ -119,22 +190,29 @@ export default function ResumeLabPage() {
             resume_name: asString(saved.resume_name),
           });
         }
-      } catch (e) {
-        // ignore
-      }
+      } catch (_) {}
     };
 
     const storageHandler = (e: StorageEvent) => {
-      if (e.key === "careerlift:resume-updated" || e.key === "careerlift:lastResume") {
+      if (
+        e.key === "careerlift:resume-updated" ||
+        e.key === "careerlift:lastResume"
+      ) {
         onResumeUpdated();
       }
     };
 
     window.addEventListener("storage", storageHandler);
-    window.addEventListener("careerlift:resume-updated", onResumeUpdated as EventListener);
+    window.addEventListener(
+      "careerlift:resume-updated",
+      onResumeUpdated as EventListener
+    );
 
     return () => {
-      window.removeEventListener("careerlift:resume-updated", onResumeUpdated as EventListener);
+      window.removeEventListener(
+        "careerlift:resume-updated",
+        onResumeUpdated as EventListener
+      );
       window.removeEventListener("storage", storageHandler);
     };
   }, []);
@@ -163,7 +241,9 @@ export default function ResumeLabPage() {
     const fileExt = "." + selectedFile.name.split(".").pop()?.toLowerCase();
 
     if (!allowedExtensions.includes(fileExt || "")) {
-      setError(`Unsupported file type. Please upload: ${allowedExtensions.join(", ")}`);
+      setError(
+        `Unsupported file type. Please upload: ${allowedExtensions.join(", ")}`
+      );
       setFile(null);
       return;
     }
@@ -171,6 +251,14 @@ export default function ResumeLabPage() {
     setFile(selectedFile);
     setError(null);
     setResult(null);
+
+    // Create URL for PDF preview if it's a PDF
+    if (fileExt === ".pdf") {
+      const url = URL.createObjectURL(selectedFile);
+      setUploadedFileUrl(url);
+    } else {
+      setUploadedFileUrl(null);
+    }
   };
 
   const handleUpload = async () => {
@@ -200,45 +288,119 @@ export default function ResumeLabPage() {
       );
 
       setResult(response.data);
-      // Update form inputs with resolved names so user can re-use them
-      if ((!personNameInput || personNameInput.trim().length === 0) && response.data.graph_data?.person?.name) {
+      if (
+        (!personNameInput || personNameInput.trim().length === 0) &&
+        response.data.graph_data?.person?.name
+      ) {
         setPersonNameInput(response.data.graph_data.person.name);
       }
-      if ((!resumeNameInput || resumeNameInput.trim().length === 0) && response.data.resume_name) {
+      if (
+        (!resumeNameInput || resumeNameInput.trim().length === 0) &&
+        response.data.resume_name
+      ) {
         setResumeNameInput(response.data.resume_name);
       }
-      // Persist for dashboard quick view
+      // Persist for dashboard
       try {
         const payload = {
           filename: response.data.filename,
           text_length: response.data.text_length,
           graph_data: response.data.graph_data,
           nodes_created: response.data.nodes_created,
-          person_name: personNameInput || response.data.graph_data.person?.name || "",
+          person_name:
+            personNameInput ||
+            response.data.graph_data.person?.name ||
+            "",
           resume_name: resumeNameInput || response.data.filename,
           storedAt: Date.now(),
         };
         if (typeof window !== "undefined") {
-          localStorage.setItem("careerlift:lastResume", JSON.stringify(payload));
+          localStorage.setItem(
+            "careerlift:lastResume",
+            JSON.stringify(payload)
+          );
         }
-      } catch (_) {
-        // non-fatal
-      }
+      } catch (_) {}
+
+      // Auto-populate resume builder from extracted data
+      const mapped = graphDataToResumeData(response.data.graph_data);
+      setResumeData(mapped);
+
       setFile(null);
     } catch (err: any) {
       const errorDetail = err.response?.data?.detail;
-      if (typeof errorDetail === 'object') {
-        setError(errorDetail.message || errorDetail.error || "Failed to process resume. Please try again.");
+      if (typeof errorDetail === "object") {
+        setError(
+          errorDetail.message ||
+            errorDetail.error ||
+            "Failed to process resume. Please try again."
+        );
       } else {
-        setError(errorDetail || "Failed to process resume. Please try again.");
+        setError(
+          errorDetail || "Failed to process resume. Please try again."
+        );
       }
     } finally {
       setUploading(false);
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!resumeData || !selectedTemplate || selectedTemplate === "uploaded") return;
+    setDownloadingPdf(true);
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/latex/compile`,
+        { template_id: selectedTemplate, resume_data: resumeData },
+        { responseType: "blob" }
+      );
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "resume.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      // Silently fail -- user can retry
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
+  const handleTemplateSelect = (id: string) => {
+    setSelectedTemplate(id);
+    // Initialize empty resume data if none exists
+    if (!resumeData) {
+      setResumeData(createEmptyResumeData());
+    }
+    // Trigger immediate compile for LaTeX templates
+    if (id !== "uploaded") {
+      // Use setTimeout(0) so the state update settles before triggerCompile reads refs
+      setTimeout(() => triggerCompile(), 0);
+    }
+  };
+
+  const selectedTemplateInfo =
+    templates.find((t) => t.id === selectedTemplate) || null;
+
+  const clearResume = () => {
+    try {
+      localStorage.removeItem("careerlift:lastResume");
+      localStorage.removeItem("careerlift:resumeBuilder");
+    } catch (_) {}
+    setResult(null);
+    setFile(null);
+    setError(null);
+    setResumeData(null);
+    setSelectedTemplate(null);
+    setUploadedFileUrl(null);
+  };
+
   return (
-    <div className="max-w-4xl mx-auto pt-4">
+    <div className={`mx-auto pt-4 ${builderActive ? "max-w-[1600px]" : "max-w-4xl"}`}>
       <h1 className="text-[40px] font-semibold tracking-tight heading-gradient mb-6">
         Resume Lab
       </h1>
@@ -249,14 +411,7 @@ export default function ResumeLabPage() {
           <h2 className="text-[20px] font-medium">Upload Resume</h2>
           {result && (
             <button
-              onClick={() => {
-                try {
-                  localStorage.removeItem("careerlift:lastResume");
-                } catch (_) {}
-                setResult(null);
-                setFile(null);
-                setError(null);
-              }}
+              onClick={clearResume}
               className="text-[13px] text-muted hover:text-foreground underline-offset-2 hover:underline"
               type="button"
               title="Clear saved resume"
@@ -266,7 +421,8 @@ export default function ResumeLabPage() {
           )}
         </div>
         <p className="text-muted text-[14px] mb-4">
-          Upload your resume to extract and visualize your career information as a knowledge graph.
+          Upload your resume to extract and visualize your career information
+          as a knowledge graph.
         </p>
 
         <div
@@ -305,9 +461,12 @@ export default function ResumeLabPage() {
                   type="file"
                   className="hidden"
                   accept={allowedExtensions.join(",")}
-                  onChange={(e) => e.target.files?.[0] && handleFileChange(e.target.files[0])}
+                  onChange={(e) =>
+                    e.target.files?.[0] &&
+                    handleFileChange(e.target.files[0])
+                  }
                 />
-                </label>
+              </label>
             </div>
 
             <div className="w-full mt-2">
@@ -361,20 +520,78 @@ export default function ResumeLabPage() {
         )}
       </div>
 
+      {/* Template Selector */}
+      {templates.length > 0 && (
+        <TemplateSelector
+          templates={templates}
+          selected={selectedTemplate}
+          onSelect={handleTemplateSelect}
+          hasUploadedFile={!!uploadedFileUrl}
+        />
+      )}
+
+      {/* Builder: side-by-side on xl, stacked below */}
+      {builderActive ? (
+        <div className="flex flex-col xl:flex-row gap-6">
+          {/* Editor panel - narrow single column */}
+          <div className="xl:w-[420px] xl:flex-shrink-0">
+            <ResumeEditor
+              data={resumeData!}
+              onChange={setResumeData}
+              onCompile={triggerCompile}
+              compiling={compiling}
+              compileError={compileError}
+              selectedTemplate={selectedTemplateInfo}
+              lastCompileTime={lastCompileTime}
+            />
+          </div>
+
+          {/* PDF panel - takes remaining space, sticky on xl */}
+          <div className="flex-1 min-w-0 xl:sticky xl:top-6 xl:self-start">
+            <PdfViewer
+              previewImageUrl={previewImageUrl}
+              pageCount={pageCount}
+              uploadedFileUrl={uploadedFileUrl}
+              showUploaded={false}
+              isRecompiling={isRecompiling}
+              onDownloadPdf={handleDownloadPdf}
+              downloadingPdf={downloadingPdf}
+            />
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Show uploaded PDF viewer when "uploaded" template is selected */}
+          {selectedTemplate === "uploaded" && uploadedFileUrl && (
+            <PdfViewer
+              previewImageUrl={null}
+              uploadedFileUrl={uploadedFileUrl}
+              showUploaded={true}
+            />
+          )}
+
+          {/* Show editor without side-by-side when no template or uploaded template */}
+          {resumeData && selectedTemplate && selectedTemplate !== "uploaded" && (
+            <ResumeEditor
+              data={resumeData}
+              onChange={setResumeData}
+              onCompile={triggerCompile}
+              compiling={compiling}
+              compileError={compileError}
+              selectedTemplate={selectedTemplateInfo}
+              lastCompileTime={lastCompileTime}
+            />
+          )}
+        </>
+      )}
+
       {/* Results Section */}
       {result && (
         <div className="card hover-ring card-hue">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[20px] font-medium">Processing Results</h2>
             <button
-              onClick={() => {
-                try {
-                  localStorage.removeItem("careerlift:lastResume");
-                } catch (_) {}
-                setResult(null);
-                setFile(null);
-                setError(null);
-              }}
+              onClick={clearResume}
               className="text-[13px] text-muted hover:text-foreground underline-offset-2 hover:underline"
               type="button"
               title="Clear saved resume"
@@ -387,19 +604,31 @@ export default function ResumeLabPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="panel-tinted p-4 rounded-lg">
                 <p className="text-[13px] text-muted mb-1">File</p>
-                <p className="text-[15px] font-medium">{result.filename}</p>
+                <p className="text-[15px] font-medium">
+                  {result.filename}
+                </p>
               </div>
               <div className="panel-tinted p-4 rounded-lg">
-                <p className="text-[13px] text-muted mb-1">Text Extracted</p>
-                <p className="text-[15px] font-medium">{result.text_length.toLocaleString()} characters</p>
+                <p className="text-[13px] text-muted mb-1">
+                  Text Extracted
+                </p>
+                <p className="text-[15px] font-medium">
+                  {result.text_length.toLocaleString()} characters
+                </p>
               </div>
               <div className="panel-tinted p-4 rounded-lg">
-                <p className="text-[13px] text-muted mb-1">Nodes Created</p>
-                <p className="text-[15px] font-medium">{result.nodes_created}</p>
+                <p className="text-[13px] text-muted mb-1">
+                  Nodes Created
+                </p>
+                <p className="text-[15px] font-medium">
+                  {result.nodes_created}
+                </p>
               </div>
               <div className="panel-tinted p-4 rounded-lg">
                 <p className="text-[13px] text-muted mb-1">Status</p>
-                <p className="text-[15px] font-medium text-green-400">Success</p>
+                <p className="text-[15px] font-medium text-green-400">
+                  Success
+                </p>
               </div>
             </div>
 
@@ -407,18 +636,28 @@ export default function ResumeLabPage() {
             <div className="mt-6">
               <h3 className="text-[16px] font-medium mb-3">Person</h3>
               <div className="panel-tinted p-4 rounded-lg">
-                <p className="text-[18px] font-semibold mb-2">{result.graph_data.person.name}</p>
+                <p className="text-[18px] font-semibold mb-2">
+                  {result.graph_data.person.name}
+                </p>
                 {result.graph_data.person.email && (
-                  <p className="text-[14px] text-muted">Email: {result.graph_data.person.email}</p>
+                  <p className="text-[14px] text-muted">
+                    Email: {result.graph_data.person.email}
+                  </p>
                 )}
                 {result.graph_data.person.phone && (
-                  <p className="text-[14px] text-muted">Phone: {result.graph_data.person.phone}</p>
+                  <p className="text-[14px] text-muted">
+                    Phone: {result.graph_data.person.phone}
+                  </p>
                 )}
                 {result.graph_data.person.location && (
-                  <p className="text-[14px] text-muted">Location: {result.graph_data.person.location}</p>
+                  <p className="text-[14px] text-muted">
+                    Location: {result.graph_data.person.location}
+                  </p>
                 )}
                 {result.graph_data.person.summary && (
-                  <p className="text-[14px] text-muted mt-2">{result.graph_data.person.summary}</p>
+                  <p className="text-[14px] text-muted mt-2">
+                    {result.graph_data.person.summary}
+                  </p>
                 )}
               </div>
             </div>
@@ -426,7 +665,9 @@ export default function ResumeLabPage() {
             {/* Skills */}
             {result.graph_data.skills.length > 0 && (
               <div className="mt-6">
-                <h3 className="text-[16px] font-medium mb-3">Skills ({result.graph_data.skills.length})</h3>
+                <h3 className="text-[16px] font-medium mb-3">
+                  Skills ({result.graph_data.skills.length})
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {result.graph_data.skills.map((skill, idx) => (
                     <span
@@ -443,19 +684,30 @@ export default function ResumeLabPage() {
             {/* Experience */}
             {result.graph_data.experiences.length > 0 && (
               <div className="mt-6">
-                <h3 className="text-[16px] font-medium mb-3">Experience ({result.graph_data.experiences.length})</h3>
+                <h3 className="text-[16px] font-medium mb-3">
+                  Experience ({result.graph_data.experiences.length})
+                </h3>
                 <div className="space-y-3">
                   {result.graph_data.experiences.map((exp, idx) => (
-                    <div key={idx} className="panel-tinted p-4 rounded-lg">
-                      <p className="text-[15px] font-medium">{asString(exp.title)}</p>
-                      <p className="text-[14px] text-blue-400">{asString(exp.company)}</p>
+                    <div
+                      key={idx}
+                      className="panel-tinted p-4 rounded-lg"
+                    >
+                      <p className="text-[15px] font-medium">
+                        {asString(exp.title)}
+                      </p>
+                      <p className="text-[14px] text-blue-400">
+                        {asString(exp.company)}
+                      </p>
                       {exp.duration && (
                         <p className="text-[13px] text-muted mt-1">
                           {exp.duration}
                         </p>
                       )}
                       {exp.description && (
-                        <p className="text-[13px] text-muted mt-2">{exp.description}</p>
+                        <p className="text-[13px] text-muted mt-2">
+                          {exp.description}
+                        </p>
                       )}
                     </div>
                   ))}
@@ -466,14 +718,25 @@ export default function ResumeLabPage() {
             {/* Education */}
             {result.graph_data.education.length > 0 && (
               <div className="mt-6">
-                <h3 className="text-[16px] font-medium mb-3">Education ({result.graph_data.education.length})</h3>
+                <h3 className="text-[16px] font-medium mb-3">
+                  Education ({result.graph_data.education.length})
+                </h3>
                 <div className="space-y-3">
                   {result.graph_data.education.map((edu, idx) => (
-                    <div key={idx} className="panel-tinted p-4 rounded-lg">
-                      <p className="text-[15px] font-medium">{asString(edu.degree)}</p>
-                      <p className="text-[14px] text-blue-400">{asString(edu.institution)}</p>
+                    <div
+                      key={idx}
+                      className="panel-tinted p-4 rounded-lg"
+                    >
+                      <p className="text-[15px] font-medium">
+                        {asString(edu.degree)}
+                      </p>
+                      <p className="text-[14px] text-blue-400">
+                        {asString(edu.institution)}
+                      </p>
                       {edu.year && (
-                        <p className="text-[13px] text-muted mt-1">{edu.year}</p>
+                        <p className="text-[13px] text-muted mt-1">
+                          {edu.year}
+                        </p>
                       )}
                     </div>
                   ))}
@@ -482,24 +745,52 @@ export default function ResumeLabPage() {
             )}
 
             {/* Saved Jobs */}
-            {result.graph_data.saved_jobs && result.graph_data.saved_jobs.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-[16px] font-medium mb-3">Saved Jobs ({result.graph_data.saved_jobs.length})</h3>
-                <div className="space-y-3">
-                  {result.graph_data.saved_jobs.map((job, idx) => (
-                    <div key={idx} className="panel-tinted p-4 rounded-lg">
-                      <p className="text-[15px] font-medium">{asString(job.title) || asString(job.company) || 'Job'}</p>
-                      {job.company && (<p className="text-[14px] text-blue-400">{asString(job.company)}</p>)}
-                      {job.apply_url && (<a className="text-[13px] text-muted" href={asString(job.apply_url)} target="_blank" rel="noopener noreferrer">Open job</a>)}
-                      {job.description && (<p className="text-[13px] text-muted mt-2">{job.description}</p>)}
-                    </div>
-                  ))}
+            {result.graph_data.saved_jobs &&
+              result.graph_data.saved_jobs.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-[16px] font-medium mb-3">
+                    Saved Jobs ({result.graph_data.saved_jobs.length})
+                  </h3>
+                  <div className="space-y-3">
+                    {result.graph_data.saved_jobs.map((job, idx) => (
+                      <div
+                        key={idx}
+                        className="panel-tinted p-4 rounded-lg"
+                      >
+                        <p className="text-[15px] font-medium">
+                          {asString(job.title) ||
+                            asString(job.company) ||
+                            "Job"}
+                        </p>
+                        {job.company && (
+                          <p className="text-[14px] text-blue-400">
+                            {asString(job.company)}
+                          </p>
+                        )}
+                        {job.apply_url && (
+                          <a
+                            className="text-[13px] text-muted"
+                            href={asString(job.apply_url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Open job
+                          </a>
+                        )}
+                        {job.description && (
+                          <p className="text-[13px] text-muted mt-2">
+                            {job.description}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             <div className="mt-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-[14px]">
-              Knowledge graph created successfully. View it in Neo4j Browser at{" "}
+              Knowledge graph created successfully. View it in Neo4j
+              Browser at{" "}
               <a
                 href="http://localhost:7474"
                 target="_blank"
@@ -519,7 +810,9 @@ export default function ResumeLabPage() {
                   onChange={() => setShowGraph((s) => !s)}
                   className="w-4 h-4"
                 />
-                <span className="text-[13px] text-muted">Show interactive knowledge graph</span>
+                <span className="text-[13px] text-muted">
+                  Show interactive knowledge graph
+                </span>
               </label>
             </div>
           </div>
@@ -533,7 +826,6 @@ export default function ResumeLabPage() {
             <h2 className="text-[20px] font-medium">Knowledge Graph</h2>
           </div>
           <div className="p-4">
-            {/* Dynamically import to avoid SSR issues */}
             <DynamicKnowledgeGraph graphData={result.graph_data} />
           </div>
         </div>
@@ -543,4 +835,7 @@ export default function ResumeLabPage() {
 }
 
 // Dynamic import for client-side-only visualization component
-const DynamicKnowledgeGraph = dynamic(() => import("../../components/KnowledgeGraph"), { ssr: false });
+const DynamicKnowledgeGraph = dynamic(
+  () => import("../../components/KnowledgeGraph"),
+  { ssr: false }
+);

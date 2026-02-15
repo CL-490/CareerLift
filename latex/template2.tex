@@ -1,0 +1,308 @@
+\documentclass[10pt,a4paper]{article}
+
+%========================
+% Core packages & layout
+%========================
+\usepackage[margin=1cm]{geometry}
+\usepackage{ifxetex,ifluatex}
+\usepackage{xcolor}
+\usepackage{fontawesome}
+\usepackage{tikz}
+\usepackage[skins]{tcolorbox}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{etoolbox}
+\usepackage{dashrule}
+\usepackage{multirow,tabularx}
+\usepackage{changepage}
+\usepackage[hidelinks,unicode]{hyperref}
+\usepackage{multicol}
+\usepackage{fontspec} % for XeLaTeX/LuaLaTeX fonts
+
+\pagestyle{empty}
+\raggedright
+
+%========================
+% Color scheme (MAltaCV-style)
+%========================
+\definecolor{Body}{HTML}{000000}
+\definecolor{SecondaryBody}{HTML}{333333}
+\definecolor{LightBody}{HTML}{ffffff}
+\definecolor{LightIcons}{HTML}{ffffff}
+\definecolor{AccentBody}{HTML}{2E282A}
+\definecolor{Primary}{HTML}{E4572E}
+
+\colorlet{primary}{Primary}
+\colorlet{accent_body}{AccentBody}
+\colorlet{body}{Body}
+\colorlet{secondary_body}{SecondaryBody}
+\colorlet{light_body}{LightBody}
+\colorlet{light_icons}{LightIcons}
+
+\newcommand{\itemmarker}{{\small\textbullet}}
+\newcommand{\ratingmarker}{\faCircle}
+
+\setlist{leftmargin=*,labelsep=0.5em,nosep,itemsep=0pt}
+\setlist[itemize]{label=\itemmarker}
+
+\newtcolorbox{section_box}{colback=accent_body,colframe=accent_body,
+boxrule=2pt,arc=0pt,boxsep=2pt,left=3pt,right=3pt,top=3pt,bottom=3pt,leftrule=0pt}
+\newtcolorbox{subsection_box}{colback=white,colframe=accent_body,
+boxrule=2pt,arc=0pt,boxsep=2pt,left=2pt,right=2pt,top=2pt,bottom=2pt}
+
+\setlength{\parindent}{0pt}
+\newcommand{\divider}{\medskip}
+
+%========================
+% Basic fonts
+%========================
+\setmainfont{TeX Gyre Heros} % or any installed sans font
+
+%========================
+% Icon helpers
+%========================
+\newcommand{\emailsymbol}{\faAt}
+\newcommand{\phonesymbol}{\faPhone}
+\newcommand{\homepagesymbol}{\faChain}
+\newcommand{\locationsymbol}{\faMapMarker}
+\newcommand{\linkedinsymbol}{\faLinkedin}
+\newcommand{\twittersymbol}{\faTwitter}
+\newcommand{\githubsymbol}{\faGithub}
+\newcommand{\mailsymbol}{\faEnvelope}
+\newcommand{\birthdaysymbol}{\faBirthdayCake}
+
+\newcommand{\printinfo}[2]{%
+  \mbox{\makebox[1.5em][c]{\textcolor{light_icons}{\normalfont #1}}%
+  \hspace{0.5em}\textcolor{light_body}{#2}\hspace{2em}}%
+}
+
+%========================
+% Header fields & commands
+%========================
+\newcommand{\userFirstName}{}
+\newcommand{\userLastName}{}
+\newcommand{\userTagline}{}
+
+\newcommand{\userEmail}{}
+\newcommand{\userMailAddress}{}
+\newcommand{\userPhone}{}
+\newcommand{\userHomepage}{}
+\newcommand{\userTwitter}{}
+\newcommand{\userLinkedIn}{}
+\newcommand{\userGithub}{}
+\newcommand{\userLocation}{}
+\newcommand{\userBirthday}{}
+
+\newcommand{\userBio}{}
+
+\newcommand{\emailinfo}{\ifx\userEmail\empty\else\href{mailto:\userEmail}{\printinfo{\emailsymbol}{\userEmail}}\fi}
+\newcommand{\mailaddressinfo}{\ifx\userMailAddress\empty\else\printinfo{\mailsymbol}{\userMailAddress}\fi}
+\newcommand{\phoneinfo}{\ifx\userPhone\empty\else\printinfo{\phonesymbol}{\userPhone}\fi}
+\newcommand{\homepageinfo}{\ifx\userHomepage\empty\else\href{https://\userHomepage}{\printinfo{\homepagesymbol}{\userHomepage}}\fi}
+\newcommand{\twitterinfo}{\ifx\userTwitter\empty\else\printinfo{\twittersymbol}{\userTwitter}\fi}
+\newcommand{\linkedininfo}{\ifx\userLinkedIn\empty\else\href{https://www.linkedin.com/in/\userLinkedIn}{\printinfo{\linkedinsymbol}{\userLinkedIn}}\fi}
+\newcommand{\githubinfo}{\ifx\userGithub\empty\else\href{https://www.github.com/\userGithub}{\printinfo{\githubsymbol}{\userGithub}}\fi}
+\newcommand{\locationinfo}{\ifx\userLocation\empty\else\printinfo{\locationsymbol}{\userLocation}\fi}
+\newcommand{\birthdayinfo}{\ifx\userBirthday\empty\else\printinfo{\birthdaysymbol}{\userBirthday}\fi}
+
+\newcommand{\personalinfo}{}
+\newcommand{\setpersonalinfo}[1]{\renewcommand{\personalinfo}{#1}}
+
+\newcommand{\namefont}{\bfseries\fontsize{24}{24}\mdseries}
+
+\newcommand{\makecvheader}{%
+  \begingroup
+    \raggedright\color{accent_body}%
+    {\namefont{\color{accent_body}\userFirstName} {\color{accent_body}\userLastName}\par}
+    \medskip
+    {\large\itshape\color{secondary_body}\userTagline\par}
+    \ifx\userBio\empty\relax\else
+      \medskip
+      {\color{secondary_body}\userBio\par}
+    \fi
+    \medskip
+    \noindent\makebox[\textwidth][l]{%
+      \hspace{-\dimexpr\oddsidemargin+1in}%
+      \colorbox{primary}{%
+        \parbox{\dimexpr\paperwidth-2\fboxsep}{%
+          \vspace*{-\medskipamount}
+          \center\color{light_body}\personalinfo\par
+          \smallskip
+        }%
+      }%
+    }%
+  \endgroup
+  \medskip
+}
+
+%========================
+% Section / entry commands
+%========================
+\newcommand{\cvsection}[1]{%
+  \medskip
+  {\Large\color{primary}\bfseries\MakeUppercase{#1}}\\[-1ex]%
+  \medskip\color{body}%
+}
+
+\newcommand{\cvsubsection}[1]{%
+  \medskip
+  {\large\color{accent_body}\bfseries\MakeUppercase{#1}}\\[-1ex]%
+  \medskip\color{body}%
+}
+
+\newcommand{\cvsubsubsection}[1]{%
+  \smallskip
+  {\color{primary}\bfseries\MakeUppercase{#1}\par}\smallskip
+}
+
+\newcommand{\cvuniversity}[4]{%
+  \smallskip
+  {\large\color{accent_body}\textbf{#1}\par}
+  \smallskip
+  \ifx#2\empty\else{\color{secondary_body}\small{\faUniversity\hspace{0.5em}#2}}\hspace{1em}\fi
+  \ifx#3\empty\else{\color{secondary_body}\small{\faCalendar\hspace{0.5em}#3}}\hspace{1em}\fi
+  \ifx#4\empty\else{\color{secondary_body}\small{\faMapMarker\hspace{0.5em}#4}}\hspace{1em}\fi
+  \par\smallskip\normalsize\color{body}
+}
+
+\newcommand{\cvexperience}[5]{%
+  \smallskip
+  {\large\color{accent_body}\textbf{#1}\par}
+  \smallskip
+  \ifx#2\empty\else{\color{secondary_body}\small{\faBuilding\hspace{0.5em}#2}}\hspace{1em}\fi
+  \ifx#3\empty\else{\color{secondary_body}\small{\faCalendar\hspace{0.5em}#3}}\hspace{1em}\fi
+  \ifx#4\empty\else{\color{secondary_body}\small{\faMapMarker\hspace{0.5em}#4}}\hspace{1em}\fi
+  \par
+  \ifx#5\empty\else{\color{secondary_body}\textbf{\small Keywords:} \textit{#5}\par}\fi
+  \smallskip\normalsize\color{body}
+}
+
+\newcommand{\cvlistitem}[2]{%
+  {\bfseries\color{accent_body}{#1}}\\
+  \ifx#2\empty\else{\itshape\color{secondary_body}{#2}}\fi
+  \color{body}\par\medskip
+}
+
+\newenvironment{cvcolumn}[1]{\begin{minipage}[t]{#1}\raggedright}{\end{minipage}}
+
+%========================
+% Fillable buffers
+%========================
+\newcommand{\SkillsList}{}
+\newcommand{\EducationList}{}
+\newcommand{\ExperienceList}{}
+\newcommand{\OtherActivitiesList}{}
+\newcommand{\AwardsList}{}
+\newcommand{\LanguagesList}{}
+
+\newcommand{\AppendTo}[2]{%
+  \expandafter\gdef\expandafter#1\expandafter{#1#2}%
+}
+
+% Skills: \skill{Skill name}
+\newcommand{\skill}[1]{%
+  \AppendTo{\SkillsList}{%
+    \cvlistitem{#1}{}%
+  }%
+}
+
+% Education: \education{Degree}{Institution}{Dates}{Location}{items=\item ...}
+\newcommand{\education}[5]{%
+  \AppendTo{\EducationList}{%
+    \cvuniversity{#1}{#2}{#3}{#4}%
+    \begin{itemize}
+      #5
+    \end{itemize}
+  }%
+}
+
+% Experience: \experience{Title}{Org}{Dates}{Location}{Keywords}{items=\item ...}
+\newcommand{\experience}[6]{%
+  \AppendTo{\ExperienceList}{%
+    \cvexperience{#1}{#2}{#3}{#4}{#5}%
+    \begin{itemize}
+      #6
+    \end{itemize}
+    \divider
+  }%
+}
+
+% Other activities / projects: \otheractivity{Label}{Detail}
+\newcommand{\otheractivity}[2]{%
+  \AppendTo{\OtherActivitiesList}{%
+    \cvlistitem{#1}{#2}%
+  }%
+}
+
+% Awards: \award{Title}{Detail}
+\newcommand{\award}[2]{%
+  \AppendTo{\AwardsList}{%
+    \cvlistitem{#1}{#2}%
+  }%
+}
+
+% Languages: \lang{Language}{Level}
+\newcommand{\lang}[2]{%
+  \AppendTo{\LanguagesList}{%
+    \cvlistitem{#1}{#2}%
+  }%
+}
+
+%========================
+% DOCUMENT
+%========================
+\begin{document}
+
+% Example header info hook – your app should set this
+\setpersonalinfo{%
+  \emailinfo
+  \linkedininfo
+  \githubinfo
+  \phoneinfo
+}
+
+\makecvheader
+
+% Skills
+\cvsection{Skills}
+\begin{center}
+  \begin{multicols}{5}
+    \SkillsList
+  \end{multicols}
+\end{center}
+
+% Education
+\cvsection{Education}
+\medskip
+\begin{multicols}{2}
+  \EducationList
+\end{multicols}
+
+% Experience
+\medskip
+\cvsection{Experience}
+\ExperienceList
+
+% Other activities & projects
+\cvsubsection{Other Activities and Projects}
+\medskip
+\begin{multicols}{3}
+  \OtherActivitiesList
+\end{multicols}
+
+% Awards
+\medskip
+\cvsection{Awards}
+\medskip
+\begin{multicols}{3}
+  \AwardsList
+\end{multicols}
+
+% Languages
+\cvsection{Languages}
+\medskip
+\begin{multicols}{3}
+  \LanguagesList
+\end{multicols}
+
+\end{document}

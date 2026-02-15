@@ -1,0 +1,311 @@
+\documentclass[a4paper,11pt]{article}
+
+%========================
+% Packages & layout
+%========================
+\usepackage{latexsym}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{ragged2e}
+\usepackage[empty]{fullpage}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage{titlesec}
+\usepackage{geometry}
+\usepackage{marvosym}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{cfr-lm}
+\usepackage[T1]{fontenc}
+\usepackage[most]{tcolorbox}
+
+\setlength{\multicolsep}{0pt} 
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\geometry{left=0.6cm, top=0.5cm, right=0.6cm, bottom=0.5cm}
+
+\tcbset{
+	frame code={},
+	center title,
+	left=0pt,
+	right=0pt,
+	top=0pt,
+	bottom=0pt,
+	colback=gray!20,
+	colframe=white,
+	width=\dimexpr\textwidth\relax,
+	enlarge left by=-2mm,
+	boxsep=4pt,
+	arc=0pt,outer arc=0pt,
+}
+
+\urlstyle{same}
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-7pt}]
+
+%========================
+% Original helper commands (kept)
+%========================
+\newcommand{\resumeItem}[2]{%
+  \item{%
+    \textbf{#1}{:\hspace{0.5mm}#2 \vspace{-0.5mm}}%
+  }%
+}
+
+\newcommand{\resumePOR}[3]{%
+\vspace{0.5mm}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+        \textbf{#1},\hspace{0.3mm}#2 & \textit{\small{#3}} 
+    \end{tabular*}
+    \vspace{-2mm}
+}
+
+\newcommand{\resumeSubheading}[4]{%
+\vspace{0.5mm}\item
+    \begin{tabular*}{0.98\textwidth}[t]{l@{\extracolsep{\fill}}r}
+        \textbf{#1} & \textit{\footnotesize{#4}} \\
+        \textit{\footnotesize{#3}} &  \footnotesize{#2}\\
+    \end{tabular*}
+    \vspace{-2.4mm}
+}
+
+\newcommand{\resumeProject}[4]{%
+\vspace{0.5mm}\item
+    \begin{tabular*}{0.98\textwidth}[t]{l@{\extracolsep{\fill}}r}
+        \textbf{#1} & \textit{\footnotesize{#3}} \\
+        \footnotesize{\textit{#2}} & \footnotesize{#4}
+    \end{tabular*}
+    \vspace{-2.4mm}
+}
+
+\newcommand{\resumeSubItem}[2]{\resumeItem{#1}{#2}\vspace{-4pt}}
+
+\renewcommand{\labelitemi}{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=*,labelsep=0mm]}
+\newcommand{\resumeHeadingSkillStart}{\begin{itemize}[leftmargin=*,itemsep=1.7mm, rightmargin=2ex]}
+\newcommand{\resumeItemListStart}{\begin{justify}\begin{itemize}[leftmargin=3ex, rightmargin=2ex, noitemsep,labelsep=1.2mm,itemsep=0mm]\small}
+
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}\vspace{2mm}}
+\newcommand{\resumeHeadingSkillEnd}{\end{itemize}\vspace{-2mm}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\end{justify}\vspace{-2mm}}
+
+\newcommand{\cvsection}[1]{%
+\vspace{2mm}
+\begin{tcolorbox}
+    \textbf{\large #1}
+\end{tcolorbox}
+\vspace{-4mm}
+}
+
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}%
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}%
+\newcolumntype{C}{>{\centering\arraybackslash}X}%
+
+%========================
+% USER SCALARS (fill from app)
+%========================
+\newcommand{\userName}{First Name Last Name}
+\newcommand{\userCourse}{Bachelor of Technology}
+\newcommand{\userRoll}{Roll No}
+\newcommand{\userPhone}{0000000000}
+\newcommand{\userEmailA}{email@example.com}
+\newcommand{\userEmailB}{email@example.com}
+\newcommand{\userGithub}{github-username}
+\newcommand{\userLinkedIn}{linkedin-username}
+\newcommand{\userLogoPath}{GGSIU_logo.png} % or empty to skip logo
+\newcommand{\userUniversityLine}{University name, City}
+
+%========================
+% BUFFERS FOR REPEATABLE CONTENT
+%========================
+\newcommand{\EducationTableRows}{}
+\newcommand{\ExperienceList}{}
+\newcommand{\ProjectsList}{}
+\newcommand{\TechSkillsList}{}
+\newcommand{\KeyCoursesList}{}
+\newcommand{\CertificationsList}{}
+\newcommand{\PositionsList}{}
+\newcommand{\MiscList}{}
+
+\newcommand{\AppendTo}[2]{%
+  \expandafter\gdef\expandafter#1\expandafter{#1#2}%
+}
+
+%========================
+% APP-FACING MACROS
+%========================
+
+% Education row in tabular
+%   \education{Year}{Degree/Certificate}{Institute}{CGPA/Percentage}
+\newcommand{\education}[4]{%
+  \AppendTo{\EducationTableRows}{%
+    #1 & #2 & #3 & #4\\\hline
+  }%
+}
+
+% Experience entry
+%   \experience{Company}{Location}{Position}{Dates}{items}
+% where {items} is a block of \item ... lines (no begin/end{itemize})
+\newcommand{\experience}[5]{%
+  \AppendTo{\ExperienceList}{%
+    \resumeSubheading{#1}{#2}{#3}{#4}%
+    \resumeItemListStart
+      #5
+    \resumeItemListEnd
+  }%
+}
+
+% Project entry
+%   \project{Project Name}{Course/Context}{Dates}{Right side (e.g. link)}{items}
+\newcommand{\project}[5]{%
+  \AppendTo{\ProjectsList}{%
+    \resumeProject{#1}{#2}{#3}{#4}%
+    \resumeItemListStart
+      #5
+    \resumeItemListEnd
+  }%
+}
+
+% Technical skills section rows
+%   \techskill{Category}{Text}
+\newcommand{\techskill}[2]{%
+  \AppendTo{\TechSkillsList}{%
+    \resumeSubItem{#1}{#2}%
+  }%
+}
+
+% Key courses section rows
+%   \keycourses{Category}{Text}
+\newcommand{\keycourses}[2]{%
+  \AppendTo{\KeyCoursesList}{%
+    \resumeSubItem{#1}{#2}%
+  }%
+}
+
+% Certifications
+%   \certification{URL}{Certificate Name}{Institution}
+\newcommand{\certification}[3]{%
+  \AppendTo{\CertificationsList}{%
+    \item{\href{#1}{\textbf{#2}} \hspace{1mm} #3}%
+  }%
+}
+
+% Positions of responsibility
+%   \position{Title}{Org}{Year}
+\newcommand{\position}[3]{%
+  \AppendTo{\PositionsList}{%
+    \resumePOR{#1}{#2}{#3}%
+  }%
+}
+
+% Misc achievements
+%   \miscitem{Title}{Detail}{Year}
+\newcommand{\miscitem}[3]{%
+  \AppendTo{\MiscList}{%
+    \resumePOR{#1}{#2}{#3}%
+  }%
+}
+
+%========================
+% DOCUMENT
+%========================
+\begin{document}
+\fontfamily{cmr}\selectfont
+
+%---------- HEADING ----------
+\parbox{2.35cm}{%
+  % comment this line out if you don't want a logo
+  \includegraphics[width=2cm,clip]{\userLogoPath}
+}%
+\parbox{\dimexpr\linewidth-2.8cm\relax}{%
+\begin{tabularx}{\linewidth}{L r}
+  \textbf{\LARGE \userName} & +91-\userPhone\\
+  \userCourse & \href{mailto:\userEmailB}{\userEmailB}\\
+  {in Chemical Engineering} & \href{https://github.com/\userGithub}{GitHub}\\
+  \userUniversityLine & \href{https://www.linkedin.com/in/\userLinkedIn/}{LinkedIn}
+\end{tabularx}
+}
+
+\vspace{-2mm}
+
+%----------- EDUCATION ----------
+\section{\textbf{Education}}
+\setlength{\tabcolsep}{5pt}
+\small{%
+\begin{tabularx}{\dimexpr\textwidth-2mm\relax}{|c|C|c|c|}
+  \hline
+  \textbf{Year} & \textbf{Degree/Certificate} & \textbf{Institute} & \textbf{CGPA/Percentage} \\
+  \hline
+  \EducationTableRows
+\end{tabularx}%
+}
+\vspace{-1mm}
+
+%----------- EXPERIENCE ----------
+\section{\textbf{Experience}}
+\resumeSubHeadingListStart
+  \ExperienceList
+\resumeSubHeadingListEnd
+\vspace{-6.5mm}
+
+%----------- PROJECTS ----------
+\section{\textbf{Projects}}
+\resumeSubHeadingListStart
+  \ProjectsList
+\resumeSubHeadingListEnd
+\vspace{-7.5mm}
+
+%----------- TECHNICAL SKILLS ----------
+\section{\textbf{Technical Skills}}
+\resumeHeadingSkillStart
+  \TechSkillsList
+\resumeHeadingSkillEnd
+
+\vspace{-1.5mm}
+
+%----------- KEY COURSES ----------
+\section{\textbf{Key courses taken}}
+\resumeHeadingSkillStart
+  \KeyCoursesList
+\resumeHeadingSkillEnd
+
+\vspace{-1mm}
+
+%----------- CERTIFICATIONS ----------
+\section{\textbf{Certifications}}
+\resumeItemListStart
+  \CertificationsList
+\resumeItemListEnd
+\vspace{-4mm}
+
+%----------- POSITIONS ----------
+\section{\textbf{Positions of Responsibility}}
+\vspace{-0.4mm}
+\resumeSubHeadingListStart
+  \PositionsList
+\resumeSubHeadingListEnd
+\vspace{-4mm}
+
+%----------- MISC ----------
+\section{\textbf{Miscellaneous}}
+\vspace{-0.1mm}
+\resumeSubHeadingListStart
+  \MiscList
+\resumeSubHeadingListEnd
+
+\vfill
+\center{\footnotesize Last updated: \today}
+
+\end{document}

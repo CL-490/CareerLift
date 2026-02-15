@@ -162,6 +162,7 @@ cython_debug/
 .pypirc
 
 # Assistants
+.agents/
 .claude/
 .cursor/
 .cursorignore
@@ -171,6 +172,7 @@ cython_debug/
 .github/copilot-instructions.md
 CLAUDE.md
 GEMINI.md
+.mcp.json
 
 
 # Marimo

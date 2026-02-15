@@ -3,7 +3,6 @@ name: careerlift
 services:
   neo4j:
     image: neo4j:latest
-    container_name: neo4j
     ports:
       - "7474:7474"  # HTTP
       - "7687:7687"  # Bolt
@@ -28,7 +27,6 @@ services:
 
   ollama:
     image: ollama/ollama:latest
-    container_name: ollama
     ports:
       - "11434:11434"
     environment:
@@ -51,7 +49,6 @@ services:
       args:
         BUILDKIT_INLINE_CACHE: 1
     image: fastapi:latest
-    container_name: fastapi
     ports:
       - "8000:8000"
     environment:
@@ -71,6 +68,8 @@ services:
       - fastapi_cache:/root/.cache
       - ./fastapi/app/data:/app/app/data
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./latex:/app/latex:ro
+      - tectonic_cache:/root/.cache/Tectonic
     networks:
       - network
     depends_on:
@@ -97,7 +96,6 @@ services:
       args:
         BUILDKIT_INLINE_CACHE: 1
     image: nextjs:latest
-    container_name: nextjs
     ports:
       - "3000:3000"
     environment:
@@ -136,3 +134,4 @@ volumes:
   fastapi_cache:
   nextjs_node_modules:
   nextjs_next:
+  tectonic_cache:

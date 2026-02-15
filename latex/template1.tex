@@ -1,0 +1,248 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[margin=0.75in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=*, itemsep=1pt, topsep=0pt}
+\usepackage[hyphens]{url}
+\Urlmuskip=0mu plus 1mu
+\usepackage{hyperref}
+\hypersetup{colorlinks=false}
+\usepackage{setspace}
+\setstretch{1.05}
+\usepackage{microtype}
+\microtypesetup{protrusion=true,expansion=true}
+\setlength{\emergencystretch}{2em}
+\setlength{\parskip}{0.25em}
+\setlength{\parindent}{0pt}
+\raggedright
+
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries}{}{0pt}{}[\vspace{0.25em}\titlerule]
+\titlespacing*{\section}{0pt}{0.6em}{0.4em}
+
+%========================
+% USER DATA VARIABLES
+%========================
+
+% Header Information
+\newcommand{\userName}{[Full Name]}
+\newcommand{\userEmail}{email@example.com}
+\newcommand{\userPhone}{+1-XXX-XXX-XXXX}
+\newcommand{\userLocation}{City, State}
+\newcommand{\userWebsite}{https://yourwebsite.com}
+\newcommand{\userWebsiteDisplay}{yourwebsite.com}
+
+% Education
+\newcommand{\eduInstitution}{University Name}
+\newcommand{\eduDates}{Start Date -- End Date}
+\newcommand{\eduDegree}{Degree Type and Major}
+\newcommand{\eduGPA}{X.XX/4.00}
+
+% Skills
+\newcommand{\skillsProgramming}{Programming languages here}
+\newcommand{\skillsAIML}{AI/ML skills here}
+\newcommand{\skillsFrameworks}{Frameworks here}
+\newcommand{\skillsData}{Data/Infrastructure tools here}
+\newcommand{\skillsTools}{Tools here}
+\newcommand{\skillsLanguages}{Languages here}
+
+%========================
+% DYNAMIC LISTS (Buffers)
+%========================
+
+\newcommand{\AwardsList}{}
+\newcommand{\ExperienceList}{}
+\newcommand{\ProjectsList}{}
+\newcommand{\LeadershipList}{}
+
+%========================
+% APPEND MACROS
+%========================
+
+% Award: \award{title}{description}
+\newcommand{\award}[2]{%
+  \g@addto@macro\AwardsList{%
+    \item \textbf{#1}: #2%
+  }%
+}
+
+% Experience: \experience{title}{organization}{dates}{bullet1}{bullet2}{...}
+\newcommand{\experience}[3]{%
+  \g@addto@macro\ExperienceList{%
+    \textbf{#1} $|$ #2 \hfill #3\\
+    \begin{itemize}
+  }%
+}
+
+% Experience bullet
+\newcommand{\experienceBullet}[1]{%
+  \g@addto@macro\ExperienceList{%
+    \item #1%
+  }%
+}
+
+% Close experience
+\newcommand{\experienceEnd}{%
+  \g@addto@macro\ExperienceList{%
+    \end{itemize}
+    \vspace{0.5em}
+  }%
+}
+
+% Project: \project{title}{url}{bullet1}{bullet2}{...}
+\newcommand{\project}[2]{%
+  \g@addto@macro\ProjectsList{%
+    \if\relax\detokenize{#2}\relax
+      \textbf{#1}\\
+    \else
+      \textbf{\href{#2}{#1}}\\
+    \fi
+    \begin{itemize}[leftmargin=*]
+  }%
+}
+
+% Project bullet
+\newcommand{\projectBullet}[1]{%
+  \g@addto@macro\ProjectsList{%
+    \item #1%
+  }%
+}
+
+% Close project
+\newcommand{\projectEnd}{%
+  \g@addto@macro\ProjectsList{%
+    \end{itemize}
+    \vspace{0.3em}
+  }%
+}
+
+% Leadership: \leadership{title}{dates}{bullet1}{bullet2}{...}
+\newcommand{\leadership}[2]{%
+  \g@addto@macro\LeadershipList{%
+    \textbf{#1} \hfill #2\\
+    \begin{itemize}
+  }%
+}
+
+% Leadership bullet
+\newcommand{\leadershipBullet}[1]{%
+  \g@addto@macro\LeadershipList{%
+    \item #1%
+  }%
+}
+
+% Close leadership
+\newcommand{\leadershipEnd}{%
+  \g@addto@macro\LeadershipList{%
+    \end{itemize}
+    \vspace{0.3em}
+  }%
+}
+
+%========================
+% OPTIONAL: LaTeX Escape Helper
+% (Use in your app to escape special chars)
+%========================
+% Example Python function:
+% def escape_latex(text):
+%     replacements = {
+%         '\\': r'\textbackslash{}',
+%         '&': r'\&', '%': r'\%', '$': r'\$',
+%         '#': r'\#', '_': r'\_', '{': r'\{',
+%         '}': r'\}', '~': r'\textasciitilde{}',
+%         '^': r'\textasciicircum{}'
+%     }
+%     for old, new in replacements.items():
+%         text = text.replace(old, new)
+%     return text
+
+%========================
+% DEFAULT DEMO DATA
+% (Remove or override in production)
+%========================
+\AtBeginDocument{
+  % Uncomment to test with sample data
+  % \renewcommand{\userName}{Jane Doe}
+  % \renewcommand{\userEmail}{jane.doe@example.com}
+  % etc.
+}
+
+\begin{document}
+
+%========================
+% Header
+%========================
+\begin{center}
+    {\LARGE \textbf{\userName}}\\[4pt]
+    \href{mailto:\userEmail}{\userEmail} $|$ \userPhone{} $|$ \userLocation{} $|$ \href{\userWebsite}{\userWebsiteDisplay}
+\end{center}
+\vspace{0.2em}
+
+%========================
+% Education
+%========================
+\section*{Education}
+\textbf{\eduInstitution} \hfill \eduDates\\
+\textit{\eduDegree} $|$ Cumulative GPA: \eduGPA
+
+%========================
+% Honors & Awards
+%========================
+\ifx\AwardsList\empty
+  % Skip section if no awards
+\else
+  \section*{Honors \& Awards}
+  \begin{itemize}
+    \AwardsList
+  \end{itemize}
+\fi
+
+%========================
+% Research & Work Experience
+%========================
+\ifx\ExperienceList\empty
+  % Skip section if no experience
+\else
+  \section*{Research \& Work Experience}
+  \ExperienceList
+\fi
+
+%========================
+% Skills
+%========================
+\section*{Skills}
+\textbf{Programming:} \skillsProgramming\\
+\textbf{AI/ML:} \skillsAIML\\
+\textbf{Frameworks:} \skillsFrameworks\\
+\textbf{Data/Infra:} \skillsData\\
+\textbf{Tools:} \skillsTools\\
+\textbf{Languages:} \skillsLanguages
+
+%========================
+% Projects
+%========================
+\ifx\ProjectsList\empty
+  % Skip section if no projects
+\else
+  \section*{Selected Projects}
+  \ProjectsList
+\fi
+
+%========================
+% Leadership & Service
+%========================
+\ifx\LeadershipList\empty
+  % Skip section if no leadership
+\else
+  \section*{Leadership \& Service}
+  \LeadershipList
+\fi
+
+\vspace{0.4em}
+\hrule
+\vspace{0.2em}
+
+\end{document}
