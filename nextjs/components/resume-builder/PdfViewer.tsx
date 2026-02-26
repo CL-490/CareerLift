@@ -43,7 +43,7 @@ export default function PdfViewer({
         <h2 className="text-[20px] font-medium mb-3">PDF Preview</h2>
         <iframe
           src={uploadedFileUrl}
-          className="w-full rounded-lg border border-[rgba(255,255,255,0.14)]"
+          className="w-full rounded-lg border border-[var(--border-color)]"
           style={{ height: "800px" }}
           title="Uploaded PDF Preview"
         />
@@ -55,7 +55,7 @@ export default function PdfViewer({
     return (
       <div className="card hover-ring card-hue mb-6">
         <h2 className="text-[20px] font-medium mb-3">PDF Preview</h2>
-        <div className="flex items-center justify-center h-[400px] text-muted text-[14px] border-2 border-dashed border-[rgba(255,255,255,0.14)] rounded-lg">
+        <div className="flex items-center justify-center h-[400px] text-muted text-[14px] border-2 border-dashed border-[var(--border-color)] rounded-lg">
           {isRecompiling ? (
             <div className="flex items-center gap-2">
               <Spinner className="w-5 h-5" />
@@ -113,7 +113,7 @@ export default function PdfViewer({
           <button
             onClick={() => onPageChange?.(currentPage - 1)}
             disabled={!canPrev || isRecompiling}
-            className="p-1.5 rounded-lg border border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.06)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="p-1.5 rounded-lg border border-[var(--border-color)] hover:bg-[var(--background-alt)/20] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             title="Previous page"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,7 +126,7 @@ export default function PdfViewer({
           <button
             onClick={() => onPageChange?.(currentPage + 1)}
             disabled={!canNext || isRecompiling}
-            className="p-1.5 rounded-lg border border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.06)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="p-1.5 rounded-lg border border-[var(--border-color)] hover:bg-[var(--background-alt)/20] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             title="Next page"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,7 +144,7 @@ export default function PdfViewer({
             Updating...
           </div>
         )}
-        <div className="bg-white rounded-lg border border-[rgba(255,255,255,0.14)] overflow-hidden">
+        <div className="bg-white rounded-lg border border-[var(--border-color)] overflow-hidden">
           <img
             src={previewImageUrl}
             alt={`Resume preview — page ${currentPage + 1}`}

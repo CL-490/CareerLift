@@ -51,6 +51,11 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
   const networkRef = useRef<Network | null>(null);
   const [selectedNode, setSelectedNode] = useState<{ id: string; label?: string; group?: string; properties?: any } | null>(null);
 
+  // determine sidebar background once per render
+  const theme = typeof document !== 'undefined' ? document.documentElement.getAttribute("data-theme") || "dark" : "dark";
+  const isLight = theme === "light";
+  const sidebarBg = isLight ? "rgba(255,255,255,0.95)" : "rgba(10, 11, 14, 0.95)";
+
   // Safely convert possible nested values into readable strings
   const asString = (val: any) => {
     if (val == null) return "";
@@ -140,6 +145,14 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
       edges: new DataSet(edges as any),
     };
 
+    // determine current theme (default dark if not set)
+    const theme = document.documentElement.getAttribute("data-theme") || "dark";
+    const isLight = theme === "light";
+    const edgeColor = isLight ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.4)";
+    const edgeHighlight = isLight ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.8)";
+    const fontColor = isLight ? "#000" : "#fff";
+    const sidebarBg = isLight ? "rgba(255,255,255,0.95)" : "rgba(10, 11, 14, 0.95)";
+
     const options = {
       autoResize: true,
       height: "600px",
@@ -148,10 +161,10 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
           to: { enabled: true, type: "arrow" }
         },
         color: {
-          color: "rgba(255,255,255,0.4)",
-          highlight: "rgba(255,255,255,0.8)"
+          color: edgeColor,
+          highlight: edgeHighlight
         },
-        font: { color: "#ddd", align: "top" }
+        font: { color: fontColor, align: "top" }
       },
       layout: {
         improvedLayout: true,
@@ -163,7 +176,7 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
       nodes: {
         shape: "dot",
         size: 18,
-        font: { color: "#ffffff" },
+        font: { color: fontColor },
         borderWidth: 2
       },
       groups: {
@@ -179,7 +192,7 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
 
     networkRef.current = new Network(container, data as any, options);
 
-    networkRef.current.on("click", function (params) {
+    networkRef.current.on("click", function (params: any) {
       if (params.nodes && params.nodes.length > 0) {
         const clickedId = params.nodes[0];
         // Retrieve node data
@@ -243,7 +256,7 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
       {/* Sidebar */}
       <div
         className={`absolute top-0 right-0 z-40 h-full transition-transform transform ${selectedNode ? 'translate-x-0' : 'translate-x-[110%]'}`}
-        style={{ width: 360, background: 'rgba(10, 11, 14, 0.95)', boxShadow: '0 8px 30px rgba(0,0,0,0.4)' }}
+        style={{ width: 360, background: sidebarBg, boxShadow: '0 8px 30px rgba(0,0,0,0.4)' }}
       >
         <div className="p-4 h-full overflow-y-auto">
           {!selectedNode && (
@@ -258,7 +271,7 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
                 </div>
                 <button
                   onClick={() => setSelectedNode(null)}
-                  className="text-sm px-2 py-1 rounded-lg border border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.14)]"
+                  className="text-sm px-2 py-1 rounded-lg border border-[var(--border-strong)] hover:border-[var(--border-color)]"
                 >
                   Close
                 </button>
@@ -280,7 +293,7 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
                   <a className="inline-block mb-2 text-xs px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white" href={asString(selectedNode.properties.apply_url)} target="_blank" rel="noopener noreferrer">Open job URL</a>
                 )}
                 {/* Open Neo4j Browser */}
-                <a className="inline-block text-xs px-3 py-1 rounded-lg border border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.14)] text-muted" href="http://localhost:7474" target="_blank" rel="noopener noreferrer">Open Neo4j Browser</a>
+                <a className="inline-block text-xs px-3 py-1 rounded-lg border border-[var(--border-strong)] hover:border-[var(--border-color)] text-muted" href="http://localhost:7474" target="_blank" rel="noopener noreferrer">Open Neo4j Browser</a>
               </div>
             </div>
           )}

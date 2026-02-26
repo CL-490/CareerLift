@@ -340,12 +340,13 @@ export default function ResumeLabPage() {
     if (!resumeData || !selectedTemplate || selectedTemplate === "uploaded") return;
     setDownloadingPdf(true);
     try {
-      const response = await axios.post(
+      // responseType blob returns a Blob; declare the generic so TS knows it
+      const response = await axios.post<Blob>(
         `${API_URL}/api/latex/compile`,
         { template_id: selectedTemplate, resume_data: resumeData },
         { responseType: "blob" }
       );
-      const blob = new Blob([response.data], { type: "application/pdf" });
+      const blob = new Blob([response.data as BlobPart], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -420,7 +421,7 @@ export default function ResumeLabPage() {
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
             dragActive
               ? "border-blue-500 bg-blue-500/10"
-              : "border-[rgba(255,255,255,0.14)] hover:border-[rgba(255,255,255,0.24)]"
+              : "border-[var(--input-border)] hover:border-[var(--border-color)]"
           }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -463,14 +464,14 @@ export default function ResumeLabPage() {
             <div className="w-full mt-2">
               <input
                 type="text"
-                className="w-full p-2 bg-[#0b1220] rounded-lg border border-[rgba(255,255,255,0.04)]"
+                className="w-full p-2 bg-[var(--input-bg)] rounded-lg border border-[var(--input-border)]"
                 placeholder="Person name (optional, leave blank to use extracted name)"
                 value={personNameInput}
                 onChange={(e) => setPersonNameInput(e.target.value)}
               />
               <input
                 type="text"
-                className="w-full mt-2 p-2 bg-[#0b1220] rounded-lg border border-[rgba(255,255,255,0.04)]"
+                className="w-full mt-2 p-2 bg-[var(--input-bg)] rounded-lg border border-[var(--input-border)]"
                 placeholder="Resume name"
                 value={resumeNameInput}
                 onChange={(e) => setResumeNameInput(e.target.value)}
@@ -665,7 +666,7 @@ export default function ResumeLabPage() {
                   {result.graph_data.skills.map((skill, idx) => (
                     <span
                       key={idx}
-                      className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-[13px]"
+                      className="inline-block px-2 py-1 bg-[var(--accent)/20] text-[var(--accent)] border border-[var(--accent)] rounded text-[13px]"
                     >
                       {asString(skill)}
                     </span>
@@ -827,8 +828,14 @@ export default function ResumeLabPage() {
   );
 }
 
+// Props for the lazily loaded knowledge graph (mirror of component interface)
+type KGProps = { graphData?: GraphData | null; personName?: string; apiUrl?: string };
+
 // Dynamic import for client-side-only visualization component
-const DynamicKnowledgeGraph = dynamic(
-  () => import("../../components/KnowledgeGraph"),
+const DynamicKnowledgeGraph = dynamic<KGProps>(
+  () =>
+    import("../../components/KnowledgeGraph").then(
+      (mod) => mod.default as React.ComponentType<KGProps>
+    ),
   { ssr: false }
 );

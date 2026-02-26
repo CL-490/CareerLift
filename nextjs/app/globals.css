@@ -173,6 +173,30 @@ html {
   --danger: #dc2626;
 }
 
+/* light-mode scrollbar colours */
+:root[data-theme="light"] body,
+:root[data-theme="light"] .styled-scrollbar {
+  scrollbar-color: #c1c1c1 #ffffff;
+  scrollbar-width: auto;
+}
+:root[data-theme="light"] body::-webkit-scrollbar,
+:root[data-theme="light"] .styled-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+:root[data-theme="light"] body::-webkit-scrollbar-track,
+:root[data-theme="light"] .styled-scrollbar::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+:root[data-theme="light"] body::-webkit-scrollbar-thumb,
+:root[data-theme="light"] .styled-scrollbar::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 20px;
+}
+:root[data-theme="light"] body::-webkit-scrollbar-thumb:hover,
+:root[data-theme="light"] .styled-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}
+
 /* utility tokens used in existing UI */
 :root[data-theme="light"] .nav-item {
   background: #ffffff;
@@ -296,16 +320,20 @@ html {
   /* dark theme: keep subtle, bias toward accent slightly */
   --panel-bg: color-mix(in oklab, var(--background-alt) 85%, var(--accent) 15%);
   --panel-border: color-mix(in oklab, var(--accent) 18%, var(--border-color));
+  --input-bg: var(--background-alt);
+  --input-border: var(--border-strong);
 }
 :root[data-theme="light"] {
   /* light theme: make it visible on white, lower saturation so it's soft */
-  --panel-bg: color-mix(in oklab, var(--background-alt) 94%, var(--accent) 6%);
-  --panel-border: color-mix(in oklab, var(--accent) 14%, var(--border-color));
+  --panel-bg: color-mix(in oklab, var(--background-alt) 85%, var(--accent) 15%);
+  --panel-border: color-mix(in oklab, var(--accent) 20%, var(--border-color));
+  --input-bg: var(--background-alt);
+  --input-border: var(--border-color);
 }
 
 .panel-tinted {
   background: var(--panel-bg);
-  border-color: var(--panel-border);
+  border: 1px solid var(--panel-border);
 }
 
 /* -------------------------------
@@ -322,6 +350,17 @@ select {
   -webkit-appearance: none;
   -moz-appearance: none;
   font-size: 0.9rem;
+  transition: background .25s, border-color .25s;
+}
+
+/* inputs and textareas should also adapt to theme */
+input, textarea {
+  background: var(--input-bg);
+  color: var(--foreground);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  outline: none;
   transition: background .25s, border-color .25s;
 }
 
