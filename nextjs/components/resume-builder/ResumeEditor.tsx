@@ -160,8 +160,8 @@ export default function ResumeEditor({
               key={section.key}
               className={`rounded-lg border transition-colors ${
                 active
-                  ? "border-[rgba(255,255,255,0.14)]"
-                  : "border-[rgba(255,255,255,0.06)] opacity-40"
+                  ? "border-[var(--border-color)]"
+                  : "border-[var(--border-strong)] opacity-40"
               }`}
             >
               <button

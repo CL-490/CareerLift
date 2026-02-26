@@ -134,7 +134,7 @@ export default function JobFinderPage() {
     return String(val);
   };
 
-  const progressIntervalsRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
+  const progressIntervalsRef = useRef<{ [key: string]: ReturnType<typeof setInterval> }>({});
 
   const clearProgressInterval = (sourceKey: string) => {
     if (progressIntervalsRef.current[sourceKey]) {
@@ -658,7 +658,7 @@ export default function JobFinderPage() {
                     <button
                       onClick={() => refreshSource(key)}
                       disabled={isSourceLoading}
-                      className="text-xs px-3 py-1 rounded-lg bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-xs px-3 py-1 rounded-lg bg-purple-500/20 text-purple-700 hover:bg-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSourceLoading ? "⏳" : "🔄"} Refresh
                     </button>
@@ -666,7 +666,7 @@ export default function JobFinderPage() {
                       <button
                         onClick={() => loadMore(key)}
                         disabled={isSourceLoading}
-                        className="text-xs px-3 py-1 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-xs px-3 py-1 rounded-lg bg-blue-500/20 text-blue-700 hover:bg-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isSourceLoading ? "Loading..." : `Load More (+100)`}
                       </button>
@@ -696,7 +696,7 @@ export default function JobFinderPage() {
                         const isAddingToGraph = addingToGraph.has(jobUrl);
 
                         return (
-                          <li key={jobKey} className="p-4 hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                          <li key={jobKey} className="p-4 hover:bg-[var(--background-alt)/10] transition-colors">
                             <div className="flex items-start justify-between gap-2 mb-1">
                               <h3 className="text-sm font-semibold line-clamp-2">{j.title}</h3>
                               {typeof j.ats_score === "number" && (
@@ -733,7 +733,7 @@ export default function JobFinderPage() {
                               {jobUrl && (
                                 <a
                                   href={jobUrl}
-                                  className="text-xs px-2 py-1 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30"
+                                  className="text-xs px-2 py-1 rounded-lg bg-blue-500/20 text-blue-700 hover:bg-blue-500/30"
                                   target="_blank"
                                   rel="noreferrer"
                                 >
@@ -746,7 +746,7 @@ export default function JobFinderPage() {
                                 className={`text-xs px-2 py-1 rounded-lg ${
                                   isAddedToGraph
                                     ? "bg-green-100 text-green-700 cursor-not-allowed"
-                                    : "bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-50"
+                                    : "bg-emerald-500/20 text-emerald-700 hover:bg-emerald-500/30 disabled:opacity-50"
                                 }`}
                               >
                                 {isAddingToGraph ? "Adding..." : isAddedToGraph ? "In Graph ✓" : "Save to Knowledge Graph"}

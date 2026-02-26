@@ -29,7 +29,7 @@ export default function TemplateSelector({
             className={`flex-shrink-0 w-32 h-44 rounded-lg border-2 flex flex-col items-center justify-center gap-2 transition-all ${
               selected === "uploaded"
                 ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20"
-                : "border-[rgba(255,255,255,0.14)] hover:border-[rgba(255,255,255,0.24)]"
+                : "border-[var(--border-color)] hover:border-[var(--accent)]"
             }`}
           >
             <svg
@@ -57,7 +57,7 @@ export default function TemplateSelector({
             className={`flex-shrink-0 w-32 h-44 rounded-lg border-2 flex flex-col items-center justify-between p-3 transition-all ${
               selected === t.id
                 ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20"
-                : "border-[rgba(255,255,255,0.14)] hover:border-[rgba(255,255,255,0.24)]"
+                : "border-[var(--border-color)] hover:border-[var(--accent)]"
             }`}
           >
             <div className="flex-1 flex flex-col items-center justify-center gap-1">
