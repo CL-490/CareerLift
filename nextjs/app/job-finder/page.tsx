@@ -118,8 +118,7 @@ export default function JobFinderPage() {
   );
   const [loading, setLoading] = useState(false);
   const [loadingState, setLoadingState] = useState<LoadingState>({});
-  const [calculatingAts, setCalculatingAts] = useState(false);
-  const [atsProgress, setAtsProgress] = useState(0);
+  const [scoringJobs, setScoringJobs] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [availableResumes, setAvailableResumes] = useState<Resume[]>([]);
   const [addedToGraph, setAddedToGraph] = useState<Set<string>>(new Set());
@@ -146,6 +145,14 @@ export default function JobFinderPage() {
   const clearAllProgressIntervals = () => {
     Object.keys(progressIntervalsRef.current).forEach(clearProgressInterval);
   };
+
+  function stripAtsScores(jobsData: JobsBySource): JobsBySource {
+    const next: JobsBySource = {};
+    for (const [source, jobs] of Object.entries(jobsData)) {
+      next[source] = jobs.map(({ ats_score, ...rest }) => rest);
+    }
+    return next;
+  }
 
   useEffect(() => {
     return () => clearAllProgressIntervals();
@@ -197,11 +204,6 @@ export default function JobFinderPage() {
 
       setJobsBySource(results);
 
-      // Calculate ATS scores if resume is selected
-      if (selectedResume) {
-        await calculateAtsForAllJobs(results, selectedResume.resume_id);
-      }
-
       // If no jobs found at all
       const total = Object.values(results).reduce((sum, jobs) => sum + jobs.length, 0);
       if (total === 0) {
@@ -216,41 +218,38 @@ export default function JobFinderPage() {
     }
   };
 
-  const calculateAtsForAllJobs = async (jobsData: JobsBySource, resumeId: string) => {
-    setCalculatingAts(true);
-    setAtsProgress(0);
+  const calculateAtsForSingleJob = async (sourceKey: string, jobIndex: number) => {
+    if (!selectedResume) {
+      setError("Select a resume first to calculate ATS score.");
+      alert("Please select a resume from the dropdown before calculating ATS.");
+      return;
+    }
+
+    const job = jobsBySource[sourceKey]?.[jobIndex];
+    if (!job) return;
+
+    const scoreKey = `${sourceKey}-${jobIndex}`;
+    setScoringJobs((prev) => new Set(prev).add(scoreKey));
 
     try {
-      // Calculate total jobs across all sources
-      const totalJobs = Object.values(jobsData).reduce((sum, jobs) => sum + jobs.length, 0);
-      if (totalJobs === 0) {
-        setCalculatingAts(false);
-        return;
-      }
+      const scoredJobs = await calculateAtsScores([job], selectedResume.resume_id);
+      const scoredJob = scoredJobs[0];
+      if (!scoredJob) return;
 
-      let processedJobs = 0;
-      const updatedJobsBySource: JobsBySource = {};
-
-      for (const [source, jobs] of Object.entries(jobsData)) {
-        if (jobs.length > 0) {
-          const scoredJobs = await calculateAtsScores(jobs, resumeId);
-          updatedJobsBySource[source] = scoredJobs;
-          processedJobs += jobs.length;
-        } else {
-          updatedJobsBySource[source] = jobs;
-        }
-
-        // Update progress based on actual job count
-        const progressPercent = Math.round((processedJobs / totalJobs) * 100);
-        setAtsProgress(progressPercent);
-      }
-
-      setJobsBySource(updatedJobsBySource);
+      setJobsBySource((prev) => {
+        const sourceJobs = [...(prev[sourceKey] || [])];
+        if (!sourceJobs[jobIndex]) return prev;
+        sourceJobs[jobIndex] = scoredJob;
+        return { ...prev, [sourceKey]: sourceJobs };
+      });
     } catch (err: any) {
-      setError(`Failed to calculate ATS scores: ${err?.message}`);
+      setError(`Failed to calculate ATS score: ${err?.message}`);
     } finally {
-      setCalculatingAts(false);
-      setAtsProgress(0);
+      setScoringJobs((prev) => {
+        const next = new Set(prev);
+        next.delete(scoreKey);
+        return next;
+      });
     }
   };
 
@@ -292,18 +291,12 @@ export default function JobFinderPage() {
         [sourceKey]: { isLoading: true, progress: 95 }
       }));
 
-      // Calculate ATS if resume selected
-      let finalJobs = jobs;
-      if (selectedResume && jobs.length > 0) {
-        finalJobs = await calculateAtsScores(jobs, selectedResume.resume_id);
-      }
-
       setLoadingState(prev => ({
         ...prev,
         [sourceKey]: { isLoading: true, progress: 100 }
       }));
 
-      setJobsBySource(prev => ({ ...prev, [sourceKey]: finalJobs }));
+      setJobsBySource(prev => ({ ...prev, [sourceKey]: jobs }));
     } catch (err: any) {
       setError(`Failed to refresh ${sourceKey}: ${err?.message}`);
     } finally {
@@ -361,23 +354,17 @@ export default function JobFinderPage() {
         [sourceKey]: { isLoading: true, progress: 95 }
       }));
 
-      // Calculate ATS if resume selected
-      let finalJobs = jobs;
-      if (selectedResume && jobs.length > 0) {
-        finalJobs = await calculateAtsScores(jobs, selectedResume.resume_id);
-      }
-
       setLoadingState(prev => ({
         ...prev,
         [sourceKey]: { isLoading: true, progress: 100 }
       }));
 
       // Check if we got new jobs - if not, mark as no more available
-      if (finalJobs.length <= previousJobCount) {
+      if (jobs.length <= previousJobCount) {
         setHasMoreJobs(prev => ({ ...prev, [sourceKey]: false }));
       }
 
-      setJobsBySource(prev => ({ ...prev, [sourceKey]: finalJobs }));
+      setJobsBySource(prev => ({ ...prev, [sourceKey]: jobs }));
     } catch (err: any) {
       setError(`Failed to load more from ${sourceKey}: ${err?.message}`);
     } finally {
@@ -390,14 +377,10 @@ export default function JobFinderPage() {
     }
   };
 
-  const handleResumeChange = async (resumeId: string) => {
+  const handleResumeChange = (resumeId: string) => {
     const resume = availableResumes.find((r) => r.resume_id === resumeId);
     setSelectedResume(resume || null);
-
-    // Calculate ATS scores for existing jobs
-    if (resume && Object.keys(jobsBySource).length > 0) {
-      await calculateAtsForAllJobs(jobsBySource, resume.resume_id);
-    }
+    setJobsBySource((prev) => stripAtsScores(prev));
   };
 
   const handleAddToGraph = async (job: Job) => {
@@ -405,6 +388,10 @@ export default function JobFinderPage() {
     if (!jobUrl) {
       alert("Job must have an apply URL");
       return;
+    }
+
+    if (!selectedResume) {
+      alert("for resume lab interactive grpah view u might want to select a resume so saved job shows (optional)");
     }
 
     setAddingToGraph((prev) => new Set(prev).add(jobUrl));
@@ -498,7 +485,6 @@ export default function JobFinderPage() {
           value={selectedResume?.resume_id ?? ""}
           onChange={(e) => handleResumeChange(e.target.value)}
           className="w-full rounded-2xl border px-4 py-2"
-          disabled={calculatingAts}
         >
           <option value="">
             {availableResumes.length === 0
@@ -539,20 +525,6 @@ export default function JobFinderPage() {
           </p>
         )}
 
-        {calculatingAts && (
-          <div className="mt-3 p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-purple-300">Calculating ATS Scores...</span>
-              <span className="text-sm font-medium text-purple-300">{atsProgress}%</span>
-            </div>
-            <div className="w-full bg-purple-900/30 rounded-full h-2">
-              <div
-                className="bg-purple-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${atsProgress}%` }}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       <form onSubmit={search} className="mb-6 space-y-3">
@@ -574,7 +546,7 @@ export default function JobFinderPage() {
           <button
             type="submit"
             className="nav-item nav-item-active !px-4 !py-2 hover:opacity-80"
-            disabled={loading || calculatingAts}
+            disabled={loading}
           >
             {loading ? "Searching..." : "Search"}
           </button>
@@ -691,9 +663,11 @@ export default function JobFinderPage() {
                       {jobs.map((j, idx) => {
                         // Use source + index for guaranteed unique key
                         const jobKey = `${key}-${idx}`;
+                        const scoreKey = `${key}-${idx}`;
                         const jobUrl = j.apply_url || j.source_url || "";
                         const isAddedToGraph = addedToGraph.has(jobUrl);
                         const isAddingToGraph = addingToGraph.has(jobUrl);
+                        const isScoring = scoringJobs.has(scoreKey);
 
                         return (
                           <li key={jobKey} className="p-4 hover:bg-[var(--background-alt)/10] transition-colors">
@@ -740,6 +714,14 @@ export default function JobFinderPage() {
                                   Apply
                                 </a>
                               )}
+                              <button
+                                onClick={() => calculateAtsForSingleJob(key, idx)}
+                                disabled={isScoring}
+                                className="text-xs px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-700 hover:bg-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={!selectedResume ? "Select a resume first" : "Calculate ATS score for this job"}
+                              >
+                                {isScoring ? "Scoring..." : "Calculate ATS"}
+                              </button>
                               <button
                                 onClick={() => handleAddToGraph(j)}
                                 disabled={isAddingToGraph || isAddedToGraph}
