@@ -41,13 +41,61 @@ SKILL_ALIASES: dict[str, list[str]] = {
     "figma": ["figma"],
     "pandas": ["pandas"],
     "numpy": ["numpy"],
-    "machine learning": ["machine learning", "ml"],
+    "machine learning": [
+        "machine learning",
+        "ml",
+        "supervised learning",
+        "unsupervised learning",
+        "classification",
+        "regression",
+        "predictive modeling",
+        "statistical learning",
+        "decision trees",
+        "decision tree",
+        "random forest",
+        "random forests",
+        "svm",
+        "support vector machine",
+        "support vector machines",
+        "k-nn",
+        "knn",
+        "nearest neighbors",
+        "naive bayes",
+        "logistic regression",
+        "linear regression",
+    ],
+    "deep learning": [
+        "deep learning",
+        "neural network",
+        "neural networks",
+        "artificial neural network",
+        "anns",
+    ],
+    "reinforcement learning": [
+        "reinforcement learning",
+        "policy optimization",
+        "proximal policy optimization",
+        "ppo",
+    ],
+    "pytorch": ["pytorch", "torch"],
+    "tensorflow": ["tensorflow", "tensor flow"],
+    "keras": ["keras", "tensorflow/keras"],
+    "stable-baselines3": ["stable-baselines3", "stable baselines3", "sb3"],
     "data analysis": ["data analysis", "analytics"],
     "spark": ["spark", "apache spark"],
     "airflow": ["airflow", "apache airflow"],
     "ci/cd": ["ci/cd", "cicd", "continuous integration", "continuous delivery"],
     "testing": ["testing", "unit testing", "integration testing", "pytest", "jest"],
     "agile": ["agile", "scrum"],
+}
+
+SKILL_IMPLICATIONS: dict[str, list[str]] = {
+    "deep learning": ["machine learning"],
+    "reinforcement learning": ["machine learning"],
+    "pytorch": ["deep learning", "machine learning"],
+    "tensorflow": ["deep learning", "machine learning"],
+    "keras": ["deep learning", "machine learning"],
+    "stable-baselines3": ["reinforcement learning", "machine learning"],
 }
 
 SENIORITY_ORDER = {
@@ -117,6 +165,19 @@ class ResumeATSProfile:
 
 
 class ATSScoringService:
+    def expand_skill_hierarchy(self, skills: Iterable[str]) -> set[str]:
+        expanded = set(skills)
+        changed = True
+        while changed:
+            changed = False
+            for skill in list(expanded):
+                implied = SKILL_IMPLICATIONS.get(skill, [])
+                for parent in implied:
+                    if parent not in expanded:
+                        expanded.add(parent)
+                        changed = True
+        return expanded
+
     def build_resume_profile(
         self,
         *,
@@ -126,7 +187,7 @@ class ATSScoringService:
         education: Iterable[str],
         resume_text: str = "",
     ) -> ResumeATSProfile:
-        normalized_skills = sorted({
+        normalized_skills = self.expand_skill_hierarchy({
             skill
             for raw_skill in skills
             for skill in self.extract_known_skills(str(raw_skill))
@@ -136,8 +197,12 @@ class ATSScoringService:
         title_chunks = [str(item).strip() for item in experience_titles if str(item).strip()]
         education_chunks = [str(item).strip() for item in education if str(item).strip()]
 
+        experience_skill_signals = self.expand_skill_hierarchy(
+            self.extract_known_skills(" ".join(experience_chunks + title_chunks + [resume_text]))
+        )
+
         return ResumeATSProfile(
-            skills=normalized_skills,
+            skills=sorted(set(normalized_skills) | set(experience_skill_signals)),
             experience_text=" ".join(experience_chunks),
             experience_titles=title_chunks,
             education=education_chunks,
@@ -246,9 +311,13 @@ class ATSScoringService:
         ])
         lower_text = job_text.lower()
 
-        all_skills = self.extract_known_skills(job_text)
-        required_skills = self.extract_sentence_bucket_skills(lower_text, REQUIRED_MARKERS)
-        preferred_skills = self.extract_sentence_bucket_skills(lower_text, PREFERRED_MARKERS)
+        all_skills = sorted(self.expand_skill_hierarchy(self.extract_known_skills(job_text)))
+        required_skills = sorted(self.expand_skill_hierarchy(
+            self.extract_sentence_bucket_skills(lower_text, REQUIRED_MARKERS)
+        ))
+        preferred_skills = sorted(self.expand_skill_hierarchy(
+            self.extract_sentence_bucket_skills(lower_text, PREFERRED_MARKERS)
+        ))
 
         if not required_skills:
             required_skills = all_skills[: min(len(all_skills), 8)]
