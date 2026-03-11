@@ -82,7 +82,7 @@ export default function MockInterviewSetup({ onStartInterview }: MockInterviewSe
     <div className="space-y-6">
       {/* Resume Selection */}
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-3">
+        <label className="block text-sm font-semibold text-slate-400 mb-3">
           Select Resume
         </label>
         {resumes.length === 0 ? (
@@ -110,7 +110,7 @@ export default function MockInterviewSetup({ onStartInterview }: MockInterviewSe
 
       {/* Role Level Selection */}
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-3">
+        <label className="block text-sm font-semibold text-slate-400 mb-3">
           Target Level
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -133,7 +133,7 @@ export default function MockInterviewSetup({ onStartInterview }: MockInterviewSe
 
       {/* Job Role Selection */}
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-3">
+        <label className="block text-sm font-semibold text-slate-400 mb-3">
           Select Job Role
         </label>
         {jobsLoading ? (
