@@ -2,7 +2,10 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Body, Form
 from app.core.database import get_db
 from app.services.resume_processor import resume_processor
-from app.services.knowledge_graph_service import knowledge_graph_service
+from app.services.knowledge_graph_service import (
+    ResumeGraphExtractionError,
+    knowledge_graph_service,
+)
 from app.services.ats_service import ats_service
 from app.schemas.resume import (
     ResumeCreate,
@@ -124,6 +127,8 @@ async def upload_resume(
             "graph_data": graph_data
         }
 
+    except ResumeGraphExtractionError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except ValueError as e:
         error_msg = str(e)
         # Check if this is an Ollama auth error
@@ -193,17 +198,27 @@ async def score_resume_against_jobs(person_name: str, db=Depends(get_db)):
     MATCH (p:Person {name: $person_name})
     OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
     OPTIONAL MATCH (p)-[:HAS_EXPERIENCE]->(e:Experience)
+    OPTIONAL MATCH (p)-[:HAS_EDUCATION]->(ed:Education)
+    OPTIONAL MATCH (p)<-[:BELONGS_TO]-(r:Resume)
     RETURN p,
            collect(DISTINCT s.name) AS skills,
-           collect(DISTINCT e.description) AS experiences
+           collect(DISTINCT e.description) AS experiences,
+           collect(DISTINCT e.title) AS experience_titles,
+           collect(DISTINCT ed.degree) AS education,
+           collect(DISTINCT r.text) AS resume_texts
     """
 
     record = await (await db.run(person_query, person_name=person_name)).single()
     if not record:
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    skills = record["skills"] or []
-    exp_text = " ".join(record["experiences"] or [])
+    resume_profile = ats_service.build_resume_profile(
+        skills=record["skills"] or [],
+        experiences=record["experiences"] or [],
+        experience_titles=record["experience_titles"] or [],
+        education=record["education"] or [],
+        resume_text=" ".join(record["resume_texts"] or []),
+    )
 
     # Get all jobs
     job_query = """
@@ -215,8 +230,7 @@ async def score_resume_against_jobs(person_name: str, db=Depends(get_db)):
     jobs = []
     async for row in result:
         j = dict(row["j"])
-        score = ats_service.score_resume_to_job(skills, exp_text, j)
-        j["ats_score"] = score
+        j.update(ats_service.score_resume_to_job(resume_profile, j))
         jobs.append(j)
 
     return {"jobs": jobs}
@@ -337,14 +351,28 @@ async def get_saved_jobs(resume_id: str, db=Depends(get_db)):
     MATCH (p:Person {name: $person_name})
     OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
     OPTIONAL MATCH (p)-[:HAS_EXPERIENCE]->(e:Experience)
+    OPTIONAL MATCH (p)-[:HAS_EDUCATION]->(ed:Education)
+    OPTIONAL MATCH (p)<-[:BELONGS_TO]-(r:Resume {id: $resume_id})
     RETURN collect(DISTINCT s.name) AS skills,
-           collect(DISTINCT e.description) AS experiences
+           collect(DISTINCT e.description) AS experiences,
+           collect(DISTINCT e.title) AS experience_titles,
+           collect(DISTINCT ed.degree) AS education,
+           collect(DISTINCT r.text) AS resume_texts
     """
-    person_result = await db.run(person_query, person_name=resume_record["person_name"])
+    person_result = await db.run(
+        person_query,
+        person_name=resume_record["person_name"],
+        resume_id=resume_id,
+    )
     person_data = await person_result.single()
 
-    skills = person_data["skills"] or []
-    exp_text = " ".join(person_data["experiences"] or [])
+    resume_profile = ats_service.build_resume_profile(
+        skills=person_data["skills"] or [],
+        experiences=person_data["experiences"] or [],
+        experience_titles=person_data["experience_titles"] or [],
+        education=person_data["education"] or [],
+        resume_text=" ".join(person_data["resume_texts"] or []),
+    )
 
     # Get saved jobs
     jobs_query = """
@@ -367,9 +395,11 @@ async def get_saved_jobs(resume_id: str, db=Depends(get_db)):
         # Calculate ATS score
         job_data = {
             "description": record.get("description", ""),
-            "title": record.get("title", "")
+            "title": record.get("title", ""),
+            "company": record.get("company", ""),
+            "location": record.get("location", ""),
         }
-        score = ats_service.score_resume_to_job(skills, exp_text, job_data)
+        scoring = ats_service.score_resume_to_job(resume_profile, job_data)
 
         jobs.append(SavedJobInfo(
             job_title=record["title"],
@@ -379,7 +409,8 @@ async def get_saved_jobs(resume_id: str, db=Depends(get_db)):
             source=record.get("source"),
             saved_at=record["saved_at"],
             notes=record.get("notes"),
-            ats_score=score
+            ats_score=scoring["ats_score"],
+            ats_details=scoring["ats_details"],
         ))
 
     return SavedJobsList(

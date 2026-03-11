@@ -5,7 +5,7 @@ from neo4j import AsyncSession
 
 from app.core.database import get_db
 from app.models.career import CareerGoal, Skill, Experience
-from app.services.llm_service import llm_service
+from app.services.llm_service import LLMOutputError, llm_service
 
 router = APIRouter(prefix="/career", tags=["career"])
 
@@ -104,28 +104,37 @@ async def get_career_advice(
     """Get LLM-generated career advice."""
     skills_list = [s.strip() for s in skills.split(",")]
 
-    advice = await llm_service.generate_career_advice(
-        current_role=current_role,
-        target_role=target_role,
-        skills=skills_list,
-        experience_years=experience_years
-    )
+    try:
+        advice = await llm_service.generate_career_advice(
+            current_role=current_role,
+            target_role=target_role,
+            skills=skills_list,
+            experience_years=experience_years
+        )
+    except LLMOutputError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
-    return {"advice": advice}
+    return advice.model_dump()
 
 
 @router.post("/analyze-job")
 async def analyze_job_description(job_description: str):
     """Analyze a job description."""
-    analysis = await llm_service.analyze_job_description(job_description)
-    return analysis
+    try:
+        analysis = await llm_service.analyze_job_description(job_description)
+    except LLMOutputError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return analysis.model_dump()
 
 
 @router.post("/resume-feedback")
 async def get_resume_feedback(resume_text: str, target_role: str):
     """Get feedback on a resume."""
-    feedback = await llm_service.generate_resume_feedback(
-        resume_text=resume_text,
-        target_role=target_role
-    )
-    return {"feedback": feedback}
+    try:
+        feedback = await llm_service.generate_resume_feedback(
+            resume_text=resume_text,
+            target_role=target_role
+        )
+    except LLMOutputError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return feedback.model_dump()

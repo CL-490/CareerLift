@@ -1,9 +1,18 @@
 """Ollama-based knowledge graph transformer service."""
 from __future__ import annotations
-from typing import Dict, Any, List
+
 import json
+from typing import Any, Dict
+
 import httpx
+from pydantic import ValidationError
+
 from app.core.config import settings
+from app.schemas.llm import ResumeGraphData
+
+
+class ResumeGraphExtractionError(ValueError):
+    """Raised when resume graph extraction succeeds syntactically but is unusable."""
 
 
 class KnowledgeGraphService:
@@ -79,16 +88,24 @@ Return JSON with this exact structure:
                 data = json.loads(json_str)
             else:
                 data = json.loads(llm_response)
-        except (json.JSONDecodeError, ValueError):
-            # Fallback to basic structure if LLM doesn't return valid JSON
-            data = {
-                "person": {"name": "Unknown"},
-                "skills": [],
-                "experiences": [],
-                "education": []
-            }
+        except (json.JSONDecodeError, ValueError) as exc:
+            raise ResumeGraphExtractionError(
+                "Resume extraction returned invalid JSON. Please retry with a clearer resume or different file."
+            ) from exc
 
-        return data
+        try:
+            validated = ResumeGraphData.model_validate(data)
+        except ValidationError as exc:
+            raise ResumeGraphExtractionError(
+                "Resume extraction returned incomplete data. Please verify the resume contains a readable name and sections."
+            ) from exc
+
+        if not validated.person.name.strip():
+            raise ResumeGraphExtractionError(
+                "Resume extraction did not find a valid person name."
+            )
+
+        return validated.model_dump()
 
     async def create_resume_subgraph(self, db, graph_data: Dict[str, Any]) -> int:
         """

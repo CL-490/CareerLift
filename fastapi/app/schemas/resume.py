@@ -1,8 +1,8 @@
 """Resume schemas."""
 
+from typing import Any, List, Optional
+
 from pydantic import BaseModel
-from typing import Optional, List
-from datetime import datetime
 
 
 class ResumeCreate(BaseModel):
@@ -43,6 +43,7 @@ class SavedJobInfo(BaseModel):
     saved_at: str
     notes: Optional[str] = None
     ats_score: Optional[float] = None
+    ats_details: Optional[dict[str, Any]] = None
 
 
 class SavedJobsList(BaseModel):
