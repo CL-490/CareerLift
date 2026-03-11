@@ -279,6 +279,26 @@ async def list_resumes(person_name: Optional[str] = None, db=Depends(get_db)):
     return ResumeList(resumes=resumes)
 
 
+@router.delete("/{resume_id}")
+async def delete_resume(resume_id: str, db=Depends(get_db)):
+    """
+    Permanently delete a resume and all its relationships from the knowledge graph.
+    """
+    check = await db.run(
+        "MATCH (r:Resume {id: $resume_id}) RETURN r",
+        resume_id=resume_id
+    )
+    if not await check.single():
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    await db.run(
+        "MATCH (r:Resume {id: $resume_id}) DETACH DELETE r",
+        resume_id=resume_id
+    )
+
+    return {"message": "Resume deleted successfully", "resume_id": resume_id}
+
+
 @router.post("/save-job")
 async def save_job_to_resume(
     data: SavedJobCreate,

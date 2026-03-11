@@ -15,11 +15,45 @@ import { SOURCES } from "@/components/job-finder/types";
 import {
   addJobToGraph,
   calculateAtsScores,
+  deleteResume,
   fetchResumeGraph,
   listResumes,
   loadJobsBySource,
+  removeJobFromResume,
   saveJobToResume,
 } from "@/lib/jobFinderApi";
+
+const JF_STORAGE_KEY = "careerlift:jobfinder";
+
+interface PersistedJobFinderState {
+  q: string;
+  loc: string;
+  selectedResumeId: string | null;
+  jobsBySource: JobsBySource;
+  /** Saved-to-graph job URLs keyed by resume_id (empty string = no resume selected). */
+  addedToGraphByResume: Record<string, string[]>;
+  sourceLimits: SourceLimits;
+  hasMoreJobs: Record<string, boolean>;
+}
+
+function loadPersistedJobFinderState(): PersistedJobFinderState | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(JF_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as PersistedJobFinderState;
+  } catch {
+    return null;
+  }
+}
+
+function savePersistedJobFinderState(state: PersistedJobFinderState): void {
+  try {
+    localStorage.setItem(JF_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Ignore quota or serialization errors
+  }
+}
 
 function stripAtsScores(jobsData: JobsBySource): JobsBySource {
   const next: JobsBySource = {};
@@ -30,23 +64,47 @@ function stripAtsScores(jobsData: JobsBySource): JobsBySource {
 }
 
 export function useJobFinder() {
-  const [q, setQ] = useState("");
-  const [loc, setLoc] = useState("");
+  // Load persisted state once during initialisation
+  const [initialState] = useState<PersistedJobFinderState | null>(
+    () => loadPersistedJobFinderState()
+  );
+
+  const [q, setQ] = useState(initialState?.q ?? "");
+  const [loc, setLoc] = useState(initialState?.loc ?? "");
   const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
-  const [jobsBySource, setJobsBySource] = useState<JobsBySource>({});
+  const [jobsBySource, setJobsBySource] = useState<JobsBySource>(
+    initialState?.jobsBySource ?? {}
+  );
   const [sourceLimits, setSourceLimits] = useState<SourceLimits>(
-    SOURCES.reduce((acc, { key }) => ({ ...acc, [key]: 100 }), {})
+    initialState?.sourceLimits ??
+      SOURCES.reduce((acc, { key }) => ({ ...acc, [key]: 100 }), {})
   );
   const [hasMoreJobs, setHasMoreJobs] = useState<Record<string, boolean>>(
-    SOURCES.reduce((acc, { key }) => ({ ...acc, [key]: true }), {})
+    initialState?.hasMoreJobs ??
+      SOURCES.reduce((acc, { key }) => ({ ...acc, [key]: true }), {})
   );
   const [loading, setLoading] = useState(false);
   const [loadingState, setLoadingState] = useState<LoadingState>({});
   const [scoringJobs, setScoringJobs] = useState<Set<string>>(new Set());
   const [availableResumes, setAvailableResumes] = useState<Resume[]>([]);
-  const [addedToGraph, setAddedToGraph] = useState<Set<string>>(new Set());
+  // Saved-to-graph URLs stored per resume_id ("" = no resume selected).
+  const [addedToGraphByResume, setAddedToGraphByResume] = useState<Record<string, string[]>>(
+    initialState?.addedToGraphByResume ?? {}
+  );
   const [addingToGraph, setAddingToGraph] = useState<Set<string>>(new Set());
+  const [removingFromGraph, setRemovingFromGraph] = useState<Set<string>>(new Set());
   const [notice, setNotice] = useState<Notice | null>(null);
+
+  // Derived: only jobs saved under the currently selected resume appear as "In Graph".
+  const addedToGraph = new Set<string>(
+    addedToGraphByResume[selectedResume?.resume_id ?? ""] ?? []
+  );
+
+  // Remember which resume was selected so we can restore it once the resume
+  // list has been fetched.
+  const persistedResumeIdRef = useRef<string | null>(
+    initialState?.selectedResumeId ?? null
+  );
 
   const progressIntervalsRef = useRef<
     Record<string, ReturnType<typeof setInterval>>
@@ -286,6 +344,122 @@ export function useJobFinder() {
     setJobsBySource((prev) => stripAtsScores(prev));
   };
 
+  const handleResumeDelete = async (resumeId: string) => {
+    try {
+      await deleteResume(resumeId);
+    } catch (err: unknown) {
+      setNotice({
+        type: "error",
+        message: err instanceof Error ? err.message : "Failed to remove resume",
+      });
+      return;
+    }
+    // Deselect if the deleted resume was selected, and remove it from the list.
+    setSelectedResume((prev) =>
+      prev?.resume_id === resumeId ? null : prev
+    );
+    setAvailableResumes((prev) =>
+      prev.filter((r) => r.resume_id !== resumeId)
+    );
+    // Clear saved-to-graph entries for the deleted resume.
+    setAddedToGraphByResume((prev) => {
+      const next = { ...prev };
+      delete next[resumeId];
+      return next;
+    });
+    setNotice({ type: "success", message: "Resume removed." });
+  };
+
+  const handleDeleteAllResumes = async () => {
+    const ids = availableResumes.map((r) => r.resume_id);
+    const errors: string[] = [];
+    for (const id of ids) {
+      try {
+        await deleteResume(id);
+      } catch (err: unknown) {
+        errors.push(err instanceof Error ? err.message : id);
+      }
+    }
+    setSelectedResume(null);
+    setAvailableResumes([]);
+    setAddedToGraphByResume({});
+    if (errors.length > 0) {
+      setNotice({ type: "error", message: `Some resumes could not be removed: ${errors.join(", ")}` });
+    } else {
+      setNotice({ type: "success", message: "All resumes removed." });
+    }
+  };
+
+  const handleUnsaveJob = async (job: Job) => {
+    const jobUrl = job.apply_url || job.source_url || "";
+    if (!jobUrl) return;
+    const key = selectedResume?.resume_id ?? "";
+    setRemovingFromGraph((prev) => new Set(prev).add(jobUrl));
+    try {
+      if (selectedResume) {
+        await removeJobFromResume(selectedResume.resume_id, jobUrl);
+      }
+      setAddedToGraphByResume((prev) => ({
+        ...prev,
+        [key]: (prev[key] ?? []).filter((u) => u !== jobUrl),
+      }));
+    } catch (err: unknown) {
+      setNotice({
+        type: "error",
+        message: err instanceof Error ? err.message : "Failed to unsave job",
+      });
+    } finally {
+      setRemovingFromGraph((prev) => {
+        const next = new Set(prev);
+        next.delete(jobUrl);
+        return next;
+      });
+    }
+  };
+
+  const handleUnsaveAllInSource = async (sourceKey: string) => {
+    const key = selectedResume?.resume_id ?? "";
+    const savedUrls = new Set(addedToGraphByResume[key] ?? []);
+    const toUnsave = (jobsBySource[sourceKey] ?? [])
+      .map((j) => j.apply_url || j.source_url || "")
+      .filter((url) => url && savedUrls.has(url));
+    if (toUnsave.length === 0) return;
+    toUnsave.forEach((url) =>
+      setRemovingFromGraph((prev) => new Set(prev).add(url))
+    );
+    const errors: string[] = [];
+    if (selectedResume) {
+      for (const url of toUnsave) {
+        try {
+          await removeJobFromResume(selectedResume.resume_id, url);
+        } catch (err: unknown) {
+          errors.push(err instanceof Error ? err.message : url);
+        }
+      }
+    }
+    // Remove successfully unsaved URLs from local state
+    const failed = new Set(errors);
+    setAddedToGraphByResume((prev) => ({
+      ...prev,
+      [key]: (prev[key] ?? []).filter(
+        (u) => !toUnsave.includes(u) || failed.has(u)
+      ),
+    }));
+    toUnsave.forEach((url) =>
+      setRemovingFromGraph((prev) => {
+        const next = new Set(prev);
+        next.delete(url);
+        return next;
+      })
+    );
+    if (errors.length > 0) {
+      setNotice({
+        type: "error",
+        message: `Some jobs could not be unsaved: ${errors.slice(0, 3).join(", ")}`,
+      });
+    }
+  };
+
   const handleAddToGraph = async (job: Job) => {
     const jobUrl = job.apply_url || job.source_url || "";
     if (!jobUrl) {
@@ -312,7 +486,12 @@ export function useJobFinder() {
         throw new Error(result.message || "Failed to add job to knowledge graph");
       }
 
-      setAddedToGraph((prev) => new Set(prev).add(jobUrl));
+      setAddedToGraphByResume((prev) => {
+        const key = selectedResume?.resume_id ?? "";
+        const existing = prev[key] ?? [];
+        if (existing.includes(jobUrl)) return prev;
+        return { ...prev, [key]: [...existing, jobUrl] };
+      });
 
       if (selectedResume) {
         await saveJobToResume(selectedResume.resume_id, jobUrl);
@@ -354,11 +533,33 @@ export function useJobFinder() {
     }
   };
 
+  // Persist relevant state to localStorage whenever it changes so it survives
+  // navigation away from the Job Finder page.
+  useEffect(() => {
+    savePersistedJobFinderState({
+      q,
+      loc,
+      selectedResumeId: selectedResume?.resume_id ?? null,
+      jobsBySource,
+      addedToGraphByResume,
+      sourceLimits,
+      hasMoreJobs,
+    });
+  }, [q, loc, selectedResume, jobsBySource, addedToGraphByResume, sourceLimits, hasMoreJobs]);
+
   useEffect(() => {
     const bootstrap = async () => {
       try {
         const resumes = await listResumes();
         setAvailableResumes(resumes);
+
+        // Restore the previously selected resume if one was persisted.
+        if (persistedResumeIdRef.current) {
+          const resume = resumes.find(
+            (r) => r.resume_id === persistedResumeIdRef.current
+          );
+          if (resume) setSelectedResume(resume);
+        }
       } catch (err: unknown) {
         setNotice({
           type: "error",
@@ -371,8 +572,16 @@ export function useJobFinder() {
     bootstrap();
   }, []);
 
+  // Only auto-search on first visit (no persisted jobs). Subsequent visits
+  // restore the previous state; the user can refresh manually.
   useEffect(() => {
-    search();
+    const persistedJobCount = Object.values(
+      initialState?.jobsBySource ?? {}
+    ).reduce((sum, jobs) => sum + jobs.length, 0);
+    if (persistedJobCount === 0) {
+      search();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const totalJobs = Object.values(jobsBySource).reduce(
@@ -395,14 +604,19 @@ export function useJobFinder() {
     scoringJobs,
     addedToGraph,
     addingToGraph,
+    removingFromGraph,
     setQ,
     setLoc,
     dismissNotice,
     search,
     handleResumeChange,
+    handleResumeDelete,
+    handleDeleteAllResumes,
     refreshSource,
     loadMore,
     calculateAtsForSingleJob,
     handleAddToGraph,
+    handleUnsaveJob,
+    handleUnsaveAllInSource,
   };
 }

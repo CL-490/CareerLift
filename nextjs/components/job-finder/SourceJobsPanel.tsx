@@ -13,11 +13,14 @@ interface SourceJobsPanelProps {
   selectedResumeId: string | null;
   addedToGraph: Set<string>;
   addingToGraph: Set<string>;
+  removingFromGraph: Set<string>;
   scoringJobs: Set<string>;
   onRefresh: (sourceKey: string) => void;
   onLoadMore: (sourceKey: string) => void;
   onCalculateAts: (sourceKey: string, jobIndex: number) => void;
   onAddToGraph: (job: Job) => void;
+  onUnsave: (job: Job) => void;
+  onUnsaveAll: (sourceKey: string) => void;
 }
 
 export default function SourceJobsPanel({
@@ -29,18 +32,24 @@ export default function SourceJobsPanel({
   selectedResumeId,
   addedToGraph,
   addingToGraph,
+  removingFromGraph,
   scoringJobs,
   onRefresh,
   onLoadMore,
   onCalculateAts,
   onAddToGraph,
+  onUnsave,
+  onUnsaveAll,
 }: SourceJobsPanelProps) {
+  const savedJobsInSource = jobs.filter(
+    (j) => addedToGraph.has(j.apply_url || j.source_url || "")
+  ).length;
   const isSourceLoading = loadingState?.isLoading || false;
   const progress = loadingState?.progress || 0;
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-[var(--border-color)] surface">
-      <div className="border-b border-[var(--border-color)] bg-gradient-to-r from-blue-500/10 to-purple-500/10 p-4">
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-(--border-color) surface">
+      <div className="border-b border-(--border-color) bg-linear-to-r from-blue-500/10 to-purple-500/10 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             <span>{source.emoji}</span>
@@ -66,7 +75,7 @@ export default function SourceJobsPanel({
           </div>
         )}
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => onRefresh(source.key)}
             disabled={isSourceLoading}
@@ -83,10 +92,18 @@ export default function SourceJobsPanel({
               {isSourceLoading ? "Loading..." : "Load More (+100)"}
             </button>
           )}
+          {savedJobsInSource > 0 && (
+            <button
+              onClick={() => onUnsaveAll(source.key)}
+              className="jf-btn px-3 py-1 text-xs border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+            >
+              Unsave All ({savedJobsInSource})
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="max-h-[600px] flex-1 overflow-y-auto">
+      <div className="max-h-150 flex-1 overflow-y-auto">
         {jobs.length === 0 ? (
           <div className="p-6 text-center text-sm text-muted">
             <p className="mb-2">No jobs found from {source.label}</p>
@@ -99,12 +116,13 @@ export default function SourceJobsPanel({
             </button>
           </div>
         ) : (
-          <ul className="divide-y divide-[var(--border-color)]">
+          <ul className="divide-y divide-(--border-color)">
             {jobs.map((job, idx) => {
               const jobKey = `${source.key}-${idx}`;
               const jobUrl = job.apply_url || job.source_url || "";
               const isAddedToGraph = addedToGraph.has(jobUrl);
               const isAddingToGraph = addingToGraph.has(jobUrl);
+              const isRemovingFromGraph = removingFromGraph.has(jobUrl);
               const isScoring = scoringJobs.has(jobKey);
 
               return (
@@ -191,21 +209,23 @@ export default function SourceJobsPanel({
                     >
                       {isScoring ? "Scoring..." : "Calculate ATS"}
                     </button>
-                    <button
-                      onClick={() => onAddToGraph(job)}
-                      disabled={isAddingToGraph || isAddedToGraph}
-                      className={`px-2 py-1 ${
-                        isAddedToGraph
-                          ? "jf-btn jf-btn-success cursor-not-allowed"
-                          : "jf-btn jf-btn-primary"
-                      }`}
-                    >
-                      {isAddingToGraph
-                        ? "Adding..."
-                        : isAddedToGraph
-                          ? "In Graph ✓"
-                          : "Save to Knowledge Graph"}
-                    </button>
+                    {isAddedToGraph ? (
+                      <button
+                        onClick={() => onUnsave(job)}
+                        disabled={isRemovingFromGraph}
+                        className="jf-btn px-2 py-1 border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50"
+                      >
+                        {isRemovingFromGraph ? "Unsaving..." : "Unsave ✕"}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => onAddToGraph(job)}
+                        disabled={isAddingToGraph}
+                        className="jf-btn jf-btn-primary px-2 py-1"
+                      >
+                        {isAddingToGraph ? "Adding..." : "Save to Knowledge Graph"}
+                      </button>
+                    )}
                   </div>
                 </li>
               );

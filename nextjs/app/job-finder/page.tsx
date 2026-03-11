@@ -24,15 +24,20 @@ export default function JobFinderPage() {
     scoringJobs,
     addedToGraph,
     addingToGraph,
+    removingFromGraph,
     setQ,
     setLoc,
     dismissNotice,
     search,
     handleResumeChange,
+    handleResumeDelete,
+    handleDeleteAllResumes,
     refreshSource,
     loadMore,
     calculateAtsForSingleJob,
     handleAddToGraph,
+    handleUnsaveJob,
+    handleUnsaveAllInSource,
   } = useJobFinder();
 
   return (
@@ -51,6 +56,8 @@ export default function JobFinderPage() {
         availableResumes={availableResumes}
         selectedResume={selectedResume}
         onChange={handleResumeChange}
+        onDelete={handleResumeDelete}
+        onDeleteAll={handleDeleteAllResumes}
       />
 
       <JobSearchForm
@@ -85,11 +92,14 @@ export default function JobFinderPage() {
               selectedResumeId={selectedResume?.resume_id ?? null}
               addedToGraph={addedToGraph}
               addingToGraph={addingToGraph}
+              removingFromGraph={removingFromGraph}
               scoringJobs={scoringJobs}
               onRefresh={refreshSource}
               onLoadMore={loadMore}
               onCalculateAts={calculateAtsForSingleJob}
               onAddToGraph={handleAddToGraph}
+              onUnsave={handleUnsaveJob}
+              onUnsaveAll={handleUnsaveAllInSource}
             />
           ))}
         </div>
