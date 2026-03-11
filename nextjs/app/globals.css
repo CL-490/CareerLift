@@ -336,6 +336,130 @@ html {
   border: 1px solid var(--panel-border);
 }
 
+/* Job Finder button system */
+:root {
+  --jf-btn-bg: color-mix(in oklab, var(--background-alt) 84%, white 16%);
+  --jf-btn-bg-hover: color-mix(in oklab, var(--background-alt) 72%, white 28%);
+  --jf-btn-text: var(--foreground);
+  --jf-btn-border: color-mix(in oklab, var(--foreground) 14%, var(--border-color));
+  --jf-btn-primary-bg: color-mix(in oklab, var(--accent) 24%, var(--background-alt));
+  --jf-btn-primary-bg-hover: color-mix(in oklab, var(--accent) 34%, var(--background-alt));
+  --jf-btn-primary-border: color-mix(in oklab, var(--accent) 56%, var(--border-color));
+  --jf-btn-info-bg: color-mix(in oklab, #3b82f6 28%, var(--background-alt));
+  --jf-btn-info-bg-hover: color-mix(in oklab, #3b82f6 40%, var(--background-alt));
+  --jf-btn-info-border: color-mix(in oklab, #3b82f6 62%, var(--border-color));
+  --jf-btn-info-text: #d9ecff;
+  --jf-btn-accent-bg: color-mix(in oklab, #8b5cf6 26%, var(--background-alt));
+  --jf-btn-accent-bg-hover: color-mix(in oklab, #8b5cf6 38%, var(--background-alt));
+  --jf-btn-accent-border: color-mix(in oklab, #8b5cf6 60%, var(--border-color));
+  --jf-btn-accent-text: #efe5ff;
+  --jf-btn-success-bg: color-mix(in oklab, #16a34a 42%, var(--background-alt));
+  --jf-btn-success-bg-hover: color-mix(in oklab, #16a34a 52%, var(--background-alt));
+  --jf-btn-success-border: color-mix(in oklab, #16a34a 65%, var(--border-color));
+  --jf-btn-success-text: #ecfdf3;
+}
+
+:root[data-theme="light"] {
+  --jf-btn-bg: color-mix(in oklab, white 88%, #d8e4ef 12%);
+  --jf-btn-bg-hover: color-mix(in oklab, white 76%, #d8e4ef 24%);
+  --jf-btn-text: #0f172a;
+  --jf-btn-border: color-mix(in oklab, #334155 26%, var(--border-color));
+  --jf-btn-primary-bg: color-mix(in oklab, white 68%, #86d7b8 32%);
+  --jf-btn-primary-bg-hover: color-mix(in oklab, white 58%, #86d7b8 42%);
+  --jf-btn-primary-border: color-mix(in oklab, #2f7c66 50%, var(--border-color));
+  --jf-btn-info-bg: color-mix(in oklab, white 70%, #93c5fd 30%);
+  --jf-btn-info-bg-hover: color-mix(in oklab, white 56%, #93c5fd 44%);
+  --jf-btn-info-border: color-mix(in oklab, #2563eb 48%, var(--border-color));
+  --jf-btn-info-text: #0f3a75;
+  --jf-btn-accent-bg: color-mix(in oklab, white 72%, #c4b5fd 28%);
+  --jf-btn-accent-bg-hover: color-mix(in oklab, white 58%, #c4b5fd 42%);
+  --jf-btn-accent-border: color-mix(in oklab, #7c3aed 48%, var(--border-color));
+  --jf-btn-accent-text: #4c1d95;
+  --jf-btn-success-bg: color-mix(in oklab, white 64%, #38a169 36%);
+  --jf-btn-success-bg-hover: color-mix(in oklab, white 54%, #38a169 46%);
+  --jf-btn-success-border: color-mix(in oklab, #2f855a 54%, var(--border-color));
+  --jf-btn-success-text: #14532d;
+}
+
+.jf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  min-height: 2.2rem;
+  border-radius: .7rem;
+  border: 1px solid var(--jf-btn-border);
+  background: var(--jf-btn-bg);
+  color: var(--jf-btn-text);
+  font-size: .78rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: .02em;
+  box-shadow: var(--shadow-1);
+  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.jf-btn:hover {
+  background: var(--jf-btn-bg-hover);
+  border-color: var(--border-strong);
+  color: var(--foreground);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
+}
+
+.jf-btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--shadow-1);
+}
+
+.jf-btn-primary {
+  background: var(--jf-btn-primary-bg);
+  border-color: var(--jf-btn-primary-border);
+}
+
+.jf-btn-primary:hover {
+  background: var(--jf-btn-primary-bg-hover);
+  border-color: var(--jf-btn-primary-border);
+}
+
+.jf-btn-success {
+  background: var(--jf-btn-success-bg);
+  border-color: var(--jf-btn-success-border);
+  color: var(--jf-btn-success-text);
+}
+
+.jf-btn-success:hover {
+  background: var(--jf-btn-success-bg-hover);
+  border-color: var(--jf-btn-success-border);
+  color: var(--jf-btn-success-text);
+}
+
+.jf-btn-info {
+  background: var(--jf-btn-info-bg);
+  border-color: var(--jf-btn-info-border);
+  color: var(--jf-btn-info-text);
+}
+
+.jf-btn-info:hover {
+  background: var(--jf-btn-info-bg-hover);
+  border-color: var(--jf-btn-info-border);
+  color: var(--jf-btn-info-text);
+}
+
+.jf-btn-accent {
+  background: var(--jf-btn-accent-bg);
+  border-color: var(--jf-btn-accent-border);
+  color: var(--jf-btn-accent-text);
+}
+
+.jf-btn-accent:hover {
+  background: var(--jf-btn-accent-bg-hover);
+  border-color: var(--jf-btn-accent-border);
+  color: var(--jf-btn-accent-text);
+}
+
 /* -------------------------------
    Select dropdown (theme-aware)
 -------------------------------- */
@@ -391,4 +515,3 @@ select:focus {
 
 /* Light theme override not required —
    It auto-works because all colors come from variables */
-

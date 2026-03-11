@@ -10,6 +10,8 @@ Backend (FastAPI)
 Database
 - Neo4j (Latest) - Graph database for career relationships and paths
 
+**New Feature**: AI mock interview simulator integrated into the Coach Center. Generate role‑level‑aware questions from your resume, receive feedback, and review stored sessions.
+
 Frontend (Next.js)
 - Next.js (Latest) - React framework with App Router
 - React (Latest) - Latest React with new features
@@ -73,6 +75,10 @@ Watch mode enables automatic file synchronization and hot-reloading for all serv
 - Backend API: http://localhost:8000
 - Neo4j Browser: http://localhost:7474
 - API Documentation: http://localhost:8000/docs
+
+### Mock Interview
+
+Once a resume has been uploaded, open the Coach Center in the frontend and start an interview. The tool will ask a few questions and evaluate your answers using the LLM.
 
 5. Pull Ollama model
 

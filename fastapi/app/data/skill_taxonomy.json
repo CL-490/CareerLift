@@ -1,0 +1,279 @@
+{
+  "python": {
+    "category": "programming_language",
+    "aliases": ["python", "py", "python3"],
+    "implies": ["programming", "scripting"]
+  },
+  "javascript": {
+    "category": "programming_language",
+    "aliases": ["javascript", "js", "ecmascript"],
+    "implies": ["programming", "web development"]
+  },
+  "typescript": {
+    "category": "programming_language",
+    "aliases": ["typescript", "ts"],
+    "implies": ["javascript"]
+  },
+  "java": {
+    "category": "programming_language",
+    "aliases": ["java"],
+    "implies": ["programming"]
+  },
+  "c++": {
+    "category": "programming_language",
+    "aliases": ["c++", "cpp"],
+    "implies": ["programming"]
+  },
+  "c#": {
+    "category": "programming_language",
+    "aliases": ["c#", "csharp"],
+    "implies": [".net"]
+  },
+  "go": {
+    "category": "programming_language",
+    "aliases": ["go", "golang"],
+    "implies": ["programming"]
+  },
+  "rust": {
+    "category": "programming_language",
+    "aliases": ["rust"],
+    "implies": ["programming"]
+  },
+
+  "react": {
+    "category": "frontend_framework",
+    "aliases": ["react", "reactjs", "react.js"],
+    "implies": ["javascript", "frontend development"]
+  },
+  "next.js": {
+    "category": "frontend_framework",
+    "aliases": ["nextjs", "next.js"],
+    "implies": ["react"]
+  },
+  "angular": {
+    "category": "frontend_framework",
+    "aliases": ["angular", "angularjs"],
+    "implies": ["typescript"]
+  },
+  "vue": {
+    "category": "frontend_framework",
+    "aliases": ["vue", "vue.js"],
+    "implies": ["javascript"]
+  },
+
+  "node.js": {
+    "category": "backend_framework",
+    "aliases": ["node", "nodejs", "node.js"],
+    "implies": ["javascript", "backend development"]
+  },
+  "express": {
+    "category": "backend_framework",
+    "aliases": ["express", "express.js"],
+    "implies": ["node.js"]
+  },
+  "django": {
+    "category": "backend_framework",
+    "aliases": ["django"],
+    "implies": ["python"]
+  },
+  "flask": {
+    "category": "backend_framework",
+    "aliases": ["flask"],
+    "implies": ["python"]
+  },
+  "fastapi": {
+    "category": "backend_framework",
+    "aliases": ["fastapi"],
+    "implies": ["python"]
+  },
+  "spring": {
+    "category": "backend_framework",
+    "aliases": ["spring", "spring boot"],
+    "implies": ["java"]
+  },
+
+  "docker": {
+    "category": "devops",
+    "aliases": ["docker", "containers"],
+    "implies": ["containerization"]
+  },
+  "kubernetes": {
+    "category": "devops",
+    "aliases": ["kubernetes", "k8s"],
+    "implies": ["docker", "container orchestration"]
+  },
+  "terraform": {
+    "category": "devops",
+    "aliases": ["terraform"],
+    "implies": ["infrastructure as code"]
+  },
+  "ansible": {
+    "category": "devops",
+    "aliases": ["ansible"],
+    "implies": ["infrastructure automation"]
+  },
+  "ci/cd": {
+    "category": "devops",
+    "aliases": ["ci/cd", "continuous integration", "continuous deployment"],
+    "implies": ["devops"]
+  },
+  "jenkins": {
+    "category": "devops",
+    "aliases": ["jenkins"],
+    "implies": ["ci/cd"]
+  },
+  "github actions": {
+    "category": "devops",
+    "aliases": ["github actions"],
+    "implies": ["ci/cd"]
+  },
+
+  "aws": {
+    "category": "cloud",
+    "aliases": ["aws", "amazon web services"],
+    "implies": ["cloud computing"]
+  },
+  "azure": {
+    "category": "cloud",
+    "aliases": ["azure", "microsoft azure"],
+    "implies": ["cloud computing"]
+  },
+  "gcp": {
+    "category": "cloud",
+    "aliases": ["gcp", "google cloud"],
+    "implies": ["cloud computing"]
+  },
+
+  "sql": {
+    "category": "database",
+    "aliases": ["sql", "structured query language"],
+    "implies": ["database"]
+  },
+  "postgresql": {
+    "category": "database",
+    "aliases": ["postgresql", "postgres"],
+    "implies": ["sql"]
+  },
+  "mysql": {
+    "category": "database",
+    "aliases": ["mysql"],
+    "implies": ["sql"]
+  },
+  "mongodb": {
+    "category": "database",
+    "aliases": ["mongodb", "mongo"],
+    "implies": ["nosql"]
+  },
+  "redis": {
+    "category": "database",
+    "aliases": ["redis"],
+    "implies": ["caching"]
+  },
+
+  "pandas": {
+    "category": "data_science",
+    "aliases": ["pandas"],
+    "implies": ["python", "data analysis"]
+  },
+  "numpy": {
+    "category": "data_science",
+    "aliases": ["numpy"],
+    "implies": ["python", "data analysis"]
+  },
+  "scikit-learn": {
+    "category": "machine_learning",
+    "aliases": ["scikit-learn", "sklearn"],
+    "implies": ["machine learning", "python"]
+  },
+  "tensorflow": {
+    "category": "machine_learning",
+    "aliases": ["tensorflow"],
+    "implies": ["deep learning"]
+  },
+  "pytorch": {
+    "category": "machine_learning",
+    "aliases": ["pytorch", "torch"],
+    "implies": ["deep learning"]
+  },
+  "nlp": {
+    "category": "machine_learning",
+    "aliases": ["nlp", "natural language processing"],
+    "implies": ["machine learning"]
+  },
+
+  "tableau": {
+    "category": "data_visualization",
+    "aliases": ["tableau"],
+    "implies": ["data visualization"]
+  },
+  "power bi": {
+    "category": "data_visualization",
+    "aliases": ["power bi"],
+    "implies": ["data visualization"]
+  },
+
+  "git": {
+    "category": "tooling",
+    "aliases": ["git"],
+    "implies": ["version control"]
+  },
+  "github": {
+    "category": "tooling",
+    "aliases": ["github"],
+    "implies": ["git"]
+  },
+  "gitlab": {
+    "category": "tooling",
+    "aliases": ["gitlab"],
+    "implies": ["git"]
+  },
+
+  "linux": {
+    "category": "operating_system",
+    "aliases": ["linux", "unix"],
+    "implies": ["system administration"]
+  },
+  "bash": {
+    "category": "scripting",
+    "aliases": ["bash", "shell scripting"],
+    "implies": ["linux"]
+  },
+
+  "agile": {
+    "category": "methodology",
+    "aliases": ["agile"],
+    "implies": ["software development"]
+  },
+  "scrum": {
+    "category": "methodology",
+    "aliases": ["scrum"],
+    "implies": ["agile"]
+  },
+  "kanban": {
+    "category": "methodology",
+    "aliases": ["kanban"],
+    "implies": ["agile"]
+  },
+
+  "project management": {
+    "category": "management",
+    "aliases": ["project management"],
+    "implies": ["leadership"]
+  },
+
+  "communication": {
+    "category": "soft_skill",
+    "aliases": ["communication", "verbal communication"],
+    "implies": ["teamwork"]
+  },
+  "leadership": {
+    "category": "soft_skill",
+    "aliases": ["leadership"],
+    "implies": ["management"]
+  },
+  "teamwork": {
+    "category": "soft_skill",
+    "aliases": ["teamwork", "team collaboration"],
+    "implies": ["collaboration"]
+  }
+}

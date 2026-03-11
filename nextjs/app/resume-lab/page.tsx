@@ -9,6 +9,7 @@ import {
   createEmptyResumeData,
   asString,
 } from "@/lib/resumeDataMapper";
+import { deleteResume } from "@/lib/jobFinderApi";
 import { useAutoCompile } from "@/hooks/useAutoCompile";
 import TemplateSelector from "@/components/resume-builder/TemplateSelector";
 import PdfViewer from "@/components/resume-builder/PdfViewer";
@@ -55,6 +56,7 @@ interface UploadResult {
   graph_data: GraphData;
   person_name?: string;
   resume_name?: string;
+  resume_id?: string;
 }
 
 export default function ResumeLabPage() {
@@ -140,6 +142,7 @@ export default function ResumeLabPage() {
         nodes_created?: number;
         person_name?: string;
         resume_name?: string;
+        resume_id?: string;
         storedAt?: number;
       };
       if (saved && saved.graph_data && saved.graph_data.person) {
@@ -149,6 +152,7 @@ export default function ResumeLabPage() {
           text_length: saved.text_length,
           nodes_created: saved.nodes_created ?? 0,
           graph_data: saved.graph_data,
+          resume_id: saved.resume_id,
         };
         setResult(reconstructed);
         if (saved.person_name)
@@ -303,6 +307,7 @@ export default function ResumeLabPage() {
             response.data.graph_data.person?.name ||
             "",
           resume_name: resumeNameInput || response.data.filename,
+          resume_id: response.data.resume_id,
           storedAt: Date.now(),
         };
         if (typeof window !== "undefined") {
@@ -378,7 +383,16 @@ export default function ResumeLabPage() {
   const selectedTemplateInfo =
     templates.find((t) => t.id === selectedTemplate) || null;
 
-  const clearResume = () => {
+  const clearResume = async () => {
+    // Delete from the backend so it no longer appears in the resume dropdown.
+    const resumeId = result?.resume_id;
+    if (resumeId) {
+      try {
+        await deleteResume(resumeId);
+      } catch (_) {
+        // Still clear locally even if the backend call fails.
+      }
+    }
     try {
       localStorage.removeItem("careerlift:lastResume");
       localStorage.removeItem("careerlift:resumeBuilder");
@@ -392,7 +406,7 @@ export default function ResumeLabPage() {
   };
 
   return (
-    <div className={`mx-auto pt-4 ${builderActive ? "max-w-[1600px]" : "max-w-4xl"}`}>
+    <div className={`mx-auto pt-4 ${builderActive ? "max-w-400" : "max-w-4xl"}`}>
       <h1 className="text-[40px] font-semibold tracking-tight heading-gradient mb-6">
         Resume Lab
       </h1>
@@ -421,7 +435,7 @@ export default function ResumeLabPage() {
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
             dragActive
               ? "border-blue-500 bg-blue-500/10"
-              : "border-[var(--input-border)] hover:border-[var(--border-color)]"
+              : "border-(--input-border) hover:border-(--border-color)"
           }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -464,14 +478,14 @@ export default function ResumeLabPage() {
             <div className="w-full mt-2">
               <input
                 type="text"
-                className="w-full p-2 bg-[var(--input-bg)] rounded-lg border border-[var(--input-border)]"
+                className="w-full p-2 bg-(--input-bg) rounded-lg border border-(--input-border)"
                 placeholder="Person name (optional, leave blank to use extracted name)"
                 value={personNameInput}
                 onChange={(e) => setPersonNameInput(e.target.value)}
               />
               <input
                 type="text"
-                className="w-full mt-2 p-2 bg-[var(--input-bg)] rounded-lg border border-[var(--input-border)]"
+                className="w-full mt-2 p-2 bg-(--input-bg) rounded-lg border border-(--input-border)"
                 placeholder="Resume name"
                 value={resumeNameInput}
                 onChange={(e) => setResumeNameInput(e.target.value)}
@@ -526,7 +540,7 @@ export default function ResumeLabPage() {
       {builderActive ? (
         <div className="flex flex-col xl:flex-row gap-6">
           {/* Editor panel - narrow single column */}
-          <div className="xl:w-[420px] xl:flex-shrink-0">
+          <div className="xl:w-105 xl:shrink-0">
             <ResumeEditor
               data={resumeData!}
               onChange={setResumeData}
@@ -666,7 +680,7 @@ export default function ResumeLabPage() {
                   {result.graph_data.skills.map((skill, idx) => (
                     <span
                       key={idx}
-                      className="inline-block px-2 py-1 bg-[var(--accent)/20] text-[var(--accent)] border border-[var(--accent)] rounded text-[13px]"
+                      className="inline-block px-2 py-1 bg-(--accent)/20 text-(--accent) border border-(--accent) rounded text-[13px]"
                     >
                       {asString(skill)}
                     </span>

@@ -7,7 +7,7 @@ from .routers import job as jobs_router
 
 from app.core.config import settings
 from app.core.database import neo4j_db
-from app.routers import career, resume, ollama, latex
+from app.routers import career, resume, ollama, latex, interview
 
 
 @asynccontextmanager
@@ -49,6 +49,7 @@ app.include_router(jobs_router.router)
 app.include_router(resume.router)
 app.include_router(ollama.router)
 app.include_router(latex.router)
+app.include_router(interview.router)
 
 
 @app.get("/")

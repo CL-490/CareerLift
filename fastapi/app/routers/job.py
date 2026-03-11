@@ -61,21 +61,29 @@ async def list_jobs(
     result = await db.run(cypher, q=q, location=location, source=source, remote_only=remote_only, limit=limit)
 
     # Get resume skills for ATS scoring if resume_id provided
-    skills = []
-    exp_text = ""
+    resume_profile = None
     if resume_id:
         resume_query = """
         MATCH (r:Resume {id: $resume_id})-[:BELONGS_TO]->(p:Person)
         OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
         OPTIONAL MATCH (p)-[:HAS_EXPERIENCE]->(e:Experience)
-        RETURN collect(DISTINCT s.name) AS skills,
-               collect(DISTINCT e.description) AS experiences
+        OPTIONAL MATCH (p)-[:HAS_EDUCATION]->(ed:Education)
+        RETURN r.text AS resume_text,
+               collect(DISTINCT s.name) AS skills,
+               collect(DISTINCT e.description) AS experiences,
+               collect(DISTINCT e.title) AS experience_titles,
+               collect(DISTINCT ed.degree) AS education
         """
         resume_result = await db.run(resume_query, resume_id=resume_id)
         resume_data = await resume_result.single()
         if resume_data:
-            skills = resume_data["skills"] or []
-            exp_text = " ".join(resume_data["experiences"] or [])
+            resume_profile = ats_service.build_resume_profile(
+                skills=resume_data["skills"] or [],
+                experiences=resume_data["experiences"] or [],
+                experience_titles=resume_data["experience_titles"] or [],
+                education=resume_data["education"] or [],
+                resume_text=resume_data["resume_text"] or "",
+            )
 
     items: List[Dict[str, Any]] = []
     async for rec in result:
@@ -96,13 +104,13 @@ async def list_jobs(
         }
 
         # Add ATS score if resume provided
-        if resume_id and skills:
-            job_data["ats_score"] = ats_service.score_resume_to_job(skills, exp_text, j)
+        if resume_profile:
+            job_data.update(ats_service.score_resume_to_job(resume_profile, j))
 
         items.append(job_data)
 
     # Sort by ATS score if resume provided
-    if resume_id and skills:
+    if resume_profile:
         items.sort(key=lambda x: x.get("ats_score", 0), reverse=True)
 
     return items
@@ -129,8 +137,12 @@ async def calculate_ats_scores(
     MATCH (r:Resume {id: $resume_id})-[:BELONGS_TO]->(p:Person)
     OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
     OPTIONAL MATCH (p)-[:HAS_EXPERIENCE]->(e:Experience)
-    RETURN collect(DISTINCT s.name) AS skills,
-           collect(DISTINCT e.description) AS experiences
+    OPTIONAL MATCH (p)-[:HAS_EDUCATION]->(ed:Education)
+    RETURN r.text AS resume_text,
+           collect(DISTINCT s.name) AS skills,
+           collect(DISTINCT e.description) AS experiences,
+           collect(DISTINCT e.title) AS experience_titles,
+           collect(DISTINCT ed.degree) AS education
     """
     resume_result = await db.run(resume_query, resume_id=request.resume_id)
     resume_data = await resume_result.single()
@@ -138,15 +150,19 @@ async def calculate_ats_scores(
     if not resume_data:
         return request.jobs
 
-    skills = resume_data["skills"] or []
-    exp_text = " ".join(resume_data["experiences"] or [])
+    resume_profile = ats_service.build_resume_profile(
+        skills=resume_data["skills"] or [],
+        experiences=resume_data["experiences"] or [],
+        experience_titles=resume_data["experience_titles"] or [],
+        education=resume_data["education"] or [],
+        resume_text=resume_data["resume_text"] or "",
+    )
 
     # Calculate ATS scores for each job
     scored_jobs = []
     for job in request.jobs:
         job_copy = job.copy()
-        if skills:
-            job_copy["ats_score"] = ats_service.score_resume_to_job(skills, exp_text, job)
+        job_copy.update(ats_service.score_resume_to_job(resume_profile, job))
         scored_jobs.append(job_copy)
 
     # Sort by ATS score
