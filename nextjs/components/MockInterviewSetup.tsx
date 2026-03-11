@@ -73,7 +73,7 @@ export default function MockInterviewSetup({ onStartInterview }: MockInterviewSe
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-slate-600">Loading resumes...</div>
+        <div className="text-slate-400">Loading resumes...</div>
       </div>
     );
   }
@@ -101,7 +101,7 @@ export default function MockInterviewSetup({ onStartInterview }: MockInterviewSe
                   backgroundColor: selectedResume?.resume_id === resume.resume_id ? "#eff6ff" : "white",
                 }}
               >
-                <div className="font-medium text-slate-800">{resume.resume_name}</div>
+                <div className="font-medium text-slate-400">{resume.resume_name}</div>
               </button>
             ))}
           </div>
@@ -137,7 +137,7 @@ export default function MockInterviewSetup({ onStartInterview }: MockInterviewSe
           Select Job Role
         </label>
         {jobsLoading ? (
-          <div className="p-4 text-center text-slate-600 text-sm">
+          <div className="p-4 text-center text-slate-400 text-sm">
             Loading saved jobs...
           </div>
         ) : savedJobs.length === 0 ? (
@@ -156,8 +156,8 @@ export default function MockInterviewSetup({ onStartInterview }: MockInterviewSe
                   backgroundColor: selectedJob === job ? "#eff6ff" : "white",
                 }}
               >
-                <div className="font-medium text-slate-800">{job.job_title}</div>
-                <div className="text-sm text-slate-600">
+                <div className="font-medium text-slate-400">{job.job_title}</div>
+                <div className="text-sm text-slate-400">
                   {job.company && <span>{job.company}</span>}
                   {job.company && job.location && <span> • </span>}
                   {job.location && <span>{job.location}</span>}

@@ -153,8 +153,8 @@ export default function MockInterview({
       {/* Header with Progress */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-slate-800">Interview in Progress</h3>
-          <p className="text-sm text-slate-600">
+          <h3 className="text-lg font-semibold text-slate-500">Interview in Progress</h3>
+          <p className="text-sm font-semibold tracking-tight heading-gradient">
             {roleTitle} • {roleLevel}
           </p>
         </div>
