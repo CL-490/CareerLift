@@ -74,10 +74,19 @@ export async function addJobToGraph(job: Job) {
 
 export async function listResumes(): Promise<Resume[]> {
   const base = getApiBase();
-  const res = await fetch(`${base}/api/resume/list`);
+  const res = await fetch(`${base}/api/resume/list`, { cache: "no-store" });
   if (!res.ok) throw new Error(`Failed to load resumes: ${res.status}`);
   const data = await res.json();
   return data.resumes || [];
+}
+
+export async function deleteResume(resumeId: string): Promise<void> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/resume/${resumeId}`, {
+    method: "DELETE",
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Failed to delete resume: ${res.status}`);
 }
 
 export async function saveJobToResume(resumeId: string, jobUrl: string) {
@@ -92,6 +101,42 @@ export async function saveJobToResume(resumeId: string, jobUrl: string) {
     }),
   });
   if (!res.ok) throw new Error(`Failed to save job to resume: ${res.status}`);
+  return res.json();
+}
+
+export type SavedJobInfo = {
+  job_title: string;
+  company?: string | null;
+  location?: string | null;
+  apply_url: string;
+  source?: string | null;
+  saved_at: string;
+  notes?: string | null;
+  ats_score?: number | null;
+};
+
+export type SavedJobsList = {
+  resume_id: string;
+  resume_name: string;
+  jobs: SavedJobInfo[];
+};
+
+export async function getSavedJobs(resumeId: string): Promise<SavedJobsList> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/resume/saved-jobs/${encodeURIComponent(resumeId)}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Failed to fetch saved jobs: ${res.status}`);
+  return res.json();
+}
+
+export async function removeJobFromResume(resumeId: string, jobUrl: string) {
+  const base = getApiBase();
+  const res = await fetch(
+    `${base}/api/resume/saved-job/${encodeURIComponent(resumeId)}/${encodeURIComponent(jobUrl)}`,
+    { method: "DELETE", cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`Failed to unsave job: ${res.status}`);
   return res.json();
 }
 
