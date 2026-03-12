@@ -7,7 +7,8 @@ WORKDIR /app
 COPY package*.json ./
 
 RUN --mount=type=cache,target=/root/.npm \
-    npm install
+    npm install && \
+    chmod +x node_modules/.bin/*
 
 COPY . .
 
