@@ -39,47 +39,51 @@ export default function CoachCenterPage() {
           Interactive AI career coach: interview prep, skill gap analysis, and tailored growth plans.
         </p>
       </header>
-      <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden">
- 
+       
 
         {/* Scrollable Content Container */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-6 max-w-2xl">
             {/* Interview Simulator Section */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div className="card hover-ring mb-6 card-hue">
               <div className="mb-6">
-                <h2 className="text-lg font-bold text-slate-800 mb-2">Mock Interview</h2>
-                <p className="text-slate-600 text-sm">
-                  Practice for a specific job role with AI-powered feedback
-                </p>
+                <h2 className="text-[20px] font-medium">Mock Interview</h2>
+                <h3 className="text-lg font-semibold text-slate-400 mb-2">Practice for a specific job role with AI-powered feedback</h3>
               </div>
               {!interviewSession ? (
                 <MockInterviewSetup onStartInterview={handleStartInterview} />
               ) : (
                 <MockInterview
+                
                   resumeName={interviewSession.resumeName}
                   roleTitle={interviewSession.roleTitle}
                   roleLevel={interviewSession.roleLevel}
                   onComplete={handleInterviewComplete}
                   onReset={handleResetInterview}
                 />
+                
               )}
             </div>
 
             {/* Placeholder for Future Features */}
             <div className="space-y-4">
-              <div className="bg-slate-100 rounded-lg p-6 opacity-50">
-                <h3 className="text-lg font-semibold text-slate-700 mb-2">Skill Gap Analysis</h3>
-                <p className="text-slate-600 text-sm">Coming soon...</p>
-              </div>
-              <div className="bg-slate-100 rounded-lg p-6 opacity-50">
-                <h3 className="text-lg font-semibold text-slate-700 mb-2">Growth Plans</h3>
-                <p className="text-slate-600 text-sm">Coming soon...</p>
+              <div className="card hover-ring mb-6 card-hue">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-[20px] font-medium">Skill Gap Analysis</h2>
+                  <h3 className="text-lg font-semibold text-slate-700 mb-2">Comnig soon ...</h3>
+                </div>
+            </div>
+            <div className="card hover-ring mb-6 card-hue">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[20px] font-medium">Growth Plans</h2>
+                <h3 className="text-lg font-semibold text-slate-700 mb-2">Comnig soon ...</h3>
               </div>
             </div>
           </div>
         </div>
       </div>
+    
+      
     </main>
   );
 }

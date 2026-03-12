@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { listResumes, getSavedJobs, SavedJobInfo } from "@/lib/jobFinderApi";
+import { listResumes, getSavedJobs, SavedJobInfo, asString } from "@/lib/jobFinderApi";
 import type { Resume } from "@/components/job-finder/types";
 
 const ROLE_LEVELS = ["entry", "mid", "senior"];
@@ -73,7 +73,7 @@ export default function MockInterviewSetup({ onStartInterview }: MockInterviewSe
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-slate-600">Loading resumes...</div>
+        <div className="text-slate-400">Loading resumes...</div>
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default function MockInterviewSetup({ onStartInterview }: MockInterviewSe
     <div className="space-y-6">
       {/* Resume Selection */}
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-3">
+        <label className="block text-sm font-semibold text-slate-400 mb-3">
           Select Resume
         </label>
         {resumes.length === 0 ? (
@@ -90,27 +90,28 @@ export default function MockInterviewSetup({ onStartInterview }: MockInterviewSe
             No resumes found. Please create a resume first.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-2">
+          <select
+            value={selectedResume?.resume_id ?? ""}
+            onChange={(e) => {
+              const resumeId = e.target.value;
+              const resume = resumes.find((r) => r.resume_id === resumeId);
+              setSelectedResume(resume || null);
+            }}
+            className="w-full rounded-lg border border-slate-300 px-4 py-2 bg-white text-slate-800 outline-none hover:opacity-80 focus:border-blue-500 transition-colors"
+          >
+            <option value="">-- Select a resume --</option>
             {resumes.map((resume) => (
-              <button
-                key={resume.resume_id}
-                onClick={() => setSelectedResume(resume)}
-                className="text-left p-4 border-2 rounded-lg transition-all"
-                style={{
-                  borderColor: selectedResume?.resume_id === resume.resume_id ? "#3b82f6" : "#e2e8f0",
-                  backgroundColor: selectedResume?.resume_id === resume.resume_id ? "#eff6ff" : "white",
-                }}
-              >
-                <div className="font-medium text-slate-800">{resume.resume_name}</div>
-              </button>
+              <option key={resume.resume_id} value={resume.resume_id}>
+                {resume.resume_name} ({asString(resume.person_name)})
+              </option>
             ))}
-          </div>
+          </select>
         )}
       </div>
 
       {/* Role Level Selection */}
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-3">
+        <label className="block text-sm font-semibold text-slate-400 mb-3">
           Target Level
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -133,11 +134,11 @@ export default function MockInterviewSetup({ onStartInterview }: MockInterviewSe
 
       {/* Job Role Selection */}
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-3">
+        <label className="block text-sm font-semibold text-slate-400 mb-3">
           Select Job Role
         </label>
         {jobsLoading ? (
-          <div className="p-4 text-center text-slate-600 text-sm">
+          <div className="p-4 text-center text-slate-400 text-sm">
             Loading saved jobs...
           </div>
         ) : savedJobs.length === 0 ? (
@@ -156,8 +157,8 @@ export default function MockInterviewSetup({ onStartInterview }: MockInterviewSe
                   backgroundColor: selectedJob === job ? "#eff6ff" : "white",
                 }}
               >
-                <div className="font-medium text-slate-800">{job.job_title}</div>
-                <div className="text-sm text-slate-600">
+                <div className="font-medium text-slate-400">{job.job_title}</div>
+                <div className="text-sm text-slate-400">
                   {job.company && <span>{job.company}</span>}
                   {job.company && job.location && <span> • </span>}
                   {job.location && <span>{job.location}</span>}
