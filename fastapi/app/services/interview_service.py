@@ -1,9 +1,10 @@
 import uuid
+import logging
 from datetime import datetime
 from typing import Any, List, Optional
 
 from app.services.ats_service import ats_service
-from app.services.llm_service import llm_service
+from app.services.llm_service import LLMOutputError, llm_service
 from app.schemas.interview import (
     InterviewResponse,
     Question,
@@ -13,9 +14,47 @@ from app.schemas.interview import (
     SessionSummary,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class InterviewService:
     MAX_QUESTIONS = 5
+
+    @staticmethod
+    def _build_fallback_question(
+        resume_context: dict[str, Any],
+        job_context: dict[str, Any],
+        asked_questions: list[str],
+    ) -> Question:
+        lower_questions = " ".join(question.lower() for question in asked_questions)
+
+        for skill in job_context.get("required_skills") or []:
+            if skill and skill.lower() not in lower_questions:
+                return Question(
+                    text=(
+                        f"Tell me about a time you used {skill} in your work, and how that experience "
+                        f"would help you succeed in this {job_context.get('title') or 'role'}."
+                    )
+                )
+
+        experiences = resume_context.get("experiences") or []
+        if experiences:
+            latest = experiences[0]
+            title = latest.get("title") or "your most recent role"
+            company = latest.get("company") or "that team"
+            return Question(
+                text=(
+                    f"In {title} at {company}, what project or responsibility best prepared you for "
+                    f"this {job_context.get('title') or 'role'}?"
+                )
+            )
+
+        return Question(
+            text=(
+                f"What makes you a strong fit for the {job_context.get('title') or 'role'}, "
+                "and which part of your background best supports that?"
+            )
+        )
 
     async def _get_resume_context(self, db, resume_id: str) -> dict[str, Any]:
         query = """
@@ -282,12 +321,24 @@ class InterviewService:
             {"question": rec["question"], "answer": rec.get("answer") or ""}
             for rec in records
         ]
-        next_question = await llm_service.generate_interview_question(
-            resume_context=resume_context,
-            role_level=role_level,
-            job_context=job_context,
-            previous_steps=history_steps,
-        )
+        try:
+            next_question = await llm_service.generate_interview_question(
+                resume_context=resume_context,
+                role_level=role_level,
+                job_context=job_context,
+                previous_steps=history_steps,
+            )
+        except LLMOutputError:
+            logger.warning(
+                "Falling back to deterministic interview question for session %s",
+                session_id,
+                exc_info=True,
+            )
+            next_question = self._build_fallback_question(
+                resume_context=resume_context,
+                job_context=job_context,
+                asked_questions=[step["question"] for step in history_steps],
+            )
 
         now_iso = datetime.utcnow().isoformat()
         new_step_query = """

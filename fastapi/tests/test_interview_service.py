@@ -3,7 +3,7 @@ from datetime import datetime
 
 from app.services.interview_service import InterviewService
 from app.services import interview_service
-from app.services.llm_service import llm_service
+from app.services.llm_service import LLMOutputError, llm_service
 from app.schemas.interview import Question, Evaluation, InterviewResponse
 
 
@@ -119,5 +119,47 @@ async def test_start_and_submit():
     resp2: InterviewResponse = await interview_service.submit_answer(db, resp.session_id, "4")
     assert resp2.evaluation.score == 9.0
     assert resp2.next_question.text == "What is 2+2?"
+
+    monkeypatch.undo()
+
+
+@pytest.mark.asyncio
+async def test_submit_uses_fallback_question_when_llm_followup_fails():
+    db = DummyDB()
+
+    async def fake_question(resume_context, role_level, job_context, previous_steps=None):
+        if previous_steps:
+            raise LLMOutputError("LLM request failed")
+        return Question(text="What is 2+2?")
+
+    async def fake_eval(question, answer, role_level, resume_context, job_context):
+        return Evaluation(
+            score=8.0,
+            feedback="Solid answer",
+            rubric={
+                "relevance": 8.0,
+                "clarity": 8.0,
+                "technical_depth": 7.5,
+                "evidence": 7.5,
+                "communication": 8.0,
+            },
+            strengths=["Relevant example"],
+            improvements=["Add more measurable impact"],
+        )
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(llm_service, "generate_interview_question", fake_question)
+    monkeypatch.setattr(llm_service, "evaluate_interview_answer", fake_eval)
+
+    resp = await interview_service.start_session(
+        db,
+        "resume-123",
+        "https://example.com/job",
+        "entry",
+    )
+    resp2 = await interview_service.submit_answer(db, resp.session_id, "4")
+
+    assert resp2.evaluation.score == 8.0
+    assert "Backend Engineer" in resp2.next_question.text or "Python" in resp2.next_question.text
 
     monkeypatch.undo()

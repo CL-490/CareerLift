@@ -37,6 +37,14 @@ class LLMService:
         self.parser = StrOutputParser()
 
     @staticmethod
+    def _truncate_text(value: str | None, limit: int) -> str:
+        """Trim long prompt fields to reduce Ollama failures on oversized context."""
+        text = (value or "").strip()
+        if len(text) <= limit:
+            return text
+        return text[: limit - 3].rstrip() + "..."
+
+    @classmethod
     def _extract_json_payload(response: str) -> Any:
         """Parse JSON directly or recover it from mixed model output."""
         cleaned = response.strip()
@@ -77,7 +85,11 @@ class LLMService:
     ) -> T:
         """Invoke the model and validate a JSON-shaped response."""
         chain = prompt | self.llm | self.parser
-        response = await chain.ainvoke(variables)
+        try:
+            response = await chain.ainvoke(variables)
+        except Exception as exc:
+            logger.exception("Structured LLM invocation failed")
+            raise LLMOutputError("LLM request failed") from exc
 
         try:
             payload = self._extract_json_payload(response)
@@ -218,7 +230,10 @@ class LLMService:
                 title = experience.get("title") or "Untitled role"
                 company = experience.get("company") or "Unknown company"
                 duration = experience.get("duration") or "Unknown duration"
-                description = experience.get("description") or "No description provided"
+                description = LLMService._truncate_text(
+                    experience.get("description") or "No description provided",
+                    220,
+                )
                 lines.append(f"- {title} at {company} ({duration}): {description}")
         else:
             lines.append("Experience: None found in graph")
@@ -248,7 +263,7 @@ class LLMService:
                 "Supplemental raw resume text for union coverage "
                 "(use this for details not present in the graph):"
             )
-            lines.append(raw_resume_text)
+            lines.append(LLMService._truncate_text(raw_resume_text, 1800))
 
         return "\n".join(lines)
 
@@ -303,18 +318,26 @@ class LLMService:
         history_section = ""
         if previous_steps:
             entries = []
-            for step in previous_steps:
-                entries.append(f"Q: {step['question']}\nA: {step['answer']}")
+            for step in previous_steps[-3:]:
+                entries.append(
+                    "Q: "
+                    + self._truncate_text(step["question"], 220)
+                    + "\nA: "
+                    + self._truncate_text(step["answer"], 320)
+                )
             history_section = "Previous Q/A:\n" + "\n".join(entries)
 
         variables = {
             "resume_profile": self._format_resume_context(resume_context),
             "job_title": job_context.get("title") or "Target role",
             "job_company": job_context.get("company") or "Unknown company",
-            "job_description": job_context.get("description") or "No job description available.",
-            "required_skills": ", ".join(job_context.get("required_skills") or []) or "None listed",
-            "preferred_skills": ", ".join(job_context.get("preferred_skills") or []) or "None listed",
-            "responsibility_keywords": ", ".join(job_context.get("responsibility_keywords") or []) or "None listed",
+            "job_description": self._truncate_text(
+                job_context.get("description") or "No job description available.",
+                1800,
+            ),
+            "required_skills": ", ".join((job_context.get("required_skills") or [])[:12]) or "None listed",
+            "preferred_skills": ", ".join((job_context.get("preferred_skills") or [])[:10]) or "None listed",
+            "responsibility_keywords": ", ".join((job_context.get("responsibility_keywords") or [])[:10]) or "None listed",
             "role_level": role_level,
             "history_section": history_section,
         }
@@ -378,14 +401,17 @@ class LLMService:
             {
                 "job_title": job_context.get("title") or "Target role",
                 "job_company": job_context.get("company") or "Unknown company",
-                "job_description": job_context.get("description") or "No job description available.",
-                "required_skills": ", ".join(job_context.get("required_skills") or []) or "None listed",
-                "preferred_skills": ", ".join(job_context.get("preferred_skills") or []) or "None listed",
-                "responsibility_keywords": ", ".join(job_context.get("responsibility_keywords") or []) or "None listed",
+                "job_description": self._truncate_text(
+                    job_context.get("description") or "No job description available.",
+                    1800,
+                ),
+                "required_skills": ", ".join((job_context.get("required_skills") or [])[:12]) or "None listed",
+                "preferred_skills": ", ".join((job_context.get("preferred_skills") or [])[:10]) or "None listed",
+                "responsibility_keywords": ", ".join((job_context.get("responsibility_keywords") or [])[:10]) or "None listed",
                 "role_level": role_level,
                 "resume_profile": self._format_resume_context(resume_context),
-                "question": question,
-                "answer": answer,
+                "question": self._truncate_text(question, 320),
+                "answer": self._truncate_text(answer, 900),
             },
             Evaluation,
         )
