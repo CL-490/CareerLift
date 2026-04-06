@@ -53,7 +53,7 @@ services:
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=password123
       - OLLAMA_URL=http://ollama:11434
-      - OLLAMA_MODEL=${OLLAMA_MODEL}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-gemma4:31b-cloud}
       - OLLAMA_API_KEY=${OLLAMA_API_KEY}
       - USAJOBS_API_KEY=${USAJOBS_API_KEY}
       - USAJOBS_EMAIL=${USAJOBS_EMAIL}

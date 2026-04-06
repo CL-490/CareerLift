@@ -11,6 +11,16 @@ interface OllamaStatusData {
   available_models: string[];
 }
 
+function extractErrorMessage(err: unknown, fallback: string) {
+  if (axios.isAxiosError(err)) {
+    const detail = err.response?.data?.detail;
+    if (typeof detail === "string" && detail.trim()) return detail;
+    if (typeof err.message === "string" && err.message.trim()) return err.message;
+  }
+  if (err instanceof Error && err.message.trim()) return err.message;
+  return fallback;
+}
+
 export default function OllamaStatus() {
   const [status, setStatus] = useState<OllamaStatusData | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -103,6 +113,7 @@ export default function OllamaStatus() {
     setPullingModel(true);
     try {
       await axios.post(`${API_URL}/api/ollama/pull`);
+      setErrorMsg(null);
 
       // Poll status until model becomes available
       const pollInterval = setInterval(async () => {
@@ -128,6 +139,12 @@ export default function OllamaStatus() {
 
     } catch (err) {
       console.error("Failed to pull model:", err);
+      setErrorMsg(
+        extractErrorMessage(
+          err,
+          "Failed to pull the Ollama model."
+        )
+      );
       setPullingModel(false);
     }
   };
@@ -172,6 +189,12 @@ export default function OllamaStatus() {
 
     } catch (err) {
       console.error("Failed to get signin URL:", err);
+      setErrorMsg(
+        extractErrorMessage(
+          err,
+          "Failed to start Ollama sign-in."
+        )
+      );
       // Fallback to existing signin_url if available
       if (status?.signin_url) {
         window.open(status.signin_url, '_blank');

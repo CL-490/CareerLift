@@ -162,7 +162,15 @@ async def pull_model():
         container = _get_ollama_container()
 
         # Get the model name from settings
-        model_name = settings.ollama_model
+        model_name = settings.ollama_model.strip()
+        if not model_name:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "OLLAMA_MODEL is not configured. Set it in your .env file or "
+                    "restart Docker so the compose default is applied."
+                ),
+            )
 
         # Run 'ollama pull <model>' command
         def run_pull():
@@ -185,6 +193,8 @@ async def pull_model():
                 detail=f"Failed to pull model. Exit code: {exit_code}, Output: {stdout}, Error: {stderr}"
             )
 
+    except HTTPException:
+        raise
     except docker.errors.DockerException as e:
         raise HTTPException(status_code=500, detail=f"Docker error: {str(e)}")
     except Exception as e:

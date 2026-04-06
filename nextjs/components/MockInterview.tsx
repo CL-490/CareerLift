@@ -12,7 +12,9 @@ import {
 } from "@/lib/interviewApi";
 
 interface MockInterviewProps {
+  resumeId: string;
   resumeName: string;
+  jobApplyUrl: string;
   roleTitle: string;
   roleLevel: string;
   onComplete?: (summary: SessionSummary) => void;
@@ -22,11 +24,13 @@ interface MockInterviewProps {
 interface Message {
   question?: string;
   answer?: string;
-  evaluation?: string;
+  evaluation?: InterviewEvaluation;
 }
 
 export default function MockInterview({
+  resumeId,
   resumeName,
+  jobApplyUrl,
   roleTitle,
   roleLevel,
   onComplete,
@@ -46,7 +50,7 @@ export default function MockInterview({
     const initializeInterview = async () => {
       try {
         setIsInitializing(true);
-        const response = await startInterview(resumeName, roleLevel);
+        const response = await startInterview(resumeId, jobApplyUrl, roleLevel);
         setSessionId(response.session_id || null);
         if (response.next_question) {
           setCurrentQuestion(response.next_question.text);
@@ -60,7 +64,7 @@ export default function MockInterview({
     };
 
     initializeInterview();
-  }, [resumeName, roleLevel]);
+  }, [resumeId, jobApplyUrl, roleLevel]);
 
   const handleSubmitAnswer = async () => {
     if (!userAnswer.trim() || !sessionId) return;
@@ -75,7 +79,7 @@ export default function MockInterview({
         const lastMessage = updated[updated.length - 1];
         lastMessage.answer = userAnswer;
         if (response.evaluation) {
-          lastMessage.evaluation = response.evaluation.feedback || `Score: ${response.evaluation.score?.toFixed(1) || "N/A"}/10`;
+          lastMessage.evaluation = response.evaluation;
         }
 
         // Add next question if available
@@ -91,8 +95,8 @@ export default function MockInterview({
       // Check if interview is complete
       if (response.session_complete) {
         const sessionData = await getInterviewSession(sessionId);
-        setSummary(sessionData);
-        onComplete?.(sessionData);
+        setSummary(sessionData.summary ?? { steps: [] });
+        onComplete?.(sessionData.summary ?? { steps: [] });
       } else if (response.next_question) {
         setCurrentQuestion(response.next_question.text);
       }
@@ -198,7 +202,13 @@ export default function MockInterview({
             {msg.evaluation && (
               <div className="pl-4 border-l-2 border-blue-500">
                 <p className="text-xs font-semibold text-blue-700 uppercase mb-1">Feedback</p>
-                <p className="text-sm text-slate-700">{msg.evaluation}</p>
+                {msg.evaluation.score !== null && msg.evaluation.score !== undefined && (
+                  <p className="text-xs font-bold text-blue-600 mb-1">
+                    Overall: {msg.evaluation.score.toFixed(1)}/10
+                  </p>
+                )}
+                <p className="text-sm text-slate-700">{msg.evaluation.feedback}</p>
+                <RubricBreakdown evaluation={msg.evaluation} compact />
               </div>
             )}
           </div>
@@ -293,6 +303,7 @@ function InterviewSummary({ summary, onNewInterview }: InterviewSummaryProps) {
                   )}
                 </div>
                 <p className="text-slate-700">{step.evaluation.feedback}</p>
+                <RubricBreakdown evaluation={step.evaluation} />
               </div>
             )}
           </div>
@@ -306,6 +317,66 @@ function InterviewSummary({ summary, onNewInterview }: InterviewSummaryProps) {
       >
         Start New Interview
       </button>
+    </div>
+  );
+}
+
+function RubricBreakdown({
+  evaluation,
+  compact = false,
+}: {
+  evaluation: InterviewEvaluation;
+  compact?: boolean;
+}) {
+  const rubric = evaluation.rubric;
+  const entries = [
+    ["Relevance", rubric?.relevance],
+    ["Clarity", rubric?.clarity],
+    ["Technical", rubric?.technical_depth],
+    ["Evidence", rubric?.evidence],
+    ["Communication", rubric?.communication],
+  ].filter(([, value]) => value !== null && value !== undefined) as Array<[string, number]>;
+
+  if (
+    entries.length === 0 &&
+    (!evaluation.strengths || evaluation.strengths.length === 0) &&
+    (!evaluation.improvements || evaluation.improvements.length === 0)
+  ) {
+    return null;
+  }
+
+  return (
+    <div className={`mt-3 space-y-3 ${compact ? "text-xs" : "text-sm"}`}>
+      {entries.length > 0 && (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {entries.map(([label, value]) => (
+            <div key={label} className="rounded-md bg-slate-50 border border-slate-200 p-2 text-center">
+              <p className="text-[11px] font-semibold uppercase text-slate-500">{label}</p>
+              <p className="text-sm font-bold text-slate-700">{value.toFixed(1)}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {evaluation.strengths && evaluation.strengths.length > 0 && (
+        <div>
+          <p className="text-[11px] font-semibold uppercase text-green-700 mb-1">Strengths</p>
+          <ul className="list-disc list-inside text-slate-700 space-y-1">
+            {evaluation.strengths.map((item, idx) => (
+              <li key={`${item}-${idx}`}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {evaluation.improvements && evaluation.improvements.length > 0 && (
+        <div>
+          <p className="text-[11px] font-semibold uppercase text-amber-700 mb-1">Improve Next</p>
+          <ul className="list-disc list-inside text-slate-700 space-y-1">
+            {evaluation.improvements.map((item, idx) => (
+              <li key={`${item}-${idx}`}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

@@ -7,6 +7,8 @@ import {
   getInterviewSession,
   InterviewResponse,
   SessionSummary,
+  InterviewSession,
+  InterviewEvaluation,
 } from "@/lib/interviewApi";
 
 const STORAGE_KEY = "careerlift:interview";
@@ -14,11 +16,13 @@ const STORAGE_KEY = "careerlift:interview";
 interface Message {
   question?: string;
   answer?: string;
-  evaluation?: string;
+  evaluation?: InterviewEvaluation;
 }
 
 interface PersistedState {
   sessionId?: string;
+  resumeId?: string;
+  jobApplyUrl?: string;
   resumeName?: string;
   roleLevel?: string;
   messages: Message[];
@@ -46,6 +50,8 @@ function savePersisted(state: PersistedState) {
 
 export function useInterview() {
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [resumeId, setResumeId] = useState<string>("");
+  const [jobApplyUrl, setJobApplyUrl] = useState<string>("");
   const [resumeName, setResumeName] = useState<string>("");
   const [roleLevel, setRoleLevel] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -57,6 +63,8 @@ export function useInterview() {
     loadedRef.current = true;
     const p = loadPersisted();
     setSessionId(p.sessionId || null);
+    if (p.resumeId) setResumeId(p.resumeId);
+    if (p.jobApplyUrl) setJobApplyUrl(p.jobApplyUrl);
     if (p.resumeName) setResumeName(p.resumeName);
     if (p.roleLevel) setRoleLevel(p.roleLevel);
     setMessages(p.messages || []);
@@ -64,12 +72,22 @@ export function useInterview() {
   }, []);
 
   useEffect(() => {
-    savePersisted({ sessionId: sessionId || undefined, resumeName, roleLevel, messages, summary: summary || undefined });
-  }, [sessionId, resumeName, roleLevel, messages, summary]);
+    savePersisted({
+      sessionId: sessionId || undefined,
+      resumeId: resumeId || undefined,
+      jobApplyUrl: jobApplyUrl || undefined,
+      resumeName,
+      roleLevel,
+      messages,
+      summary: summary || undefined,
+    });
+  }, [sessionId, resumeId, jobApplyUrl, resumeName, roleLevel, messages, summary]);
 
-  const start = async (name: string, level: string) => {
-    const resp: InterviewResponse = await startInterview(name, level);
+  const start = async (id: string, name: string, applyUrl: string, level: string) => {
+    const resp: InterviewResponse = await startInterview(id, applyUrl, level);
     setSessionId(resp.session_id || null);
+    setResumeId(id);
+    setJobApplyUrl(applyUrl);
     setResumeName(name);
     setRoleLevel(level);
     const msg: Message = {};
@@ -85,8 +103,7 @@ export function useInterview() {
       const copies = [...prev];
       copies[copies.length - 1].answer = text;
       if (resp.evaluation) {
-        copies[copies.length - 1].evaluation =
-          resp.evaluation.feedback || String(resp.evaluation.score || "");
+        copies[copies.length - 1].evaluation = resp.evaluation;
       }
       if (resp.next_question) {
         copies.push({ question: resp.next_question.text });
@@ -95,18 +112,22 @@ export function useInterview() {
     });
     if (resp.session_complete && sessionId) {
       const summaryData = await getInterviewSession(sessionId);
-      setSummary(summaryData);
+      setSummary(summaryData.summary ?? null);
     }
   };
 
   const loadSessionData = async (id: string) => {
-    const data = await getInterviewSession(id);
-    setSummary(data);
+    const data: InterviewSession = await getInterviewSession(id);
+    setSummary(data.summary ?? null);
     setSessionId(id);
+    setResumeId(data.resume_id);
+    setJobApplyUrl(data.job_apply_url);
   };
 
   return {
     sessionId,
+    resumeId,
+    jobApplyUrl,
     resumeName,
     setResumeName,
     roleLevel,

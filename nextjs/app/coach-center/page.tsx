@@ -6,7 +6,9 @@ import { useState } from "react";
 import { SessionSummary } from "@/lib/interviewApi";
 
 interface InterviewSession {
+  resumeId: string;
   resumeName: string;
+  jobApplyUrl: string;
   roleTitle: string;
   roleLevel: string;
 }
@@ -15,8 +17,14 @@ export default function CoachCenterPage() {
   const [interviewSession, setInterviewSession] = useState<InterviewSession | null>(null);
   const [completedSummary, setCompletedSummary] = useState<SessionSummary | null>(null);
 
-  const handleStartInterview = (resumeName: string, roleTitle: string, level: string) => {
-    setInterviewSession({ resumeName, roleTitle, roleLevel: level });
+  const handleStartInterview = (
+    resumeId: string,
+    resumeName: string,
+    jobApplyUrl: string,
+    roleTitle: string,
+    level: string
+  ) => {
+    setInterviewSession({ resumeId, resumeName, jobApplyUrl, roleTitle, roleLevel: level });
     setCompletedSummary(null);
   };
 
@@ -54,8 +62,9 @@ export default function CoachCenterPage() {
                 <MockInterviewSetup onStartInterview={handleStartInterview} />
               ) : (
                 <MockInterview
-                
+                  resumeId={interviewSession.resumeId}
                   resumeName={interviewSession.resumeName}
+                  jobApplyUrl={interviewSession.jobApplyUrl}
                   roleTitle={interviewSession.roleTitle}
                   roleLevel={interviewSession.roleLevel}
                   onComplete={handleInterviewComplete}
