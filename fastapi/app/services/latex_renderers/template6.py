@@ -14,7 +14,7 @@ class Template6Renderer(BaseLatexRenderer):
         # Fix csection: \hrule\\ causes "no line to end" in vertical mode
         tex = tex.replace(
             r"\hrule\\[-0.5cm]",
-            r"\hrule\vspace{-0.5cm}",
+            r"\hrule\vspace{0cm}",
         )
         # Fix: empty \userTagline followed by \\ causes "no line to end"
         tex = tex.replace(
