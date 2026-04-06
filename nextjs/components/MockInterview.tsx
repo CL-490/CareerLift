@@ -24,7 +24,7 @@ interface MockInterviewProps {
 interface Message {
   question?: string;
   answer?: string;
-  evaluation?: string;
+  evaluation?: InterviewEvaluation;
 }
 
 export default function MockInterview({
@@ -79,7 +79,7 @@ export default function MockInterview({
         const lastMessage = updated[updated.length - 1];
         lastMessage.answer = userAnswer;
         if (response.evaluation) {
-          lastMessage.evaluation = response.evaluation.feedback || `Score: ${response.evaluation.score?.toFixed(1) || "N/A"}/10`;
+          lastMessage.evaluation = response.evaluation;
         }
 
         // Add next question if available
@@ -202,7 +202,13 @@ export default function MockInterview({
             {msg.evaluation && (
               <div className="pl-4 border-l-2 border-blue-500">
                 <p className="text-xs font-semibold text-blue-700 uppercase mb-1">Feedback</p>
-                <p className="text-sm text-slate-700">{msg.evaluation}</p>
+                {msg.evaluation.score !== null && msg.evaluation.score !== undefined && (
+                  <p className="text-xs font-bold text-blue-600 mb-1">
+                    Overall: {msg.evaluation.score.toFixed(1)}/10
+                  </p>
+                )}
+                <p className="text-sm text-slate-700">{msg.evaluation.feedback}</p>
+                <RubricBreakdown evaluation={msg.evaluation} compact />
               </div>
             )}
           </div>
@@ -297,6 +303,7 @@ function InterviewSummary({ summary, onNewInterview }: InterviewSummaryProps) {
                   )}
                 </div>
                 <p className="text-slate-700">{step.evaluation.feedback}</p>
+                <RubricBreakdown evaluation={step.evaluation} />
               </div>
             )}
           </div>
@@ -310,6 +317,66 @@ function InterviewSummary({ summary, onNewInterview }: InterviewSummaryProps) {
       >
         Start New Interview
       </button>
+    </div>
+  );
+}
+
+function RubricBreakdown({
+  evaluation,
+  compact = false,
+}: {
+  evaluation: InterviewEvaluation;
+  compact?: boolean;
+}) {
+  const rubric = evaluation.rubric;
+  const entries = [
+    ["Relevance", rubric?.relevance],
+    ["Clarity", rubric?.clarity],
+    ["Technical", rubric?.technical_depth],
+    ["Evidence", rubric?.evidence],
+    ["Communication", rubric?.communication],
+  ].filter(([, value]) => value !== null && value !== undefined) as Array<[string, number]>;
+
+  if (
+    entries.length === 0 &&
+    (!evaluation.strengths || evaluation.strengths.length === 0) &&
+    (!evaluation.improvements || evaluation.improvements.length === 0)
+  ) {
+    return null;
+  }
+
+  return (
+    <div className={`mt-3 space-y-3 ${compact ? "text-xs" : "text-sm"}`}>
+      {entries.length > 0 && (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {entries.map(([label, value]) => (
+            <div key={label} className="rounded-md bg-slate-50 border border-slate-200 p-2 text-center">
+              <p className="text-[11px] font-semibold uppercase text-slate-500">{label}</p>
+              <p className="text-sm font-bold text-slate-700">{value.toFixed(1)}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {evaluation.strengths && evaluation.strengths.length > 0 && (
+        <div>
+          <p className="text-[11px] font-semibold uppercase text-green-700 mb-1">Strengths</p>
+          <ul className="list-disc list-inside text-slate-700 space-y-1">
+            {evaluation.strengths.map((item, idx) => (
+              <li key={`${item}-${idx}`}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {evaluation.improvements && evaluation.improvements.length > 0 && (
+        <div>
+          <p className="text-[11px] font-semibold uppercase text-amber-700 mb-1">Improve Next</p>
+          <ul className="list-disc list-inside text-slate-700 space-y-1">
+            {evaluation.improvements.map((item, idx) => (
+              <li key={`${item}-${idx}`}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

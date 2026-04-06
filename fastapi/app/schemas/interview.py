@@ -15,9 +15,20 @@ class Question(BaseModel):
     difficulty: Optional[str] = None
 
 
+class EvaluationRubric(BaseModel):
+    relevance: Optional[float] = None
+    clarity: Optional[float] = None
+    technical_depth: Optional[float] = None
+    evidence: Optional[float] = None
+    communication: Optional[float] = None
+
+
 class Evaluation(BaseModel):
     score: Optional[float] = None
     feedback: Optional[str] = None
+    rubric: EvaluationRubric = Field(default_factory=EvaluationRubric)
+    strengths: List[str] = Field(default_factory=list)
+    improvements: List[str] = Field(default_factory=list)
 
 
 class InterviewStep(BaseModel):

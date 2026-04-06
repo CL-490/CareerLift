@@ -29,8 +29,32 @@ class DummyDB:
 
     async def run(self, query, **kwargs):
         self.calls.append((query, kwargs))
-        if "MATCH (r:Resume" in query and "RETURN r.id AS resume_id" in query:
-            return DummyResult({"resume_id": "resume-123", "resume_name": "myresume", "text": "dummy resume text"})
+        if "MATCH (r:Resume {id: $resume_id})-[:BELONGS_TO]->(p:Person)" in query:
+            return DummyResult({
+                "resume_id": "resume-123",
+                "resume_name": "myresume",
+                "resume_text": "dummy resume text",
+                "person_name": "Jane Doe",
+                "person_email": "jane@example.com",
+                "person_phone": "555-0100",
+                "person_location": "Remote",
+                "skills": ["Python", "FastAPI"],
+                "experiences": [
+                    {
+                        "title": "Backend Engineer",
+                        "company": "Acme",
+                        "duration": "2023-2025",
+                        "description": "Built APIs and services",
+                    }
+                ],
+                "education": [
+                    {
+                        "degree": "BS Computer Science",
+                        "institution": "State University",
+                        "year": "2023",
+                    }
+                ],
+            })
         if "MATCH (r:Resume {id: $resume_id})-[:SAVED_JOB]->(j:JobPosting" in query:
             return DummyResult({
                 "apply_url": "https://example.com/job",
@@ -51,8 +75,6 @@ class DummyDB:
                 "role_level": "entry",
                 "job_apply_url": "https://example.com/job",
             })
-        if "MATCH (r:Resume {id: $resume_id}) RETURN r.text AS text LIMIT 1" in query:
-            return DummyResult({"text": "dummy resume text"})
         return DummyResult({})
 
 
@@ -60,11 +82,26 @@ class DummyDB:
 async def test_start_and_submit():
     db = DummyDB()
 
-    async def fake_question(resume_text, role_level, job_context, previous_steps=None):
+    async def fake_question(resume_context, role_level, job_context, previous_steps=None):
+        assert resume_context["skills"] == ["Python", "FastAPI"]
+        assert resume_context["experiences"][0]["title"] == "Backend Engineer"
         return Question(text="What is 2+2?")
 
-    async def fake_eval(question, answer, role_level, resume_text, job_context):
-        return Evaluation(score=9.0, feedback="Great")
+    async def fake_eval(question, answer, role_level, resume_context, job_context):
+        assert resume_context["education"][0]["degree"] == "BS Computer Science"
+        return Evaluation(
+            score=9.0,
+            feedback="Great",
+            rubric={
+                "relevance": 9.0,
+                "clarity": 8.5,
+                "technical_depth": 8.0,
+                "evidence": 9.5,
+                "communication": 8.5,
+            },
+            strengths=["Strong example"],
+            improvements=["Add more implementation detail"],
+        )
 
     monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setattr(llm_service, "generate_interview_question", fake_question)

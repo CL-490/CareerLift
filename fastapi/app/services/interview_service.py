@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from app.services.ats_service import ats_service
 from app.services.llm_service import llm_service
@@ -16,6 +16,67 @@ from app.schemas.interview import (
 
 class InterviewService:
     MAX_QUESTIONS = 5
+
+    async def _get_resume_context(self, db, resume_id: str) -> dict[str, Any]:
+        query = """
+        MATCH (r:Resume {id: $resume_id})-[:BELONGS_TO]->(p:Person)
+        OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
+        OPTIONAL MATCH (p)-[:HAS_EXPERIENCE]->(e:Experience)
+        OPTIONAL MATCH (p)-[:HAS_EDUCATION]->(ed:Education)
+        RETURN r.id AS resume_id,
+               r.name AS resume_name,
+               r.text AS resume_text,
+               p.name AS person_name,
+               p.email AS person_email,
+               p.phone AS person_phone,
+               p.location AS person_location,
+               collect(DISTINCT s.name) AS skills,
+               collect(DISTINCT {
+                   title: e.title,
+                   company: e.company,
+                   duration: e.duration,
+                   description: e.description
+               }) AS experiences,
+               collect(DISTINCT {
+                   degree: ed.degree,
+                   institution: ed.institution,
+                   year: ed.year
+               }) AS education
+        LIMIT 1
+        """
+        result = await db.run(query, resume_id=resume_id)
+        record = await result.single()
+        if not record or not record.get("resume_text"):
+            raise ValueError(f"Resume not found for id: {resume_id}")
+
+        skills = [skill for skill in (record.get("skills") or []) if skill]
+        experiences = [
+            experience
+            for experience in (record.get("experiences") or [])
+            if experience and any(experience.values())
+        ]
+        education = [
+            edu
+            for edu in (record.get("education") or [])
+            if edu and any(edu.values())
+        ]
+
+        return {
+            "resume_id": record["resume_id"],
+            "resume_name": record["resume_name"],
+            "resume_text": record["resume_text"],
+            "person": {
+                "name": record.get("person_name"),
+                "email": record.get("person_email"),
+                "phone": record.get("person_phone"),
+                "location": record.get("person_location"),
+            },
+            "skills": skills,
+            "experiences": experiences,
+            "education": education,
+            # Projects are not yet stored in Neo4j; keep the shape explicit.
+            "projects": [],
+        }
 
     async def _get_job_context(self, db, resume_id: str, job_apply_url: str) -> dict:
         query = """
@@ -59,24 +120,14 @@ class InterviewService:
         job_apply_url: str,
         role_level: str,
     ) -> InterviewResponse:
-        # lookup resume text
-        query = """
-        MATCH (r:Resume {id: $resume_id})
-        RETURN r.id AS resume_id, r.name AS resume_name, r.text AS text
-        LIMIT 1
-        """
-        result = await db.run(query, resume_id=resume_id)
-        record = await result.single()
-        if not record or not record.get("text"):
-            raise ValueError(f"Resume not found for id: {resume_id}")
-        resolved_resume_id = record["resume_id"]
-        resume_name = record["resume_name"]
-        resume_text = record["text"]
+        resume_context = await self._get_resume_context(db, resume_id)
+        resolved_resume_id = resume_context["resume_id"]
+        resume_name = resume_context["resume_name"]
         job_context = await self._get_job_context(db, resolved_resume_id, job_apply_url)
 
         # ask LLM for first question
         question = await llm_service.generate_interview_question(
-            resume_text=resume_text,
+            resume_context=resume_context,
             role_level=role_level,
             job_context=job_context,
             previous_steps=None,
@@ -136,7 +187,18 @@ class InterviewService:
     ) -> InterviewResponse:
         history_query = """
         MATCH (s:InterviewSession {session_id: $session_id})-[:HAS_STEP]->(st:InterviewStep)
-        RETURN st.question AS question, st.answer AS answer, st.evaluation_score AS score, st.evaluation_feedback AS feedback, st.timestamp AS ts
+        RETURN st.question AS question,
+               st.answer AS answer,
+               st.evaluation_score AS score,
+               st.evaluation_feedback AS feedback,
+               st.evaluation_relevance AS relevance,
+               st.evaluation_clarity AS clarity,
+               st.evaluation_technical_depth AS technical_depth,
+               st.evaluation_evidence AS evidence,
+               st.evaluation_communication AS communication,
+               st.evaluation_strengths AS strengths,
+               st.evaluation_improvements AS improvements,
+               st.timestamp AS ts
         ORDER BY st.timestamp ASC
         """
         result = await db.run(history_query, session_id=session_id)
@@ -164,19 +226,14 @@ class InterviewService:
         role_level = meta["role_level"]
         job_apply_url = meta["job_apply_url"]
 
-        text_res = await db.run(
-            "MATCH (r:Resume {id: $resume_id}) RETURN r.text AS text LIMIT 1",
-            resume_id=resume_id,
-        )
-        text_record = await text_res.single()
-        resume_text = text_record["text"] if text_record else ""
+        resume_context = await self._get_resume_context(db, resume_id)
         job_context = await self._get_job_context(db, resume_id, job_apply_url)
 
         evaluation = await llm_service.evaluate_interview_answer(
             question_text,
             answer,
             role_level=role_level,
-            resume_text=resume_text,
+            resume_context=resume_context,
             job_context=job_context,
         )
 
@@ -185,7 +242,14 @@ class InterviewService:
         WHERE st.timestamp = $last_ts
         SET st.answer = $answer,
             st.evaluation_score = $score,
-            st.evaluation_feedback = $feedback
+            st.evaluation_feedback = $feedback,
+            st.evaluation_relevance = $relevance,
+            st.evaluation_clarity = $clarity,
+            st.evaluation_technical_depth = $technical_depth,
+            st.evaluation_evidence = $evidence,
+            st.evaluation_communication = $communication,
+            st.evaluation_strengths = $strengths,
+            st.evaluation_improvements = $improvements
         """
         await db.run(
             update_query,
@@ -194,6 +258,13 @@ class InterviewService:
             answer=answer,
             score=evaluation.score,
             feedback=evaluation.feedback,
+            relevance=evaluation.rubric.relevance,
+            clarity=evaluation.rubric.clarity,
+            technical_depth=evaluation.rubric.technical_depth,
+            evidence=evaluation.rubric.evidence,
+            communication=evaluation.rubric.communication,
+            strengths=evaluation.strengths,
+            improvements=evaluation.improvements,
         )
 
         count = len(records)
@@ -212,7 +283,7 @@ class InterviewService:
             for rec in records
         ]
         next_question = await llm_service.generate_interview_question(
-            resume_text=resume_text,
+            resume_context=resume_context,
             role_level=role_level,
             job_context=job_context,
             previous_steps=history_steps,
@@ -263,6 +334,15 @@ class InterviewService:
                     evaluation=Evaluation(
                         score=st.get("evaluation_score"),
                         feedback=st.get("evaluation_feedback"),
+                        rubric={
+                            "relevance": st.get("evaluation_relevance"),
+                            "clarity": st.get("evaluation_clarity"),
+                            "technical_depth": st.get("evaluation_technical_depth"),
+                            "evidence": st.get("evaluation_evidence"),
+                            "communication": st.get("evaluation_communication"),
+                        },
+                        strengths=st.get("evaluation_strengths") or [],
+                        improvements=st.get("evaluation_improvements") or [],
                     )
                     if st.get("evaluation_score") is not None
                     else None,
@@ -306,7 +386,17 @@ class InterviewService:
     async def _build_summary(self, db, session_id: str) -> SessionSummary:
         history_query = """
         MATCH (s:InterviewSession {session_id: $session_id})-[:HAS_STEP]->(st:InterviewStep)
-        RETURN st.question AS question, st.answer AS answer, st.evaluation_score AS score, st.evaluation_feedback AS feedback
+        RETURN st.question AS question,
+               st.answer AS answer,
+               st.evaluation_score AS score,
+               st.evaluation_feedback AS feedback,
+               st.evaluation_relevance AS relevance,
+               st.evaluation_clarity AS clarity,
+               st.evaluation_technical_depth AS technical_depth,
+               st.evaluation_evidence AS evidence,
+               st.evaluation_communication AS communication,
+               st.evaluation_strengths AS strengths,
+               st.evaluation_improvements AS improvements
         ORDER BY st.timestamp ASC
         """
         res = await db.run(history_query, session_id=session_id)
@@ -318,7 +408,19 @@ class InterviewService:
             eval_obj = None
             score = rec.get("score")
             if score is not None:
-                eval_obj = Evaluation(score=score, feedback=rec.get("feedback"))
+                eval_obj = Evaluation(
+                    score=score,
+                    feedback=rec.get("feedback"),
+                    rubric={
+                        "relevance": rec.get("relevance"),
+                        "clarity": rec.get("clarity"),
+                        "technical_depth": rec.get("technical_depth"),
+                        "evidence": rec.get("evidence"),
+                        "communication": rec.get("communication"),
+                    },
+                    strengths=rec.get("strengths") or [],
+                    improvements=rec.get("improvements") or [],
+                )
                 total += score
                 count += 1
             steps.append(

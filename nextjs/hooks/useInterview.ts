@@ -8,6 +8,7 @@ import {
   InterviewResponse,
   SessionSummary,
   InterviewSession,
+  InterviewEvaluation,
 } from "@/lib/interviewApi";
 
 const STORAGE_KEY = "careerlift:interview";
@@ -15,7 +16,7 @@ const STORAGE_KEY = "careerlift:interview";
 interface Message {
   question?: string;
   answer?: string;
-  evaluation?: string;
+  evaluation?: InterviewEvaluation;
 }
 
 interface PersistedState {
@@ -102,8 +103,7 @@ export function useInterview() {
       const copies = [...prev];
       copies[copies.length - 1].answer = text;
       if (resp.evaluation) {
-        copies[copies.length - 1].evaluation =
-          resp.evaluation.feedback || String(resp.evaluation.score || "");
+        copies[copies.length - 1].evaluation = resp.evaluation;
       }
       if (resp.next_question) {
         copies.push({ question: resp.next_question.text });

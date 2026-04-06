@@ -7,6 +7,15 @@ export type InterviewQuestion = {
 export type InterviewEvaluation = {
   score?: number | null;
   feedback?: string | null;
+  rubric?: {
+    relevance?: number | null;
+    clarity?: number | null;
+    technical_depth?: number | null;
+    evidence?: number | null;
+    communication?: number | null;
+  };
+  strengths?: string[];
+  improvements?: string[];
 };
 
 export type InterviewResponse = {

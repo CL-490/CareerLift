@@ -29,7 +29,19 @@ def test_start_interview_endpoint(monkeypatch):
 def test_respond_interview_endpoint(monkeypatch):
     dummy_resp = InterviewResponse(
         next_question=Question(text="Next?"),
-        evaluation=Evaluation(score=7.5, feedback="Good answer"),
+        evaluation=Evaluation(
+            score=7.5,
+            feedback="Good answer",
+            rubric={
+                "relevance": 8.0,
+                "clarity": 7.0,
+                "technical_depth": 7.5,
+                "evidence": 7.0,
+                "communication": 8.0,
+            },
+            strengths=["Clear framing"],
+            improvements=["Add more evidence"],
+        ),
         session_id="sess123"
     )
     monkeypatch.setattr(interview_service, "submit_answer", lambda db, sid, ans: dummy_resp)
@@ -38,6 +50,7 @@ def test_respond_interview_endpoint(monkeypatch):
     assert response.status_code == 200
     body = response.json()
     assert body["evaluation"]["score"] == 7.5
+    assert body["evaluation"]["rubric"]["relevance"] == 8.0
     assert body["next_question"]["text"] == "Next?"
 
 
