@@ -9,7 +9,7 @@ import {
   createEmptyResumeData,
   asString,
 } from "@/lib/resumeDataMapper";
-import { deleteResume } from "@/lib/jobFinderApi";
+import { deleteResume, listResumes } from "@/lib/jobFinderApi";
 import { useAutoCompile } from "@/hooks/useAutoCompile";
 import TemplateSelector from "@/components/resume-builder/TemplateSelector";
 import PdfViewer from "@/components/resume-builder/PdfViewer";
@@ -100,17 +100,70 @@ export default function ResumeLabPage() {
       .catch(() => {});
   }, [API_URL]);
 
-  // Load saved resumeData from localStorage
+  // Load cached data from localStorage synchronously, then validate against backend
   useEffect(() => {
+    type SavedResume = {
+      filename: string;
+      text_length: number;
+      graph_data: GraphData;
+      nodes_created?: number;
+      person_name?: string;
+      resume_name?: string;
+      resume_id?: string;
+      storedAt?: number;
+    };
+
+    // Synchronous load to avoid layout shift
+    let saved: SavedResume | null = null;
     try {
-      const raw = localStorage.getItem("careerlift:resumeBuilder");
+      const raw = localStorage.getItem("careerlift:lastResume");
       if (raw) {
-        const parsed = JSON.parse(raw) as ResumeData;
-        if (parsed && parsed.person) {
-          setResumeData(parsed);
+        const parsed = JSON.parse(raw) as SavedResume;
+        if (parsed?.graph_data?.person) {
+          saved = parsed;
+          setResult({
+            message: "Loaded from previous upload",
+            filename: parsed.filename,
+            text_length: parsed.text_length,
+            nodes_created: parsed.nodes_created ?? 0,
+            graph_data: parsed.graph_data,
+            resume_id: parsed.resume_id,
+          });
+          if (parsed.person_name) setPersonNameInput(asString(parsed.person_name));
+          if (parsed.resume_name) setResumeNameInput(asString(parsed.resume_name));
         }
       }
     } catch (_) {}
+
+    try {
+      const builderRaw = localStorage.getItem("careerlift:resumeBuilder");
+      if (builderRaw) {
+        const parsed = JSON.parse(builderRaw) as ResumeData;
+        if (parsed?.person) setResumeData(parsed);
+      } else if (saved) {
+        setResumeData(graphDataToResumeData(saved.graph_data));
+      }
+    } catch (_) {}
+
+    // Async validation — clear if backend no longer has the resume
+    if (saved) {
+      const s = saved;
+      listResumes()
+        .then((backendResumes) => {
+          const exists = backendResumes.some(
+            (r) => r.resume_id === s.resume_id || r.person_name === s.graph_data.person.name
+          );
+          if (!exists) {
+            localStorage.removeItem("careerlift:lastResume");
+            localStorage.removeItem("careerlift:resumeBuilder");
+            setResult(null);
+            setResumeData(null);
+            setPersonNameInput("");
+            setResumeNameInput("Default Resume");
+          }
+        })
+        .catch(() => {});
+    }
   }, []);
 
   // Persist resumeData to localStorage (debounced)
@@ -126,46 +179,6 @@ export default function ResumeLabPage() {
       } catch (_) {}
     }, 500);
   }, [resumeData]);
-
-  // Load the last uploaded resume (if any) so navigating back from dashboard shows data
-  useEffect(() => {
-    try {
-      const raw =
-        typeof window !== "undefined"
-          ? localStorage.getItem("careerlift:lastResume")
-          : null;
-      if (!raw) return;
-      const saved = JSON.parse(raw) as {
-        filename: string;
-        text_length: number;
-        graph_data: GraphData;
-        nodes_created?: number;
-        person_name?: string;
-        resume_name?: string;
-        resume_id?: string;
-        storedAt?: number;
-      };
-      if (saved && saved.graph_data && saved.graph_data.person) {
-        const reconstructed: UploadResult = {
-          message: "Loaded from previous upload",
-          filename: saved.filename,
-          text_length: saved.text_length,
-          nodes_created: saved.nodes_created ?? 0,
-          graph_data: saved.graph_data,
-          resume_id: saved.resume_id,
-        };
-        setResult(reconstructed);
-        if (saved.person_name)
-          setPersonNameInput(asString(saved.person_name));
-        if (saved.resume_name)
-          setResumeNameInput(asString(saved.resume_name));
-        // Auto-populate resume data if not already loaded
-        if (!localStorage.getItem("careerlift:resumeBuilder")) {
-          setResumeData(graphDataToResumeData(saved.graph_data));
-        }
-      }
-    } catch (_) {}
-  }, []);
 
   // Listen for updates from other parts of the app
   useEffect(() => {
@@ -406,7 +419,7 @@ export default function ResumeLabPage() {
   };
 
   return (
-    <div className={`mx-auto pt-4 ${builderActive ? "max-w-400" : "max-w-4xl"}`}>
+    <div className="mx-auto max-w-400">
       <h1 className="text-[40px] font-semibold tracking-tight heading-gradient mb-6">
         Resume Lab
       </h1>

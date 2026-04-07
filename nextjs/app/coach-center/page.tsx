@@ -38,20 +38,18 @@ export default function CoachCenterPage() {
   };
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10">
-      <header className="mb-8">
-        <h1 className="mb-6 text-[40px] font-semibold tracking-tight heading-gradient">
-          Coach Center
-        </h1>
-        <p className="text-sm text-muted">
-          Interactive AI career coach: interview prep, skill gap analysis, and tailored growth plans.
-        </p>
-      </header>
+    <main className="mx-auto max-w-400">
+      <h1 className="text-[40px] font-semibold tracking-tight heading-gradient mb-2">
+        Coach Center
+      </h1>
+      <p className="text-[15px] text-muted mb-6">
+        Interactive AI career coach: interview prep, skill gap analysis, and tailored growth plans.
+      </p>
        
 
         {/* Scrollable Content Container */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-6 max-w-2xl">
+          <div className="p-6">
             {/* Interview Simulator Section */}
             <div className="card hover-ring mb-6 card-hue">
               <div className="mb-6">

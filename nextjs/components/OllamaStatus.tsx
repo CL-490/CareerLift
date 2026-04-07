@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
 interface OllamaStatusData {
@@ -29,19 +29,24 @@ export default function OllamaStatus() {
   const [pullingModel, setPullingModel] = useState(false);
   const [waitingForSignin, setWaitingForSignin] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const modalDismissedRef = useRef(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 30000); // Refresh every 30 seconds
+    const interval = setInterval(fetchStatus, 30000);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    // Auto-show modal when signin is required
-    if (status?.signin_required && status?.signin_url && !restarting) {
+    // Auto-show modal once per page load when signin is required
+    if (status?.signin_required && status?.signin_url && !restarting && !modalDismissedRef.current) {
       setShowSigninModal(true);
+    }
+    // Clear dismissed flag when signin is no longer required (successful auth)
+    if (status && !status.signin_required) {
+      modalDismissedRef.current = false;
     }
   }, [status, restarting]);
 
@@ -204,6 +209,7 @@ export default function OllamaStatus() {
 
   const handleCloseModal = () => {
     setShowSigninModal(false);
+    modalDismissedRef.current = true;
   };
 
   if (!status) {

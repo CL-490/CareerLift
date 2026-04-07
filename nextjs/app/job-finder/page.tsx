@@ -41,16 +41,14 @@ export default function JobFinderPage() {
   } = useJobFinder();
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10">
-      <header className="mb-8">
-        <h1 className="mb-6 text-[40px] font-semibold tracking-tight heading-gradient">
-          Job Finder
-        </h1>
-        <p className="text-sm text-muted">
-          Browse job postings from multiple sources with ATS scoring based on
-          your selected resume.
-        </p>
-      </header>
+    <main className="mx-auto max-w-400">
+      <h1 className="text-[40px] font-semibold tracking-tight heading-gradient mb-2">
+        Job Finder
+      </h1>
+      <p className="text-[15px] text-muted mb-6">
+        Browse job postings from multiple sources with ATS scoring based on
+        your selected resume.
+      </p>
 
       <ResumeSelector
         availableResumes={availableResumes}
