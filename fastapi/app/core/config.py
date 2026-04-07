@@ -24,14 +24,12 @@ class Settings(BaseSettings):
 
     # Neo4j
     neo4j_uri: str = "bolt://localhost:7687"
-    neo4j_user: str = "neo4j"
-    neo4j_password: str = "password123"
+    neo4j_user: str = ""
+    neo4j_password: str = ""
 
     # Ollama
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "gemma4:31b-cloud"
-    ollama_api_key: str = ""
-
     # CORS
     cors_origins: list[str] = [
         "http://localhost:3000",

@@ -21,7 +21,6 @@ class KnowledgeGraphService:
     def __init__(self):
         self.ollama_url = settings.ollama_url
         self.model = settings.ollama_model
-        self.api_key = getattr(settings, 'ollama_api_key', None)
 
     async def transform_resume_to_graph(self, resume_text: str) -> Dict[str, Any]:
         """
@@ -44,10 +43,6 @@ Resume:
 Return JSON with this exact structure:
 {{"person": {{"name": "...", "email": "...", "phone": "...", "location": "..."}}, "skills": [...], "experiences": [{{"title": "...", "company": "...", "duration": "...", "description": "..."}}], "education": [{{"degree": "...", "institution": "...", "year": "..."}}]}}"""
 
-        headers = {}
-        if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
-
         async with httpx.AsyncClient(timeout=180.0) as client:
             try:
                 response = await client.post(
@@ -57,7 +52,6 @@ Return JSON with this exact structure:
                         "prompt": prompt,
                         "stream": False
                     },
-                    headers=headers
                 )
                 response.raise_for_status()
                 result = response.json()
