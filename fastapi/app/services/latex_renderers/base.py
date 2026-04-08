@@ -39,7 +39,7 @@ class BaseLatexRenderer(ABC):
     def _read_template(self) -> str:
         """Read the original .tex template file."""
         import os
-        template_path = os.path.join("/app/latex", self.template_file)
+        template_path = os.path.join("/latex", self.template_file)
         # Fallback for local development
         if not os.path.exists(template_path):
             base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))

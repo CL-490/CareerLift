@@ -15,8 +15,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     build-essential \
     curl
 
-# Install Tectonic (LaTeX compiler)
-RUN curl -sSL https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%400.15.0/tectonic-0.15.0-x86_64-unknown-linux-gnu.tar.gz \
+ARG TARGETARCH
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+      TECTONIC_ARCH="aarch64-unknown-linux-musl"; \
+    else \
+      TECTONIC_ARCH="x86_64-unknown-linux-gnu"; \
+    fi && \
+    curl -sSL "https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%400.15.0/tectonic-0.15.0-${TECTONIC_ARCH}.tar.gz" \
     -o /tmp/tectonic.tar.gz \
     && tar xz -C /usr/local/bin/ -f /tmp/tectonic.tar.gz \
     && rm /tmp/tectonic.tar.gz

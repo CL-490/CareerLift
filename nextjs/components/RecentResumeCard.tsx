@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { listResumes } from "@/lib/jobFinderApi";
 
 type Person = {
   name: string;
@@ -49,16 +50,33 @@ export default function RecentResumeCard() {
   const [resume, setResume] = React.useState<LastResume | null>(null);
 
   React.useEffect(() => {
+    // Load from localStorage synchronously to avoid layout shift
+    let cached: LastResume | null = null;
     try {
       const raw = localStorage.getItem("careerlift:lastResume");
-      if (!raw) return;
-      const parsed: LastResume = JSON.parse(raw);
-      // Basic validation
-      if (parsed && parsed.graph_data && parsed.graph_data.person) {
-        setResume(parsed);
+      if (raw) {
+        const parsed: LastResume = JSON.parse(raw);
+        if (parsed?.graph_data?.person) {
+          cached = parsed;
+          setResume(parsed);
+        }
       }
-    } catch (_) {
-      // ignore parse errors
+    } catch (_) {}
+
+    // Then validate against backend — clear if stale
+    if (cached) {
+      listResumes()
+        .then((backendResumes) => {
+          const exists = backendResumes.some(
+            (r) => r.resume_id === (cached as any).resume_id || r.person_name === cached!.graph_data.person.name
+          );
+          if (!exists) {
+            localStorage.removeItem("careerlift:lastResume");
+            localStorage.removeItem("careerlift:resumeBuilder");
+            setResume(null);
+          }
+        })
+        .catch(() => {});
     }
   }, []);
 

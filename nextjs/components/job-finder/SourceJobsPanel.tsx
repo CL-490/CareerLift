@@ -21,6 +21,15 @@ interface SourceJobsPanelProps {
   onAddToGraph: (job: Job) => void;
   onUnsave: (job: Job) => void;
   onUnsaveAll: (sourceKey: string) => void;
+  onSaveToApplications: (job: {
+                        id: string;
+                        title: string;
+                        company: string;
+                        salary?: string;
+                        url?: string;
+                        source: string;
+                      }) => void;
+                      isAlreadyApplied: (id: string) => boolean;
 }
 
 export default function SourceJobsPanel({
@@ -40,6 +49,8 @@ export default function SourceJobsPanel({
   onAddToGraph,
   onUnsave,
   onUnsaveAll,
+  onSaveToApplications,
+  isAlreadyApplied,
 }: SourceJobsPanelProps) {
   const savedJobsInSource = jobs.filter(
     (j) => addedToGraph.has(j.apply_url || j.source_url || "")
@@ -124,7 +135,8 @@ export default function SourceJobsPanel({
               const isAddingToGraph = addingToGraph.has(jobUrl);
               const isRemovingFromGraph = removingFromGraph.has(jobUrl);
               const isScoring = scoringJobs.has(jobKey);
-
+              const jobId = job.source_job_id ?? `${job.title}-${job.company}`;
+              const isSavedToApplications = isAlreadyApplied(jobId);
               return (
                 <li
                   key={jobKey}
@@ -209,21 +221,32 @@ export default function SourceJobsPanel({
                     >
                       {isScoring ? "Scoring..." : "Calculate ATS"}
                     </button>
-                    {isAddedToGraph ? (
+
+                     {isSavedToApplications ? (
                       <button
                         onClick={() => onUnsave(job)}
-                        disabled={isRemovingFromGraph}
-                        className="jf-btn px-2 py-1 border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50"
+                        disabled = {isRemovingFromGraph}
+                        className="jf-btn px-2 py-1 border border-red-500/30 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50"
                       >
                         {isRemovingFromGraph ? "Unsaving..." : "Unsave ✕"}
                       </button>
                     ) : (
                       <button
-                        onClick={() => onAddToGraph(job)}
+                        onClick={() => {
+                          onAddToGraph(job);
+                          onSaveToApplications({
+                            id: jobId,
+                            title: job.title,
+                            company: job.company ?? "",
+                            salary: job.salary_text ?? undefined,
+                            url: jobUrl,
+                            source: source.key,
+                          });
+                        }}
                         disabled={isAddingToGraph}
                         className="jf-btn jf-btn-primary px-2 py-1"
                       >
-                        {isAddingToGraph ? "Adding..." : "Save to Knowledge Graph"}
+                        {isAddingToGraph ? "Adding..." : "Save to Applications"}
                       </button>
                     )}
                   </div>
