@@ -91,16 +91,63 @@ export default function SkillGapAnalysisComponent({ resumeId }: SkillGapAnalysis
     );
   }
 
-  if (error || !data) {
+  if (error) {
+    const isNoJobs = error.toLowerCase().includes("no saved jobs") || error.includes("400");
+    if (isNoJobs) {
+      return (
+        <div className="flex items-center gap-3 rounded-lg border border-(--border-color) p-4">
+          <div className="text-2xl">📊</div>
+          <div>
+            <p className="font-medium">No saved jobs to analyze</p>
+            <p className="text-sm text-muted">
+              Save some jobs from the Job Finder to see your skill gap analysis here.
+            </p>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex items-center gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4">
         <div className="text-2xl">⚠️</div>
         <div>
           <p className="font-medium text-red-400">Unable to load analysis</p>
-          <p className="text-sm text-red-300">
-            {error || "No data available. Make sure you have saved jobs."}
-          </p>
+          <p className="text-sm text-red-300">{error}</p>
         </div>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const noSkillsExtracted =
+    data.skill_analysis.matched_skills.length === 0 &&
+    data.skill_analysis.missing_required_skills.length === 0 &&
+    data.skill_analysis.missing_preferred_skills.length === 0 &&
+    data.skill_analysis.all_job_skills.length === 0;
+
+  if (noSkillsExtracted) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 rounded-lg border border-(--border-color) p-4">
+          <div className="text-2xl">📊</div>
+          <div>
+            <p className="font-medium">Not enough data for skill analysis</p>
+            <p className="text-sm text-muted">
+              Your saved jobs have brief descriptions without specific skill requirements.
+              Save jobs with detailed descriptions (common in tech/engineering postings) for a meaningful analysis.
+            </p>
+          </div>
+        </div>
+        {data.recommendations.length > 0 && (
+          <div className="rounded-lg border border-(--border-color) p-4">
+            <h4 className="font-medium mb-2">General Recommendations</h4>
+            <ul className="space-y-2 text-sm text-muted">
+              {data.recommendations.map((rec, idx) => (
+                <li key={idx}>{rec}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     );
   }

@@ -473,6 +473,7 @@ class ATSScoringService:
                 "reasoning": reasoning,
                 "confidence": confidence,
                 "job_requirements": {
+                    "all_skills": sorted(set(requirements["all_skills"])),
                     "required_skills": sorted(required_skills),
                     "preferred_skills": sorted(preferred_skills),
                     "seniority": job_seniority,

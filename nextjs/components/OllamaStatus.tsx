@@ -230,7 +230,7 @@ export default function OllamaStatus() {
     if (restarting || waitingForSignin || pullingModel) return "bg-blue-500";
     if (status.signin_required) return "bg-yellow-500";
     if (!status.model_available) return "bg-red-500";
-    return "bg-green-500";
+    return "bg-(--accent)";
   };
 
   const getStatusIcon = () => {
@@ -305,8 +305,8 @@ export default function OllamaStatus() {
 
       {/* Status Icon */}
       <div
-        className="fixed bottom-4 right-4 z-50 cursor-pointer"
-        onClick={handleRestart}
+        className={`fixed bottom-4 right-4 z-50 ${status.signin_required || !status.model_available ? "cursor-pointer" : ""}`}
+        onClick={status.signin_required || !status.model_available ? handleRestart : undefined}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
@@ -327,10 +327,10 @@ export default function OllamaStatus() {
                 <div className="text-yellow-300 text-[11px]">⚠ Authentication required</div>
               )}
               {!waitingForSignin && !pullingModel && !status.signin_required && status.model_available && (
-                <div className="text-green-300 text-[11px]">✓ Ready</div>
+                <div className="text-(--accent) text-[11px]">Ready</div>
               )}
               {!waitingForSignin && !pullingModel && !status.model_available && !status.signin_required && (
-                <div className="text-red-300 text-[11px]">⚠ Model not available</div>
+                <div className="text-red-300 text-[11px]">Model not available</div>
               )}
               {restarting ? (
                 <div className="mt-1 text-gray-400 text-[10px]">Getting signin URL...</div>
@@ -338,9 +338,9 @@ export default function OllamaStatus() {
                 <div className="mt-1 text-gray-400 text-[10px]">Complete signin in browser</div>
               ) : pullingModel ? (
                 <div className="mt-1 text-gray-400 text-[10px]">Please wait...</div>
-              ) : (
+              ) : status.signin_required ? (
                 <div className="mt-1 text-gray-400 text-[10px]">Click to sign in</div>
-              )}
+              ) : null}
               {errorMsg && (
                 <>
                   <div className="mt-2 text-red-400 text-[11px]">{errorMsg}</div>
