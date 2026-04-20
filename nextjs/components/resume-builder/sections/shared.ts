@@ -1,8 +1,8 @@
 export const inputClass =
-  "w-full p-2 bg-[var(--input-bg)] rounded-lg border border-[var(--input-border)] text-[14px] placeholder:text-muted/50 focus:border-blue-500/50 focus:outline-none";
+  "form-control w-full rounded-lg p-2 text-[14px]";
 
 export const textareaClass =
-  "w-full p-2 bg-[var(--input-bg)] rounded-lg border border-[var(--input-border)] text-[14px] placeholder:text-muted/50 focus:border-blue-500/50 focus:outline-none resize-y min-h-[60px]";
+  "form-control min-h-[60px] w-full resize-y rounded-lg p-2 text-[14px]";
 
 export const addBtnClass =
   "text-[12px] text-blue-400 hover:text-blue-300 font-medium";

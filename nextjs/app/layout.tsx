@@ -28,11 +28,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased app-bg`} suppressHydrationWarning>
-        <div className="min-h-screen flex">
-          <Sidebar />
-          <div className="flex-1 min-w-0 px-10 py-12 fade-in"><PreferencesProvider>{children}</PreferencesProvider></div>
-        </div>
-        <OllamaStatus />
+        <PreferencesProvider>
+          <div className="min-h-screen lg:flex">
+            <Sidebar />
+            <div className="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-12 fade-in">
+              {children}
+            </div>
+          </div>
+          <OllamaStatus />
+        </PreferencesProvider>
       </body>
     </html>
   );

@@ -48,14 +48,14 @@
   }\mbox{}\\[5pt]
   \centering{\color{headings}\fontsize{11pt}{14pt}\selectfont #3}
   \noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}
-  \vspace{-15pt}
+  \vspace{4pt}
 }
 
 \titlespacing{\section}{0pt}{0pt}{0pt}
 \titleformat{\section}{\color{headings}\scshape\sffamily\fontsize{16pt}{24pt}\selectfont\raggedright\uppercase}{}{0em}{}
 \titleformat{\subsection}{\color{subheadings}\sffamily\bfseries\fontsize{12pt}{12pt}\selectfont\uppercase}{}{0em}{}
-\titlespacing{\subsection}{0pt}{\parskip}{-\parskip}
-\titlespacing{\subsubsection}{0pt}{\parskip}{-\parskip}
+\titlespacing{\subsection}{0pt}{0.4em}{0.2em}
+\titlespacing{\subsubsection}{0pt}{0.3em}{0.15em}
 
 \newcommand{\runsubsection}[1]{\color{subheadings}\sffamily\bfseries\fontsize{12pt}{12pt}\selectfont\uppercase{#1}\normalfont}
 \newcommand{\descript}[1]{\color{subheadings}\raggedright\sffamily\fontsize{11pt}{13pt}\selectfont #1\\ \normalfont}
@@ -63,8 +63,8 @@
 \newcommand{\sectionsep}{\vspace{8pt}}
 
 \newenvironment{tightemize}{%
-  \vspace{-\topsep}\begin{itemize}\itemsep1pt \parskip0pt \parsep0pt%
-}{\end{itemize}\vspace{-\topsep}}
+  \begin{itemize}\itemsep1pt \parskip0pt \parsep0pt%
+}{\end{itemize}\vspace{2pt}}
 
 \setlist[itemize]{leftmargin=*,nosep}
 

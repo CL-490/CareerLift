@@ -292,8 +292,6 @@ export default function KnowledgeGraph({ graphData, personName, apiUrl = (typeof
                 {selectedNode.properties?.apply_url && (
                   <a className="inline-block mb-2 text-xs px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white" href={asString(selectedNode.properties.apply_url)} target="_blank" rel="noopener noreferrer">Open job URL</a>
                 )}
-                {/* Open Neo4j Browser */}
-                <a className="inline-block text-xs px-3 py-1 rounded-lg border border-[var(--border-strong)] hover:border-[var(--border-color)] text-muted" href="http://localhost:7474" target="_blank" rel="noopener noreferrer">Open Neo4j Browser</a>
               </div>
             </div>
           )}

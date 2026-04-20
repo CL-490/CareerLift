@@ -1,98 +1,67 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import dynamic from "next/dynamic";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import type { ResumeData, TemplateInfo } from "@/types/resume";
-import {
-  graphDataToResumeData,
-  createEmptyResumeData,
-  asString,
-} from "@/lib/resumeDataMapper";
-import { deleteResume, listResumes } from "@/lib/jobFinderApi";
+import EditStep from "@/components/resume-lab/EditStep";
+import GraphStep from "@/components/resume-lab/GraphStep";
+import PreviewStep from "@/components/resume-lab/PreviewStep";
+import ResumeLabHeader from "@/components/resume-lab/ResumeLabHeader";
+import ResumeLabStepper from "@/components/resume-lab/ResumeLabStepper";
+import UploadStep from "@/components/resume-lab/UploadStep";
+import type {
+  GraphData,
+  ResumeLabStep,
+  ResumeLabStepId,
+  UploadResult,
+} from "@/components/resume-lab/types";
 import { useAutoCompile } from "@/hooks/useAutoCompile";
-import TemplateSelector from "@/components/resume-builder/TemplateSelector";
-import PdfViewer from "@/components/resume-builder/PdfViewer";
-import ResumeEditor from "@/components/resume-builder/ResumeEditor";
-
-interface GraphData {
-  person: {
-    name: string;
-    email?: string;
-    phone?: string;
-    location?: string;
-    summary?: string;
-  };
-  skills: Array<string>;
-  experiences: Array<{
-    title: string;
-    company: string;
-    duration?: string;
-    description?: string;
-  }>;
-  education: Array<{
-    degree: string;
-    institution: string;
-    year?: string;
-  }>;
-  saved_jobs?: Array<{
-    title?: any;
-    company?: any;
-    apply_url?: string;
-    description?: any;
-  }>;
-  resumes?: Array<{
-    id?: string;
-    name?: any;
-    resume_id?: string;
-  }>;
-}
-
-interface UploadResult {
-  message: string;
-  filename: string;
-  text_length: number;
-  nodes_created: number;
-  graph_data: GraphData;
-  person_name?: string;
-  resume_name?: string;
-  resume_id?: string;
-}
+import { deleteResume, listResumes } from "@/lib/jobFinderApi";
+import {
+  asString,
+  createEmptyResumeData,
+  graphDataToResumeData,
+} from "@/lib/resumeDataMapper";
+import type { ResumeData, TemplateInfo } from "@/types/resume";
 
 export default function ResumeLabPage() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showGraph, setShowGraph] = useState(true);
   const [dragActive, setDragActive] = useState(false);
-  const [personNameInput, setPersonNameInput] = useState<string>("");
-  const [resumeNameInput, setResumeNameInput] = useState<string>(
-    "Default Resume"
-  );
+  const [personNameInput, setPersonNameInput] = useState("");
+  const [resumeNameInput, setResumeNameInput] = useState("Default Resume");
+  const [activeStep, setActiveStep] = useState<ResumeLabStepId>("upload");
 
-  // Resume builder state
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [templates, setTemplates] = useState<TemplateInfo[]>([]);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const [downloadingPdf, setDownloadingPdf] = useState(false);
 
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const seededInitialStepRef = useRef(false);
+
   const allowedExtensions = [".txt", ".md", ".pdf", ".doc", ".docx"];
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  // Auto-compile hook
-  const { previewImageUrl, pageCount, currentPage, compiling, compileError, isRecompiling, triggerCompile, goToPage, lastCompileTime } =
-    useAutoCompile({ resumeData, selectedTemplate, apiUrl: API_URL, debounceMs: 1500 });
+  const {
+    previewImageUrl,
+    pageCount,
+    currentPage,
+    compiling,
+    compileError,
+    isRecompiling,
+    triggerCompile,
+    goToPage,
+    lastCompileTime,
+  } = useAutoCompile({
+    resumeData,
+    selectedTemplate,
+    apiUrl: API_URL,
+    debounceMs: 1500,
+  });
 
-  // Whether the builder (editor + PDF) is active
-  const builderActive =
-    !!resumeData && !!selectedTemplate && selectedTemplate !== "uploaded";
-
-  // Fetch templates on mount
   useEffect(() => {
     axios
       .get<TemplateInfo[]>(`${API_URL}/api/latex/templates`)
@@ -100,7 +69,6 @@ export default function ResumeLabPage() {
       .catch(() => {});
   }, [API_URL]);
 
-  // Load cached data from localStorage synchronously, then validate against backend
   useEffect(() => {
     type SavedResume = {
       filename: string;
@@ -113,7 +81,6 @@ export default function ResumeLabPage() {
       storedAt?: number;
     };
 
-    // Synchronous load to avoid layout shift
     let saved: SavedResume | null = null;
     try {
       const raw = localStorage.getItem("careerlift:lastResume");
@@ -145,14 +112,16 @@ export default function ResumeLabPage() {
       }
     } catch (_) {}
 
-    // Async validation — clear if backend no longer has the resume
     if (saved) {
-      const s = saved;
+      const snapshot = saved;
       listResumes()
         .then((backendResumes) => {
           const exists = backendResumes.some(
-            (r) => r.resume_id === s.resume_id || r.person_name === s.graph_data.person.name
+            (resume) =>
+              resume.resume_id === snapshot.resume_id ||
+              resume.person_name === snapshot.graph_data.person.name
           );
+
           if (!exists) {
             localStorage.removeItem("careerlift:lastResume");
             localStorage.removeItem("careerlift:resumeBuilder");
@@ -160,34 +129,59 @@ export default function ResumeLabPage() {
             setResumeData(null);
             setPersonNameInput("");
             setResumeNameInput("Default Resume");
+            seededInitialStepRef.current = false;
           }
         })
         .catch(() => {});
     }
   }, []);
 
-  // Persist resumeData to localStorage (debounced)
   useEffect(() => {
     if (!resumeData) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
+
     debounceRef.current = setTimeout(() => {
       try {
-        localStorage.setItem(
-          "careerlift:resumeBuilder",
-          JSON.stringify(resumeData)
-        );
+        localStorage.setItem("careerlift:resumeBuilder", JSON.stringify(resumeData));
       } catch (_) {}
     }, 500);
   }, [resumeData]);
 
-  // Listen for updates from other parts of the app
+  useEffect(() => {
+    if (!seededInitialStepRef.current && (result || resumeData)) {
+      setActiveStep("edit");
+      seededInitialStepRef.current = true;
+    }
+
+    if (!result && !resumeData) {
+      setActiveStep("upload");
+    }
+  }, [result, resumeData]);
+
+  useEffect(() => {
+    return () => {
+      if (uploadedFileUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(uploadedFileUrl);
+      }
+    };
+  }, [uploadedFileUrl]);
+
   useEffect(() => {
     const onResumeUpdated = async () => {
       try {
         const raw = localStorage.getItem("careerlift:lastResume");
         if (!raw) return;
-        const saved = JSON.parse(raw);
-        if (saved && saved.graph_data && saved.graph_data.person) {
+
+        const saved = JSON.parse(raw) as {
+          filename: string;
+          text_length: number;
+          graph_data: GraphData;
+          nodes_created?: number;
+          person_name?: string;
+          resume_name?: string;
+        };
+
+        if (saved?.graph_data?.person) {
           setResult({
             message: "Loaded from previous upload",
             filename: saved.filename,
@@ -197,6 +191,7 @@ export default function ResumeLabPage() {
             person_name: asString(saved.person_name),
             resume_name: asString(saved.resume_name),
           });
+          setResumeData((current) => current ?? graphDataToResumeData(saved.graph_data));
         }
       } catch (_) {}
     };
@@ -225,7 +220,7 @@ export default function ResumeLabPage() {
     };
   }, []);
 
-  const handleDrag = (e: React.DragEvent) => {
+  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
@@ -235,7 +230,7 @@ export default function ResumeLabPage() {
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -246,7 +241,7 @@ export default function ResumeLabPage() {
   };
 
   const handleFileChange = (selectedFile: File) => {
-    const fileExt = "." + selectedFile.name.split(".").pop()?.toLowerCase();
+    const fileExt = `.${selectedFile.name.split(".").pop()?.toLowerCase()}`;
 
     if (!allowedExtensions.includes(fileExt || "")) {
       setError(
@@ -256,14 +251,16 @@ export default function ResumeLabPage() {
       return;
     }
 
+    if (uploadedFileUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(uploadedFileUrl);
+    }
+
     setFile(selectedFile);
     setError(null);
     setResult(null);
 
-    // Create URL for PDF preview if it's a PDF
     if (fileExt === ".pdf") {
-      const url = URL.createObjectURL(selectedFile);
-      setUploadedFileUrl(url);
+      setUploadedFileUrl(URL.createObjectURL(selectedFile));
     } else {
       setUploadedFileUrl(null);
     }
@@ -277,10 +274,10 @@ export default function ResumeLabPage() {
 
     const formData = new FormData();
     formData.append("file", file);
-    if (personNameInput && personNameInput.trim().length > 0) {
+    if (personNameInput.trim().length > 0) {
       formData.append("person_name", personNameInput.trim());
     }
-    if (resumeNameInput && resumeNameInput.trim().length > 0) {
+    if (resumeNameInput.trim().length > 0) {
       formData.append("resume_name", resumeNameInput.trim());
     }
 
@@ -296,19 +293,21 @@ export default function ResumeLabPage() {
       );
 
       setResult(response.data);
+
       if (
         (!personNameInput || personNameInput.trim().length === 0) &&
         response.data.graph_data?.person?.name
       ) {
         setPersonNameInput(response.data.graph_data.person.name);
       }
+
       if (
         (!resumeNameInput || resumeNameInput.trim().length === 0) &&
         response.data.resume_name
       ) {
         setResumeNameInput(response.data.resume_name);
       }
-      // Persist for dashboard
+
       try {
         const payload = {
           filename: response.data.filename,
@@ -316,26 +315,19 @@ export default function ResumeLabPage() {
           graph_data: response.data.graph_data,
           nodes_created: response.data.nodes_created,
           person_name:
-            personNameInput ||
-            response.data.graph_data.person?.name ||
-            "",
+            personNameInput || response.data.graph_data.person?.name || "",
           resume_name: resumeNameInput || response.data.filename,
           resume_id: response.data.resume_id,
           storedAt: Date.now(),
         };
-        if (typeof window !== "undefined") {
-          localStorage.setItem(
-            "careerlift:lastResume",
-            JSON.stringify(payload)
-          );
-        }
+
+        localStorage.setItem("careerlift:lastResume", JSON.stringify(payload));
       } catch (_) {}
 
-      // Auto-populate resume builder from extracted data
-      const mapped = graphDataToResumeData(response.data.graph_data);
-      setResumeData(mapped);
-
+      setResumeData(graphDataToResumeData(response.data.graph_data));
       setFile(null);
+      setActiveStep("edit");
+      seededInitialStepRef.current = true;
     } catch (err: any) {
       const errorDetail = err.response?.data?.detail;
       if (typeof errorDetail === "object") {
@@ -345,9 +337,7 @@ export default function ResumeLabPage() {
             "Failed to process resume. Please try again."
         );
       } else {
-        setError(
-          errorDetail || "Failed to process resume. Please try again."
-        );
+        setError(errorDetail || "Failed to process resume. Please try again.");
       }
     } finally {
       setUploading(false);
@@ -355,16 +345,21 @@ export default function ResumeLabPage() {
   };
 
   const handleDownloadPdf = async () => {
-    if (!resumeData || !selectedTemplate || selectedTemplate === "uploaded") return;
+    if (!resumeData || !selectedTemplate || selectedTemplate === "uploaded") {
+      return;
+    }
+
     setDownloadingPdf(true);
     try {
-      // responseType blob returns a Blob; declare the generic so TS knows it
       const response = await axios.post<Blob>(
         `${API_URL}/api/latex/compile`,
         { template_id: selectedTemplate, resume_data: resumeData },
         { responseType: "blob" }
       );
-      const blob = new Blob([response.data as BlobPart], { type: "application/pdf" });
+
+      const blob = new Blob([response.data as BlobPart], {
+        type: "application/pdf",
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -373,8 +368,8 @@ export default function ResumeLabPage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch (err: any) {
-      // Silently fail -- user can retry
+    } catch (_) {
+      // Silently fail and let the user retry.
     } finally {
       setDownloadingPdf(false);
     }
@@ -382,488 +377,166 @@ export default function ResumeLabPage() {
 
   const handleTemplateSelect = (id: string) => {
     setSelectedTemplate(id);
-    // Initialize empty resume data if none exists
-    if (!resumeData) {
+
+    if (!resumeData && id !== "uploaded") {
       setResumeData(createEmptyResumeData());
     }
-    // Trigger immediate compile for LaTeX templates
+
     if (id !== "uploaded") {
-      // Use setTimeout(0) so the state update settles before triggerCompile reads refs
       setTimeout(() => triggerCompile(), 0);
     }
   };
 
-  const selectedTemplateInfo =
-    templates.find((t) => t.id === selectedTemplate) || null;
-
   const clearResume = async () => {
-    // Delete from the backend so it no longer appears in the resume dropdown.
     const resumeId = result?.resume_id;
     if (resumeId) {
       try {
         await deleteResume(resumeId);
-      } catch (_) {
-        // Still clear locally even if the backend call fails.
-      }
+      } catch (_) {}
     }
+
     try {
       localStorage.removeItem("careerlift:lastResume");
       localStorage.removeItem("careerlift:resumeBuilder");
     } catch (_) {}
+
+    if (uploadedFileUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(uploadedFileUrl);
+    }
+
     setResult(null);
     setFile(null);
     setError(null);
     setResumeData(null);
     setSelectedTemplate(null);
     setUploadedFileUrl(null);
+    setPersonNameInput("");
+    setResumeNameInput("Default Resume");
+    setActiveStep("upload");
+    seededInitialStepRef.current = false;
+  };
+
+  const selectedTemplateInfo =
+    templates.find((template) => template.id === selectedTemplate) || null;
+
+  const previewEnabled = Boolean(
+    previewImageUrl || (selectedTemplate === "uploaded" && uploadedFileUrl)
+  );
+  const editEnabled = Boolean(result || resumeData);
+  const graphEnabled = Boolean(result);
+
+  const steps: ResumeLabStep[] = [
+    {
+      id: "upload",
+      label: "Upload",
+      description: "Import a resume and keep raw details out of the main flow.",
+      enabled: true,
+      complete: Boolean(result || resumeData),
+    },
+    {
+      id: "edit",
+      label: "Edit",
+      description: "Choose a template and refine content with a compact preview.",
+      enabled: editEnabled,
+      complete: Boolean(selectedTemplate),
+    },
+    {
+      id: "preview",
+      label: "Preview",
+      description: "Review the output at full size before downloading.",
+      enabled: previewEnabled,
+      complete: previewEnabled,
+    },
+    {
+      id: "graph",
+      label: "Graph",
+      description: "Inspect the relationship map without crowding the editor.",
+      enabled: graphEnabled,
+      complete: graphEnabled,
+    },
+  ];
+
+  const handleStepChange = (step: ResumeLabStepId) => {
+    const targetStep = steps.find((item) => item.id === step);
+    if (targetStep?.enabled) {
+      setActiveStep(step);
+    }
   };
 
   return (
     <div className="mx-auto max-w-400">
-      <h1 className="text-[40px] font-semibold tracking-tight heading-gradient mb-6">
-        Resume Lab
-      </h1>
+      <ResumeLabHeader
+        canClear={Boolean(result || resumeData)}
+        onClear={clearResume}
+      />
 
-      {/* Upload Section */}
-      <div className="card hover-ring mb-6 card-hue">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[20px] font-medium">Upload Resume</h2>
-          {result && (
-            <button
-              onClick={clearResume}
-              className="text-[13px] text-muted hover:text-foreground underline-offset-2 hover:underline"
-              type="button"
-              title="Clear saved resume"
-            >
-              Clear resume
-            </button>
-          )}
-        </div>
-        <p className="text-muted text-[14px] mb-4">
-          Upload your resume to extract and visualize your career information
-          as a knowledge graph.
-        </p>
+      <ResumeLabStepper
+        steps={steps}
+        activeStep={activeStep}
+        onStepChange={handleStepChange}
+      />
 
-        <div
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-            dragActive
-              ? "border-blue-500 bg-blue-500/10"
-              : "border-(--input-border) hover:border-(--border-color)"
-          }`}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
+      {activeStep === "upload" && (
+        <UploadStep
+          file={file}
+          uploading={uploading}
+          error={error}
+          result={result}
+          dragActive={dragActive}
+          allowedExtensions={allowedExtensions}
+          personNameInput={personNameInput}
+          resumeNameInput={resumeNameInput}
+          onPersonNameChange={setPersonNameInput}
+          onResumeNameChange={setResumeNameInput}
+          onDrag={handleDrag}
           onDrop={handleDrop}
-        >
-          <div className="flex flex-col items-center gap-4">
-            <svg
-              className="w-12 h-12 text-muted"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-              />
-            </svg>
-
-            <div>
-              <label className="cursor-pointer">
-                <span className="text-blue-400 hover:text-blue-300 font-medium">
-                  Click to upload
-                </span>
-                <span className="text-muted"> or drag and drop</span>
-                <input
-                  type="file"
-                  className="hidden"
-                  accept={allowedExtensions.join(",")}
-                  onChange={(e) =>
-                    e.target.files?.[0] &&
-                    handleFileChange(e.target.files[0])
-                  }
-                />
-              </label>
-            </div>
-
-            <div className="w-full mt-2">
-              <input
-                type="text"
-                className="w-full p-2 bg-(--input-bg) rounded-lg border border-(--input-border)"
-                placeholder="Person name (optional, leave blank to use extracted name)"
-                value={personNameInput}
-                onChange={(e) => setPersonNameInput(e.target.value)}
-              />
-              <input
-                type="text"
-                className="w-full mt-2 p-2 bg-(--input-bg) rounded-lg border border-(--input-border)"
-                placeholder="Resume name"
-                value={resumeNameInput}
-                onChange={(e) => setResumeNameInput(e.target.value)}
-              />
-            </div>
-
-            <p className="text-[13px] text-muted">
-              Supported formats: TXT, MD, PDF, DOC, DOCX
-            </p>
-
-            {file && (
-              <div className="mt-2 text-[14px] text-green-400">
-                Selected: {file.name}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {error && (
-          <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-[14px]">
-            {error}
-          </div>
-        )}
-
-        {file && !uploading && (
-          <button
-            onClick={handleUpload}
-            className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
-          >
-            Process Resume
-          </button>
-        )}
-
-        {uploading && (
-          <div className="mt-4 text-center text-muted text-[14px]">
-            Processing your resume...
-          </div>
-        )}
-      </div>
-
-      {/* Template Selector */}
-      {templates.length > 0 && (
-        <TemplateSelector
-          templates={templates}
-          selected={selectedTemplate}
-          onSelect={handleTemplateSelect}
-          hasUploadedFile={!!uploadedFileUrl}
-          resumeData={resumeData}
+          onFileSelect={handleFileChange}
+          onUpload={handleUpload}
+          onContinue={() => setActiveStep("edit")}
         />
       )}
 
-      {/* Builder: side-by-side on xl, stacked below */}
-      {builderActive ? (
-        <div className="flex flex-col xl:flex-row gap-6">
-          {/* Editor panel - narrow single column */}
-          <div className="xl:w-105 xl:shrink-0">
-            <ResumeEditor
-              data={resumeData!}
-              onChange={setResumeData}
-              onCompile={triggerCompile}
-              compiling={compiling}
-              compileError={compileError}
-              selectedTemplate={selectedTemplateInfo}
-              lastCompileTime={lastCompileTime}
-            />
-          </div>
-
-          {/* PDF panel - takes remaining space, sticky + scrollable on xl */}
-          <div className="flex-1 min-w-0 xl:sticky xl:top-6 xl:self-start xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto styled-scrollbar">
-            <PdfViewer
-              previewImageUrl={previewImageUrl}
-              pageCount={pageCount}
-              currentPage={currentPage}
-              uploadedFileUrl={uploadedFileUrl}
-              showUploaded={false}
-              isRecompiling={isRecompiling}
-              onDownloadPdf={handleDownloadPdf}
-              downloadingPdf={downloadingPdf}
-              onPageChange={goToPage}
-            />
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Show uploaded PDF viewer when "uploaded" template is selected */}
-          {selectedTemplate === "uploaded" && uploadedFileUrl && (
-            <PdfViewer
-              previewImageUrl={null}
-              uploadedFileUrl={uploadedFileUrl}
-              showUploaded={true}
-            />
-          )}
-
-          {/* Show editor without side-by-side when no template or uploaded template */}
-          {resumeData && selectedTemplate && selectedTemplate !== "uploaded" && (
-            <ResumeEditor
-              data={resumeData}
-              onChange={setResumeData}
-              onCompile={triggerCompile}
-              compiling={compiling}
-              compileError={compileError}
-              selectedTemplate={selectedTemplateInfo}
-              lastCompileTime={lastCompileTime}
-            />
-          )}
-        </>
+      {activeStep === "edit" && (
+        <EditStep
+          result={result}
+          resumeData={resumeData}
+          templates={templates}
+          selectedTemplate={selectedTemplate}
+          selectedTemplateInfo={selectedTemplateInfo}
+          uploadedFileUrl={uploadedFileUrl}
+          previewImageUrl={previewImageUrl}
+          pageCount={pageCount}
+          currentPage={currentPage}
+          compiling={compiling}
+          compileError={compileError}
+          isRecompiling={isRecompiling}
+          lastCompileTime={lastCompileTime}
+          downloadingPdf={downloadingPdf}
+          onTemplateSelect={handleTemplateSelect}
+          onResumeChange={(data) => setResumeData(data)}
+          onCompile={triggerCompile}
+          onDownloadPdf={handleDownloadPdf}
+          onPageChange={goToPage}
+        />
       )}
 
-      {/* Results Section */}
-      {result && (
-        <div className="card hover-ring card-hue">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[20px] font-medium">Processing Results</h2>
-            <button
-              onClick={clearResume}
-              className="text-[13px] text-muted hover:text-foreground underline-offset-2 hover:underline"
-              type="button"
-              title="Clear saved resume"
-            >
-              Clear resume
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="panel-tinted p-4 rounded-lg">
-                <p className="text-[13px] text-muted mb-1">File</p>
-                <p className="text-[15px] font-medium">
-                  {result.filename}
-                </p>
-              </div>
-              <div className="panel-tinted p-4 rounded-lg">
-                <p className="text-[13px] text-muted mb-1">
-                  Text Extracted
-                </p>
-                <p className="text-[15px] font-medium">
-                  {result.text_length.toLocaleString()} characters
-                </p>
-              </div>
-              <div className="panel-tinted p-4 rounded-lg">
-                <p className="text-[13px] text-muted mb-1">
-                  Nodes Created
-                </p>
-                <p className="text-[15px] font-medium">
-                  {result.nodes_created}
-                </p>
-              </div>
-              <div className="panel-tinted p-4 rounded-lg">
-                <p className="text-[13px] text-muted mb-1">Status</p>
-                <p className="text-[15px] font-medium text-green-400">
-                  Success
-                </p>
-              </div>
-            </div>
-
-            {/* Person Info */}
-            <div className="mt-6">
-              <h3 className="text-[16px] font-medium mb-3">Person</h3>
-              <div className="panel-tinted p-4 rounded-lg">
-                <p className="text-[18px] font-semibold mb-2">
-                  {result.graph_data.person.name}
-                </p>
-                {result.graph_data.person.email && (
-                  <p className="text-[14px] text-muted">
-                    Email: {result.graph_data.person.email}
-                  </p>
-                )}
-                {result.graph_data.person.phone && (
-                  <p className="text-[14px] text-muted">
-                    Phone: {result.graph_data.person.phone}
-                  </p>
-                )}
-                {result.graph_data.person.location && (
-                  <p className="text-[14px] text-muted">
-                    Location: {result.graph_data.person.location}
-                  </p>
-                )}
-                {result.graph_data.person.summary && (
-                  <p className="text-[14px] text-muted mt-2">
-                    {result.graph_data.person.summary}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Skills */}
-            {result.graph_data.skills.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-[16px] font-medium mb-3">
-                  Skills ({result.graph_data.skills.length})
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {result.graph_data.skills.map((skill, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-block px-2 py-1 bg-(--accent)/20 text-(--accent) border border-(--accent) rounded text-[13px]"
-                    >
-                      {asString(skill)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Experience */}
-            {result.graph_data.experiences.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-[16px] font-medium mb-3">
-                  Experience ({result.graph_data.experiences.length})
-                </h3>
-                <div className="space-y-3">
-                  {result.graph_data.experiences.map((exp, idx) => (
-                    <div
-                      key={idx}
-                      className="panel-tinted p-4 rounded-lg"
-                    >
-                      <p className="text-[15px] font-medium">
-                        {asString(exp.title)}
-                      </p>
-                      <p className="text-[14px] text-blue-400">
-                        {asString(exp.company)}
-                      </p>
-                      {exp.duration && (
-                        <p className="text-[13px] text-muted mt-1">
-                          {exp.duration}
-                        </p>
-                      )}
-                      {exp.description && (
-                        <p className="text-[13px] text-muted mt-2">
-                          {exp.description}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Education */}
-            {result.graph_data.education.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-[16px] font-medium mb-3">
-                  Education ({result.graph_data.education.length})
-                </h3>
-                <div className="space-y-3">
-                  {result.graph_data.education.map((edu, idx) => (
-                    <div
-                      key={idx}
-                      className="panel-tinted p-4 rounded-lg"
-                    >
-                      <p className="text-[15px] font-medium">
-                        {asString(edu.degree)}
-                      </p>
-                      <p className="text-[14px] text-blue-400">
-                        {asString(edu.institution)}
-                      </p>
-                      {edu.year && (
-                        <p className="text-[13px] text-muted mt-1">
-                          {edu.year}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Saved Jobs */}
-            {result.graph_data.saved_jobs &&
-              result.graph_data.saved_jobs.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-[16px] font-medium mb-3">
-                    Saved Jobs ({result.graph_data.saved_jobs.length})
-                  </h3>
-                  <div className="space-y-3">
-                    {result.graph_data.saved_jobs.map((job, idx) => (
-                      <div
-                        key={idx}
-                        className="panel-tinted p-4 rounded-lg"
-                      >
-                        <p className="text-[15px] font-medium">
-                          {asString(job.title) ||
-                            asString(job.company) ||
-                            "Job"}
-                        </p>
-                        {job.company && (
-                          <p className="text-[14px] text-blue-400">
-                            {asString(job.company)}
-                          </p>
-                        )}
-                        {job.apply_url && (
-                          <a
-                            className="text-[13px] text-muted"
-                            href={asString(job.apply_url)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Open job
-                          </a>
-                        )}
-                        {job.description && (
-                          <p className="text-[13px] text-muted mt-2">
-                            {job.description}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-            <div className="mt-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-[14px]">
-              Knowledge graph created successfully. View it in Neo4j
-              Browser at{" "}
-              <a
-                href="http://localhost:7474"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-green-300"
-              >
-                localhost:7474
-              </a>
-            </div>
-
-            {/* Graph visualization toggle */}
-            <div className="mt-4 flex gap-3 items-center">
-              <label className="flex items-center gap-2 text-[14px]">
-                <input
-                  type="checkbox"
-                  checked={showGraph}
-                  onChange={() => setShowGraph((s) => !s)}
-                  className="w-4 h-4"
-                />
-                <span className="text-[13px] text-muted">
-                  Show interactive knowledge graph
-                </span>
-              </label>
-            </div>
-          </div>
-        </div>
+      {activeStep === "preview" && (
+        <PreviewStep
+          result={result}
+          selectedTemplate={selectedTemplate}
+          selectedTemplateInfo={selectedTemplateInfo}
+          previewImageUrl={previewImageUrl}
+          pageCount={pageCount}
+          currentPage={currentPage}
+          uploadedFileUrl={uploadedFileUrl}
+          isRecompiling={isRecompiling}
+          downloadingPdf={downloadingPdf}
+          onDownloadPdf={handleDownloadPdf}
+          onPageChange={goToPage}
+        />
       )}
 
-      {/* Render graph visualization */}
-      {result && showGraph && (
-        <div className="card hover-ring card-hue mt-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[20px] font-medium">Knowledge Graph</h2>
-          </div>
-          <div className="p-4">
-            <DynamicKnowledgeGraph graphData={result.graph_data} />
-          </div>
-        </div>
-      )}
+      {activeStep === "graph" && <GraphStep result={result} />}
     </div>
   );
 }
-
-// Props for the lazily loaded knowledge graph (mirror of component interface)
-type KGProps = { graphData?: GraphData | null; personName?: string; apiUrl?: string };
-
-// Dynamic import for client-side-only visualization component
-const DynamicKnowledgeGraph = dynamic<KGProps>(
-  () =>
-    import("../../components/KnowledgeGraph").then(
-      (mod) => mod.default as React.ComponentType<KGProps>
-    ),
-  { ssr: false }
-);

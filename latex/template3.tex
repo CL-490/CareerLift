@@ -51,8 +51,8 @@
 \setlength{\tabcolsep}{0in}
 
 \titleformat{\section}{
-  \vspace{-4pt}\scshape\raggedright\large
-}{}{0em}{}[\color{black}\titlerule \vspace{-7pt}]
+  \vspace{4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{2pt}]
 
 %========================
 % Original helper commands (kept)
@@ -68,7 +68,7 @@
     \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
         \textbf{#1},\hspace{0.3mm}#2 & \textit{\small{#3}} 
     \end{tabular*}
-    \vspace{-2mm}
+    \vspace{0.5mm}
 }
 
 \newcommand{\resumeSubheading}[4]{%
@@ -77,7 +77,7 @@
         \textbf{#1} & \textit{\footnotesize{#4}} \\
         \textit{\footnotesize{#3}} &  \footnotesize{#2}\\
     \end{tabular*}
-    \vspace{-2.4mm}
+    \vspace{0.5mm}
 }
 
 \newcommand{\resumeProject}[4]{%
@@ -86,10 +86,10 @@
         \textbf{#1} & \textit{\footnotesize{#3}} \\
         \footnotesize{\textit{#2}} & \footnotesize{#4}
     \end{tabular*}
-    \vspace{-2.4mm}
+    \vspace{0.5mm}
 }
 
-\newcommand{\resumeSubItem}[2]{\resumeItem{#1}{#2}\vspace{-4pt}}
+\newcommand{\resumeSubItem}[2]{\resumeItem{#1}{#2}\vspace{0pt}}
 
 \renewcommand{\labelitemi}{$\vcenter{\hbox{\tiny$\bullet$}}$}
 
@@ -97,16 +97,16 @@
 \newcommand{\resumeHeadingSkillStart}{\begin{itemize}[leftmargin=*,itemsep=1.7mm, rightmargin=2ex]}
 \newcommand{\resumeItemListStart}{\begin{justify}\begin{itemize}[leftmargin=3ex, rightmargin=2ex, noitemsep,labelsep=1.2mm,itemsep=0mm]\small}
 
-\newcommand{\resumeSubHeadingListEnd}{\end{itemize}\vspace{2mm}}
-\newcommand{\resumeHeadingSkillEnd}{\end{itemize}\vspace{-2mm}}
-\newcommand{\resumeItemListEnd}{\end{itemize}\end{justify}\vspace{-2mm}}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}\vspace{1mm}}
+\newcommand{\resumeHeadingSkillEnd}{\end{itemize}\vspace{1mm}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\end{justify}\vspace{1mm}}
 
 \newcommand{\cvsection}[1]{%
 \vspace{2mm}
 \begin{tcolorbox}
     \textbf{\large #1}
 \end{tcolorbox}
-\vspace{-4mm}
+\vspace{1mm}
 }
 
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}%
@@ -238,7 +238,7 @@
 \end{tabularx}
 }
 
-\vspace{-2mm}
+\vspace{2mm}
 
 %----------- EDUCATION ----------
 \section{\textbf{Education}}
@@ -251,21 +251,21 @@
   \EducationTableRows
 \end{tabularx}%
 }
-\vspace{-1mm}
+\vspace{2mm}
 
 %----------- EXPERIENCE ----------
 \section{\textbf{Experience}}
 \resumeSubHeadingListStart
   \ExperienceList
 \resumeSubHeadingListEnd
-\vspace{-6.5mm}
+\vspace{2mm}
 
 %----------- PROJECTS ----------
 \section{\textbf{Projects}}
 \resumeSubHeadingListStart
   \ProjectsList
 \resumeSubHeadingListEnd
-\vspace{-7.5mm}
+\vspace{2mm}
 
 %----------- TECHNICAL SKILLS ----------
 \section{\textbf{Technical Skills}}
@@ -273,7 +273,7 @@
   \TechSkillsList
 \resumeHeadingSkillEnd
 
-\vspace{-1.5mm}
+\vspace{2mm}
 
 %----------- KEY COURSES ----------
 \section{\textbf{Key courses taken}}
@@ -281,26 +281,26 @@
   \KeyCoursesList
 \resumeHeadingSkillEnd
 
-\vspace{-1mm}
+\vspace{2mm}
 
 %----------- CERTIFICATIONS ----------
 \section{\textbf{Certifications}}
 \resumeItemListStart
   \CertificationsList
 \resumeItemListEnd
-\vspace{-4mm}
+\vspace{2mm}
 
 %----------- POSITIONS ----------
 \section{\textbf{Positions of Responsibility}}
-\vspace{-0.4mm}
+\vspace{1mm}
 \resumeSubHeadingListStart
   \PositionsList
 \resumeSubHeadingListEnd
-\vspace{-4mm}
+\vspace{2mm}
 
 %----------- MISC ----------
 \section{\textbf{Miscellaneous}}
-\vspace{-0.1mm}
+\vspace{1mm}
 \resumeSubHeadingListStart
   \MiscList
 \resumeSubHeadingListEnd

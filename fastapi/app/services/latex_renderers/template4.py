@@ -1,5 +1,7 @@
 """Renderer for Template 4 - Research Professional."""
 
+import re
+
 from app.schemas.latex import ResumeData
 from .base import BaseLatexRenderer
 
@@ -9,6 +11,27 @@ class Template4Renderer(BaseLatexRenderer):
 
     def render(self, data: ResumeData) -> str:
         tex = self._read_template()
+        empty_patterns = []
+        if not data.person.profile:
+            empty_patterns.append(r"%--- PERSONAL PROFILE ---\s*\\section\*\{Personal Profile\}\s*\\userProfile\s*")
+        if not data.education:
+            empty_patterns.append(r"%--- EDUCATION ---\s*\\section\*\{Education\}\s*\\EducationList\s*")
+        if not data.experiences:
+            empty_patterns.append(r"%--- EXPERIENCE ---\s*\\section\*\{Experience\}\s*\\ExperienceList\s*")
+        if not data.publications:
+            empty_patterns.append(r"%--- ACADEMIC PUBLICATIONS ---\s*\\section\*\{Academic Publications\}\s*\\PublicationList\s*")
+        if not data.projects:
+            empty_patterns.append(r"%--- PROJECTS / RESEARCH ---\s*\\section\*\{Projects/Research\}\s*\\ProjectList\s*")
+        if not data.skills.categories and not data.skills.flat:
+            empty_patterns.append(r"%--- SKILLS ---\s*\\section\*\{Skills\}\s*\\SkillsLine\s*")
+        if not data.references:
+            empty_patterns.append(
+                r"%--- REFERENCES ---\s*\\section\*\{References\}\s*"
+                r"\\begin\{minipage\}\[t\]\{0\.48\\textwidth\}\s*\\ReferenceLeft\s*\\end\{minipage\}%\s*"
+                r"\\hfill\s*\\begin\{minipage\}\[t\]\{0\.48\\textwidth\}\s*\\ReferenceRight\s*\\end\{minipage\}\s*"
+            )
+        for pattern in empty_patterns:
+            tex = re.sub(pattern, "", tex, flags=re.MULTILINE)
         preamble, body = self._split_at_document(tex)
 
         inject = "\n%=== INJECTED DATA ===\n"

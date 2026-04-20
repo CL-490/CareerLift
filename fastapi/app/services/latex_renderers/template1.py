@@ -1,5 +1,7 @@
 """Renderer for Template 1 - Classic Academic."""
 
+import re
+
 from app.schemas.latex import ResumeData
 from .base import BaseLatexRenderer
 
@@ -25,6 +27,26 @@ class Template1Renderer(BaseLatexRenderer):
             tex = tex.replace(
                 f"\\newcommand{{\\{buf}}}{{}}",
                 f"\\def\\{buf}{{}}"
+            )
+        if not data.education:
+            tex = re.sub(
+                r"%=+\n% Education\n%=+\n\\section\*\{Education\}\n"
+                r"\\textbf\{\\eduInstitution\} \\hfill \\eduDates\\\\\n"
+                r"\\textit\{\\eduDegree\} \$\|\$ Cumulative GPA: \\eduGPA\n",
+                "",
+                tex,
+            )
+        if not data.skills.categories and not data.skills.flat:
+            tex = re.sub(
+                r"%=+\n% Skills\n%=+\n\\section\*\{Skills\}\n"
+                r"\\textbf\{Programming:\} \\skillsProgramming\\\\\n"
+                r"\\textbf\{AI/ML:\} \\skillsAIML\\\\\n"
+                r"\\textbf\{Frameworks:\} \\skillsFrameworks\\\\\n"
+                r"\\textbf\{Data/Infra:\} \\skillsData\\\\\n"
+                r"\\textbf\{Tools:\} \\skillsTools\\\\\n"
+                r"\\textbf\{Languages:\} \\skillsLanguages\n",
+                "",
+                tex,
             )
         preamble, body = self._split_at_document(tex)
 

@@ -31,6 +31,14 @@ class BaseLatexRenderer(ABC):
             ("}", r"\}"),
             ("~", r"\textasciitilde{}"),
             ("^", r"\textasciicircum{}"),
+            ("\u00a0", " "),
+            ("\u2013", "--"),
+            ("\u2014", "---"),
+            ("\u2018", "'"),
+            ("\u2019", "'"),
+            ("\u201c", '"'),
+            ("\u201d", '"'),
+            ("\u2026", "..."),
         ]
         for old, new in replacements:
             text = text.replace(old, new)

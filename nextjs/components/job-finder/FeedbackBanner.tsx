@@ -6,9 +6,9 @@ interface FeedbackBannerProps {
 }
 
 const styles = {
-  error: "border-red-300 bg-red-50 text-red-800",
-  info: "border-blue-300 bg-blue-50 text-blue-800",
-  success: "border-green-300 bg-green-50 text-green-800",
+  error: "notice-error",
+  info: "notice-info",
+  success: "notice-success",
 };
 
 export default function FeedbackBanner({
@@ -19,7 +19,7 @@ export default function FeedbackBanner({
 
   return (
     <div
-      className={`mb-4 flex items-start justify-between gap-4 rounded-2xl border px-4 py-3 text-sm ${styles[notice.type]}`}
+      className={`notice-banner mb-4 flex items-start justify-between gap-4 px-4 py-3 text-sm ${styles[notice.type]}`}
     >
       <p>{notice.message}</p>
       <button

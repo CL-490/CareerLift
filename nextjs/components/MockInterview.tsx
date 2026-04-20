@@ -124,7 +124,7 @@ export default function MockInterview({
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="animate-spinner mb-4">⏳</div>
-          <p className="text-slate-600">Initializing interview...</p>
+          <p className="text-muted">Initializing interview...</p>
         </div>
       </div>
     );
@@ -132,12 +132,12 @@ export default function MockInterview({
 
   if (error && !summary) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-red-800">
+      <div className="notice-banner notice-error p-6">
         <p className="font-semibold mb-2">Error Starting Interview</p>
         <p className="text-sm mb-4">{error}</p>
         <button
           onClick={onReset}
-          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold"
+          className="jf-btn px-4 py-2 text-sm"
         >
           Go Back
         </button>
@@ -157,7 +157,7 @@ export default function MockInterview({
       {/* Header with Progress */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-slate-500">Interview in Progress</h3>
+          <h3 className="text-lg font-semibold text-muted">Interview in Progress</h3>
           <p className="text-sm font-semibold tracking-tight heading-gradient">
             {roleTitle} • {roleLevel}
           </p>
@@ -165,17 +165,17 @@ export default function MockInterview({
         <div className="flex flex-col items-end gap-2">
           <button
             onClick={handleResetClick}
-            className="px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 rounded border border-red-200 transition-colors"
+            className="notice-error rounded px-3 py-1 text-xs font-semibold transition-colors hover:opacity-85"
           >
             Reset
           </button>
           <div className="text-right">
-            <p className="text-xs text-slate-600 mb-1">
+            <p className="mb-1 text-xs text-muted">
               Question {questionNumber} of 5
             </p>
-            <div className="w-24 h-1.5 bg-slate-200 rounded-full">
+            <div className="h-1.5 w-24 rounded-full bg-[var(--input-bg)]">
               <div
-                className="h-full bg-blue-600 rounded-full transition-all"
+                className="h-full rounded-full bg-[var(--accent)] transition-all"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -184,30 +184,30 @@ export default function MockInterview({
       </div>
 
       {/* Message History - Scrollable */}
-      <div className="bg-slate-50 rounded-lg p-4 space-y-4 max-h-64 overflow-y-auto border border-slate-200">
+      <div className="surface rounded-lg p-4 space-y-4 max-h-64 overflow-y-auto">
         {messages.map((msg, idx) => (
           <div key={idx} className="space-y-2">
             {msg.question && (
               <div>
-                <p className="text-xs font-semibold text-blue-600 uppercase">Question {idx + 1}</p>
-                <p className="text-sm font-medium text-slate-800">{msg.question}</p>
+                <p className="text-xs font-semibold uppercase text-[var(--tone-info-text)]">Question {idx + 1}</p>
+                <p className="text-sm font-medium text-foreground">{msg.question}</p>
               </div>
             )}
             {msg.answer && (
-              <div className="pl-4 border-l-2 border-green-500">
-                <p className="text-xs font-semibold text-green-700 uppercase mb-1">Your Answer</p>
-                <p className="text-sm text-slate-700">{msg.answer}</p>
+              <div className="border-l-2 border-[var(--tone-success-border)] pl-4">
+                <p className="mb-1 text-xs font-semibold uppercase text-[var(--tone-success-text)]">Your Answer</p>
+                <p className="text-sm text-muted">{msg.answer}</p>
               </div>
             )}
             {msg.evaluation && (
-              <div className="pl-4 border-l-2 border-blue-500">
-                <p className="text-xs font-semibold text-blue-700 uppercase mb-1">Feedback</p>
+              <div className="border-l-2 border-[var(--tone-info-border)] pl-4">
+                <p className="mb-1 text-xs font-semibold uppercase text-[var(--tone-info-text)]">Feedback</p>
                 {msg.evaluation.score !== null && msg.evaluation.score !== undefined && (
-                  <p className="text-xs font-bold text-blue-600 mb-1">
+                  <p className="mb-1 text-xs font-bold text-[var(--tone-info-text)]">
                     Overall: {msg.evaluation.score.toFixed(1)}/10
                   </p>
                 )}
-                <p className="text-sm text-slate-700">{msg.evaluation.feedback}</p>
+                <p className="text-sm text-muted">{msg.evaluation.feedback}</p>
                 <RubricBreakdown evaluation={msg.evaluation} compact />
               </div>
             )}
@@ -223,16 +223,16 @@ export default function MockInterview({
             onChange={(e) => setUserAnswer(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type your answer here... (Ctrl+Enter to submit)"
-            className="w-full h-24 p-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none resize-none text-sm"
+            className="h-24 w-full resize-none rounded-lg p-3 text-sm"
           />
           <button
             onClick={handleSubmitAnswer}
             disabled={!userAnswer.trim() || isLoading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            className="jf-btn jf-btn-primary w-full px-4 py-2 text-sm"
           >
             {isLoading ? "Processing..." : "Submit Answer"}
           </button>
-          <p className="text-xs text-slate-500">Ctrl+Enter to submit</p>
+          <p className="text-xs text-muted">Ctrl+Enter to submit</p>
         </div>
       )}
     </div>
@@ -257,52 +257,52 @@ function InterviewSummary({ summary, onNewInterview }: InterviewSummaryProps) {
     <div className="space-y-4">
       {/* Score Cards */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg text-center border border-blue-200">
-          <p className="text-xs font-semibold text-blue-700 uppercase mb-1">Average Score</p>
-          <p className="text-2xl font-bold text-blue-600">{averageScore}</p>
-          <p className="text-xs text-blue-600">out of 10</p>
+        <div className="notice-banner notice-info p-4 text-center">
+          <p className="mb-1 text-xs font-semibold uppercase">Average Score</p>
+          <p className="text-2xl font-bold">{averageScore}</p>
+          <p className="text-xs">out of 10</p>
         </div>
-        <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg text-center border border-green-200">
-          <p className="text-xs font-semibold text-green-700 uppercase mb-1">Questions</p>
-          <p className="text-2xl font-bold text-green-600">{summary.steps.length}</p>
-          <p className="text-xs text-green-600">completed</p>
+        <div className="notice-banner notice-success p-4 text-center">
+          <p className="mb-1 text-xs font-semibold uppercase">Questions</p>
+          <p className="text-2xl font-bold">{summary.steps.length}</p>
+          <p className="text-xs">completed</p>
         </div>
       </div>
 
       {/* Overall Feedback */}
       {summary.overall_feedback && (
-        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded">
-          <p className="text-xs font-semibold text-amber-700 uppercase mb-2">Overall Feedback</p>
-          <p className="text-sm text-slate-800">{summary.overall_feedback}</p>
+        <div className="notice-banner notice-warning rounded p-4">
+          <p className="mb-2 text-xs font-semibold uppercase">Overall Feedback</p>
+          <p className="text-sm text-foreground">{summary.overall_feedback}</p>
         </div>
       )}
 
       {/* Detailed Results */}
       <div className="space-y-3 max-h-96 overflow-y-auto">
-        <p className="text-sm font-semibold text-slate-800">Detailed Feedback</p>
+        <p className="text-sm font-semibold text-foreground">Detailed Feedback</p>
         {summary.steps.map((step, idx) => (
-          <div key={idx} className="border border-slate-200 rounded-lg p-3 space-y-2 text-sm">
+          <div key={idx} className="surface rounded-lg p-3 space-y-2 text-sm">
             <div>
-              <p className="text-xs font-semibold text-blue-600 uppercase">Q{idx + 1}</p>
-              <p className="font-medium text-slate-800">{step.question.text}</p>
+              <p className="text-xs font-semibold uppercase text-[var(--tone-info-text)]">Q{idx + 1}</p>
+              <p className="font-medium text-foreground">{step.question.text}</p>
             </div>
             {step.answer && (
-              <div className="pl-3 border-l-2 border-green-500">
-                <p className="text-xs font-semibold text-green-700 uppercase mb-1">Your Answer</p>
-                <p className="text-slate-700">{step.answer}</p>
+              <div className="border-l-2 border-[var(--tone-success-border)] pl-3">
+                <p className="mb-1 text-xs font-semibold uppercase text-[var(--tone-success-text)]">Your Answer</p>
+                <p className="text-muted">{step.answer}</p>
               </div>
             )}
             {step.evaluation && (
-              <div className="pl-3 border-l-2 border-blue-500">
+              <div className="border-l-2 border-[var(--tone-info-border)] pl-3">
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs font-semibold text-blue-700 uppercase">Feedback</p>
+                  <p className="text-xs font-semibold uppercase text-[var(--tone-info-text)]">Feedback</p>
                   {step.evaluation.score !== null && step.evaluation.score !== undefined && (
-                    <span className="text-xs font-bold text-blue-600">
+                    <span className="text-xs font-bold text-[var(--tone-info-text)]">
                       {step.evaluation.score.toFixed(1)}/10
                     </span>
                   )}
                 </div>
-                <p className="text-slate-700">{step.evaluation.feedback}</p>
+                <p className="text-muted">{step.evaluation.feedback}</p>
                 <RubricBreakdown evaluation={step.evaluation} />
               </div>
             )}
@@ -313,7 +313,7 @@ function InterviewSummary({ summary, onNewInterview }: InterviewSummaryProps) {
       {/* Action Button */}
       <button
         onClick={onNewInterview}
-        className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-sm"
+        className="jf-btn jf-btn-primary w-full px-4 py-2 text-sm"
       >
         Start New Interview
       </button>

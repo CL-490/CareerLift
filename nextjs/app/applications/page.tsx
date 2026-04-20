@@ -6,25 +6,25 @@ import { useApplications, ApplicationStatus } from "@/hooks/useApplications";
 const STATUS_OPTIONS: ApplicationStatus[] = ["Applied", "Interview", "Offer", "Rejected"];
  
 const STATUS_COLORS: Record<ApplicationStatus, string> = {
-  Applied: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-  Interview: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
-  Offer: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-  Rejected: "bg-red-500/20 text-red-300 border-red-500/30",
+  Applied: "notice-info",
+  Interview: "notice-warning",
+  Offer: "notice-success",
+  Rejected: "notice-error",
 };
  
 const TAB_ACTIVE_COLORS: Record<ApplicationStatus, string> = {
-  Applied: "border-blue-400 text-blue-300",
-  Interview: "border-yellow-400 text-yellow-300",
-  Offer: "border-emerald-400 text-emerald-300",
-  Rejected: "border-red-400 text-red-300",
+  Applied: "border-[var(--tone-info-border)] text-[var(--tone-info-text)]",
+  Interview: "border-[var(--tone-warning-border)] text-[var(--tone-warning-text)]",
+  Offer: "border-[var(--tone-success-border)] text-[var(--tone-success-text)]",
+  Rejected: "border-[var(--tone-danger-border)] text-[var(--tone-danger-text)]",
 };
  
 const TAB_HOVER_COLORS: Record<Tab, string> = {
-  All: "hover:border-teal-400/50 hover:text-teal-300/80 hover:drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]",
-  Applied: "hover:border-blue-400/50 hover:text-blue-300/80 hover:drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]",
-  Interview: "hover:border-yellow-400/50 hover:text-yellow-300/80 hover:drop-shadow-[0_0_8px_rgba(253,224,71,0.5)]",
-  Offer: "hover:border-emerald-400/50 hover:text-emerald-300/80 hover:drop-shadow-[0_0_8px_rgba(110,231,183,0.5)]",
-  Rejected: "hover:border-red-400/50 hover:text-red-300/80 hover:drop-shadow-[0_0_8px_rgba(252,165,165,0.5)]",
+  All: "hover:border-[var(--accent)]/50 hover:text-foreground",
+  Applied: "hover:border-[var(--tone-info-border)] hover:text-[var(--tone-info-text)]",
+  Interview: "hover:border-[var(--tone-warning-border)] hover:text-[var(--tone-warning-text)]",
+  Offer: "hover:border-[var(--tone-success-border)] hover:text-[var(--tone-success-text)]",
+  Rejected: "hover:border-[var(--tone-danger-border)] hover:text-[var(--tone-danger-text)]",
 };
  
 type Tab = "All" | ApplicationStatus;
@@ -43,19 +43,19 @@ function ApplicationCard({
     <div className="rounded-xl border border-(--border-color) surface p-5 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-semibold text-white text-lg leading-tight">
+          <h2 className="text-lg font-semibold leading-tight text-foreground">
             {app.title}
           </h2>
           <p className="text-sm text-muted mt-0.5">
             {app.company} · {app.source} · Applied {app.dateApplied}
           </p>
           {app.salary && (
-            <p className="text-xs text-green-500 mt-0.5">{app.salary}</p>
+            <p className="mt-0.5 text-xs text-[var(--tone-success-text)]">{app.salary}</p>
           )}
         </div>
         <button
           onClick={() => removeApplication(app.id)}
-          className="text-red-400 hover:text-red-300 text-xs border border-red-500/30 hover:bg-red-500/10 rounded px-2 py-1 transition-colors shrink-0"
+          className="notice-error rounded px-2 py-1 text-xs transition-colors shrink-0 hover:opacity-85"
         >
           Remove
         </button>
@@ -67,7 +67,7 @@ function ApplicationCard({
             href={app.url}
             target="_blank"
             rel="noreferrer"
-            className="text-xs text-teal-400 hover:underline"
+            className="text-xs text-[var(--accent)] hover:underline"
           >
             View Posting ↗
           </a>
@@ -80,7 +80,7 @@ function ApplicationCard({
               className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                 app.status === s
                   ? STATUS_COLORS[s]
-                  : "border-white/10 text-white/40 hover:text-white/70 hover:border-white/20"
+                  : "border-[var(--border-color)] text-muted hover:text-foreground hover:border-[var(--border-strong)]"
               }`}
             >
               {s}
@@ -122,7 +122,7 @@ export default function ApplicationsPage() {
           const count = countFor(tab);
           const activeColor =
             tab === "All"
-              ? "border-teal-400 text-teal-300"
+              ? "border-[var(--accent)] text-foreground"
               : TAB_ACTIVE_COLORS[tab as ApplicationStatus];
  
           return (
@@ -140,9 +140,9 @@ export default function ApplicationsPage() {
                 className={`text-xs rounded-full px-1.5 py-0.5 font-mono leading-none ${
                   isActive
                     ? tab === "All"
-                      ? "bg-teal-500/20 text-teal-300"
+                      ? "bg-[color:color-mix(in_oklab,var(--accent)_24%,transparent)] text-foreground"
                       : STATUS_COLORS[tab as ApplicationStatus]
-                    : "bg-white/5 text-white/30"
+                    : "bg-[color:color-mix(in_oklab,var(--background-alt)_88%,transparent)] text-muted"
                 }`}
               >
                 {count}
@@ -157,14 +157,14 @@ export default function ApplicationsPage() {
         <div className="rounded-xl border border-(--border-color) surface p-12 text-center">
           <p className="text-lg mb-1">No saved applications yet.</p>
           <p className="text-sm text-muted">
-            Hit <span className="text-teal-400 font-medium">Save to Applications</span> on any job listing to start tracking.
+            Hit <span className="font-medium text-[var(--accent)]">Save to Applications</span> on any job listing to start tracking.
           </p>
         </div>
       ) : filteredApplications.length === 0 ? (
         <div className="rounded-xl border border-(--border-color) surface p-12 text-center">
           <p className="text-lg mb-1">No {activeTab} applications.</p>
           <p className="text-sm text-muted">
-            Update an application's status to <span className="text-white/70 font-medium">{activeTab}</span> to see it here.
+            Update an application's status to <span className="font-medium text-foreground">{activeTab}</span> to see it here.
           </p>
         </div>
       ) : (

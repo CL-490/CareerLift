@@ -381,6 +381,48 @@ html {
   --jf-btn-success-text: #14532d;
 }
 
+:root {
+  --tone-info-bg: color-mix(in oklab, #2563eb 24%, var(--background-alt));
+  --tone-info-border: color-mix(in oklab, #2563eb 58%, var(--border-color));
+  --tone-info-text: #dbeafe;
+  --tone-success-bg: color-mix(in oklab, #16a34a 24%, var(--background-alt));
+  --tone-success-border: color-mix(in oklab, #16a34a 58%, var(--border-color));
+  --tone-success-text: #dcfce7;
+  --tone-warning-bg: color-mix(in oklab, #d97706 24%, var(--background-alt));
+  --tone-warning-border: color-mix(in oklab, #d97706 58%, var(--border-color));
+  --tone-warning-text: #fef3c7;
+  --tone-danger-bg: color-mix(in oklab, #dc2626 22%, var(--background-alt));
+  --tone-danger-border: color-mix(in oklab, #dc2626 54%, var(--border-color));
+  --tone-danger-text: #fecaca;
+  --selection-bg: var(--background-alt);
+  --selection-border: var(--input-border);
+  --selection-hover-bg: color-mix(in oklab, var(--background-alt) 82%, white 18%);
+  --selection-active-bg: color-mix(in oklab, var(--accent) 24%, var(--background-alt));
+  --selection-active-border: color-mix(in oklab, var(--accent) 62%, var(--border-color));
+  --focus-ring: 0 0 0 1px color-mix(in oklab, var(--accent) 58%, white 42%), 0 0 0 4px color-mix(in oklab, var(--accent) 20%, transparent);
+}
+
+:root[data-theme="light"] {
+  --tone-info-bg: color-mix(in oklab, white 72%, #bfdbfe 28%);
+  --tone-info-border: color-mix(in oklab, #2563eb 42%, var(--border-color));
+  --tone-info-text: #1d4ed8;
+  --tone-success-bg: color-mix(in oklab, white 72%, #bbf7d0 28%);
+  --tone-success-border: color-mix(in oklab, #15803d 42%, var(--border-color));
+  --tone-success-text: #166534;
+  --tone-warning-bg: color-mix(in oklab, white 74%, #fde68a 26%);
+  --tone-warning-border: color-mix(in oklab, #b45309 42%, var(--border-color));
+  --tone-warning-text: #92400e;
+  --tone-danger-bg: color-mix(in oklab, white 74%, #fecaca 26%);
+  --tone-danger-border: color-mix(in oklab, #b91c1c 40%, var(--border-color));
+  --tone-danger-text: #991b1b;
+  --selection-bg: color-mix(in oklab, white 86%, #dbe4ee 14%);
+  --selection-border: color-mix(in oklab, #475569 20%, var(--border-color));
+  --selection-hover-bg: color-mix(in oklab, white 72%, #dbe4ee 28%);
+  --selection-active-bg: color-mix(in oklab, white 64%, #9fd8c0 36%);
+  --selection-active-border: color-mix(in oklab, #2f7c66 44%, var(--border-color));
+  --focus-ring: 0 0 0 1px color-mix(in oklab, #2f7c66 70%, white 30%), 0 0 0 4px color-mix(in oklab, #86d7b8 34%, transparent);
+}
+
 .jf-btn {
   display: inline-flex;
   align-items: center;
@@ -460,6 +502,93 @@ html {
   color: var(--jf-btn-accent-text);
 }
 
+.notice-banner {
+  border-radius: 1rem;
+  border: 1px solid;
+}
+
+.notice-info {
+  background: var(--tone-info-bg);
+  border-color: var(--tone-info-border);
+  color: var(--tone-info-text);
+}
+
+.notice-success {
+  background: var(--tone-success-bg);
+  border-color: var(--tone-success-border);
+  color: var(--tone-success-text);
+}
+
+.notice-warning {
+  background: var(--tone-warning-bg);
+  border-color: var(--tone-warning-border);
+  color: var(--tone-warning-text);
+}
+
+.notice-error {
+  background: var(--tone-danger-bg);
+  border-color: var(--tone-danger-border);
+  color: var(--tone-danger-text);
+}
+
+.selection-card {
+  background: var(--selection-bg);
+  border: 1px solid var(--selection-border);
+  border-radius: 0.9rem;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.selection-card:hover {
+  background: var(--selection-hover-bg);
+  border-color: var(--border-strong);
+}
+
+.selection-card-active {
+  background: var(--selection-active-bg);
+  border-color: var(--selection-active-border);
+  box-shadow: var(--shadow-1);
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--foreground);
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.form-helper {
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.form-control {
+  width: 100%;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--foreground);
+  border-radius: 0.9rem;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.form-control::placeholder {
+  color: color-mix(in oklab, var(--muted) 78%, transparent);
+}
+
+.form-control:hover {
+  border-color: var(--border-strong);
+}
+
+.form-control:focus,
+.form-control:focus-visible {
+  border-color: color-mix(in oklab, var(--accent) 62%, var(--border-color));
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
 /* -------------------------------
    Select dropdown (theme-aware)
 -------------------------------- */
@@ -488,6 +617,15 @@ input, textarea {
   transition: background .25s, border-color .25s;
 }
 
+input:focus,
+textarea:focus,
+input:focus-visible,
+textarea:focus-visible {
+  border-color: color-mix(in oklab, var(--accent) 62%, var(--border-color));
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
 /* Chevron icon simulation (optional) */
 select {
   appearance: none;
@@ -510,7 +648,8 @@ select:hover {
 
 select:focus {
   border-color: var(--accent);
-  box-shadow: var(--accent-glow);
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 /* Light theme override not required —
