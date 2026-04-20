@@ -94,9 +94,9 @@ export default function MockInterview({
 
       // Check if interview is complete
       if (response.session_complete) {
-        const sessionData = await getInterviewSession(sessionId);
-        setSummary(sessionData.summary ?? { steps: [] });
-        onComplete?.(sessionData.summary ?? { steps: [] });
+        const summary = response.summary ?? { steps: [] };
+        setSummary(summary);
+        onComplete?.(summary);
       } else if (response.next_question) {
         setCurrentQuestion(response.next_question.text);
       }
