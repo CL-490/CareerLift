@@ -314,6 +314,7 @@ class InterviewService:
                 evaluation=evaluation,
                 session_complete=True,
                 session_id=session_id,
+                summary=summary,
             )
 
         # generate next question

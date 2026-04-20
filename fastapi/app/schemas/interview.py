@@ -43,6 +43,7 @@ class InterviewResponse(BaseModel):
     evaluation: Optional[Evaluation] = None
     session_complete: bool = False
     session_id: Optional[str] = None
+    summary: Optional["SessionSummary"] = None
 
 
 class SessionSummary(BaseModel):
