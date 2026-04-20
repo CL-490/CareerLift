@@ -1,5 +1,7 @@
 """Renderer for Template 2 - Modern AltaCV."""
 
+import re
+
 from app.schemas.latex import ResumeData
 from .base import BaseLatexRenderer
 
@@ -9,6 +11,37 @@ class Template2Renderer(BaseLatexRenderer):
 
     def render(self, data: ResumeData) -> str:
         tex = self._read_template()
+        empty_blocks = []
+        if not data.skills.categories and not data.skills.flat:
+            empty_blocks.append(
+                r"% Skills\s*\\cvsection\{Skills\}\s*\\begin\{center\}\s*"
+                r"\\begin\{multicols\}\{5\}\s*\\SkillsList\s*\\end\{multicols\}\s*"
+                r"\\end\{center\}\s*"
+            )
+        if not data.education:
+            empty_blocks.append(
+                r"% Education\s*\\cvsection\{Education\}\s*\\medskip\s*"
+                r"\\begin\{multicols\}\{2\}\s*\\EducationList\s*\\end\{multicols\}\s*"
+            )
+        if not data.experiences:
+            empty_blocks.append(r"% Experience\s*\\medskip\s*\\cvsection\{Experience\}\s*\\ExperienceList\s*")
+        if not data.projects:
+            empty_blocks.append(
+                r"% Other activities & projects\s*\\cvsubsection\{Other Activities and Projects\}\s*\\medskip\s*"
+                r"\\begin\{multicols\}\{3\}\s*\\OtherActivitiesList\s*\\end\{multicols\}\s*"
+            )
+        if not data.awards:
+            empty_blocks.append(
+                r"% Awards\s*\\medskip\s*\\cvsection\{Awards\}\s*\\medskip\s*"
+                r"\\begin\{multicols\}\{3\}\s*\\AwardsList\s*\\end\{multicols\}\s*"
+            )
+        if not data.languages:
+            empty_blocks.append(
+                r"% Languages\s*\\cvsection\{Languages\}\s*\\medskip\s*"
+                r"\\begin\{multicols\}\{3\}\s*\\LanguagesList\s*\\end\{multicols\}\s*"
+            )
+        for pattern in empty_blocks:
+            tex = re.sub(pattern, "", tex, flags=re.MULTILINE)
         preamble, body = self._split_at_document(tex)
 
         inject = "\n%=== INJECTED DATA ===\n"

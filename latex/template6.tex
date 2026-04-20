@@ -17,16 +17,18 @@
 \usepackage{tikz}
 \setlength{\unitlength}{1mm}
 
-\setlist[itemize]{leftmargin=*}
+\setlist[itemize]{leftmargin=*, itemsep=0.2em, topsep=0.25em}
 \linespread{1.15}
 \pagenumbering{gobble}
 
 \newcommand\clink[1]{{\usefont{T1}{lmtt}{m}{n} #1 }}
 
 \newenvironment{csection}[2]{%
-  \vspace{0.001cm}%
-  \textbf{#1}\\[-0.35cm]%
-  \hrule\\[-0.5cm]%
+  \vspace{0.35cm}%
+  \textbf{#1}\par
+  \vspace{0.08cm}%
+  \hrule
+  \vspace{0.12cm}%
   {#2}%
 }{}
 

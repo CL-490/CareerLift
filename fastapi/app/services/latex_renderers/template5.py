@@ -68,12 +68,83 @@ class Template5Renderer(BaseLatexRenderer):
                 "  \\sectionsep\n",
                 "",
             )
+        elif not data.coursework.postgraduate:
+            tex = tex.replace(
+                "  \\subsection{PostGraduate}\n"
+                "  \\PGCourseworkList\n"
+                "  \\sectionsep\n"
+                "\n",
+                "",
+            )
+        elif not data.coursework.undergraduate:
+            tex = tex.replace(
+                "\n  \\subsection{Undergraduate}\n"
+                "  \\UGCourseworkList\n"
+                "  \\sectionsep\n",
+                "\n",
+            )
         # Left column: Education (if none)
         if not data.education:
             tex = tex.replace(
                 "\n  % EDUCATION\n"
                 "  \\section{Education}\n"
                 "  \\EducationList\n",
+                "",
+            )
+        # Left column: Skills (remove fully or trim empty subsections)
+        cat_map = {c.name.lower(): c.items for c in data.skills.categories}
+        prog = cat_map.get("programming", "")
+        soft = cat_map.get("software", "")
+        lang = cat_map.get("language", cat_map.get("languages", ""))
+        if not prog and data.skills.flat:
+            prog = ", ".join(data.skills.flat)
+        if not prog and not soft and not lang:
+            tex = tex.replace(
+                "\n  % SKILLS\n"
+                "  \\section{Skills}\n"
+                "  \\subsection{Programming}\n"
+                "  \\ProgSkillsLine\\\\\n"
+                "  \\sectionsep\n"
+                "\n"
+                "  \\subsection{Software}\n"
+                "  \\SoftwareSkillsLine\\\\\n"
+                "  \\sectionsep\n"
+                "\n"
+                "  \\subsection{Language}\n"
+                "  \\LanguageSkillsLine\\\\\n"
+                "  \\sectionsep\n",
+                "",
+            )
+        else:
+            if not prog:
+                tex = tex.replace(
+                    "  \\subsection{Programming}\n"
+                    "  \\ProgSkillsLine\\\\\n"
+                    "  \\sectionsep\n"
+                    "\n",
+                    "",
+                )
+            if not soft:
+                tex = tex.replace(
+                    "  \\subsection{Software}\n"
+                    "  \\SoftwareSkillsLine\\\\\n"
+                    "  \\sectionsep\n"
+                    "\n",
+                    "",
+                )
+            if not lang:
+                tex = tex.replace(
+                    "  \\subsection{Language}\n"
+                    "  \\LanguageSkillsLine\\\\\n"
+                    "  \\sectionsep\n",
+                    "",
+                )
+        # Right column: Experience (if none)
+        if not data.experiences:
+            tex = tex.replace(
+                "\n  % EXPERIENCE\n"
+                "  \\section{Experience}\n"
+                "  \\ExperienceList\n",
                 "",
             )
         # Right column: Projects (if none)
@@ -144,12 +215,6 @@ class Template5Renderer(BaseLatexRenderer):
             inject += f"\\ugcourse{{{self.escape(course)}}}\n"
 
         # Skills
-        cat_map = {c.name.lower(): c.items for c in data.skills.categories}
-        prog = cat_map.get("programming", "")
-        soft = cat_map.get("software", "")
-        lang = cat_map.get("language", cat_map.get("languages", ""))
-        if not prog and data.skills.flat:
-            prog = ", ".join(data.skills.flat)
         inject += f"\\setprogskills{{{self.escape(prog)}}}\n"
         inject += f"\\setsoftskills{{{self.escape(soft)}}}\n"
         inject += f"\\setlangskills{{{self.escape(lang)}}}\n"

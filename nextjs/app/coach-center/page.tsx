@@ -57,7 +57,7 @@ export default function CoachCenterPage() {
             <div className="card hover-ring mb-6 card-hue">
               <div className="mb-6">
                 <h2 className="text-[20px] font-medium">Mock Interview</h2>
-                <h3 className="text-lg font-semibold text-slate-400 mb-2">Practice for a specific job role with AI-powered feedback</h3>
+                <h3 className="mb-2 text-lg font-semibold text-muted">Practice for a specific job role with AI-powered feedback</h3>
               </div>
               {!interviewSession ? (
                 <MockInterviewSetup onStartInterview={handleStartInterview} />
@@ -79,19 +79,19 @@ export default function CoachCenterPage() {
             <div className="card hover-ring mb-6 card-hue">
               <div className="mb-6">
                 <h2 className="text-[20px] font-medium">Skill Gap Analysis</h2>
-                <h3 className="text-lg font-semibold text-slate-400 mb-4">Identify gaps between your skills and saved job requirements</h3>
+                <h3 className="mb-4 text-lg font-semibold text-muted">Identify gaps between your skills and saved job requirements</h3>
               </div>
               
               {!selectedResumeForGap ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-slate-400">Select a resume to analyze skill gaps across your saved jobs:</p>
+                  <p className="text-sm text-muted">Select a resume to analyze skill gaps across your saved jobs:</p>
                   <ResumeSelector onSelectResume={setSelectedResumeForGap} />
                 </div>
               ) : (
                 <div>
                   <button
                     onClick={() => setSelectedResumeForGap(null)}
-                    className="mb-4 px-3 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm text-slate-300 transition-colors"
+                    className="jf-btn mb-4 px-3 py-1 text-sm"
                   >
                     ← Change Resume
                   </button>
@@ -105,7 +105,7 @@ export default function CoachCenterPage() {
               <div className="card hover-ring mb-6 card-hue">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-[20px] font-medium">Growth Plans</h2>
-                  <h3 className="text-lg font-semibold text-slate-700 mb-2">Coming soon ...</h3>
+                  <h3 className="mb-2 text-lg font-semibold text-muted">Coming soon ...</h3>
                 </div>
               </div>
             </div>
@@ -144,7 +144,7 @@ function ResumeSelector({ onSelectResume }: ResumeSelectorProps) {
   }, []);
 
   if (loading) {
-    return <div className="text-slate-400">Loading resumes...</div>;
+    return <div className="text-muted">Loading resumes...</div>;
   }
 
   if (error) {
@@ -153,7 +153,7 @@ function ResumeSelector({ onSelectResume }: ResumeSelectorProps) {
 
   if (resumes.length === 0) {
     return (
-      <div className="rounded-lg bg-blue-500/10 p-4 border border-blue-500/30 text-blue-300">
+      <div className="notice-banner notice-info p-4">
         No resumes found. Upload a resume first to analyze skill gaps.
       </div>
     );
@@ -165,10 +165,10 @@ function ResumeSelector({ onSelectResume }: ResumeSelectorProps) {
         <button
           key={resume.resume_id}
           onClick={() => onSelectResume(resume.resume_id)}
-          className="text-left rounded-lg border border-slate-700 bg-slate-800/50 p-4 hover:bg-slate-700 transition-colors"
+          className="selection-card text-left p-4"
         >
-          <p className="font-medium text-white">{resume.resume_name}</p>
-          <p className="text-sm text-slate-400">{resume.person_name}</p>
+          <p className="font-medium text-foreground">{resume.resume_name}</p>
+          <p className="text-sm text-muted">{resume.person_name}</p>
         </button>
       ))}
     </div>
