@@ -18,11 +18,23 @@ export function CLLogo({
     >
       <defs>
         <linearGradient id="cl-logo-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="var(--accent)" />
-          <stop offset="100%" stopColor="var(--accent-strong, var(--accent))" />
+          <stop offset="0%" stopColor="#37303f" stopOpacity="0.88" />
+          <stop offset="54%" stopColor="#211d28" stopOpacity="0.82" />
+          <stop offset="100%" stopColor="#12151b" stopOpacity="0.78" />
+        </linearGradient>
+        <radialGradient id="cl-logo-gloss" cx="28%" cy="22%" r="64%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.18" />
+          <stop offset="46%" stopColor="#d9c7f6" stopOpacity="0.08" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="cl-logo-edge" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.16" />
+          <stop offset="100%" stopColor="#c4b0e6" stopOpacity="0.05" />
         </linearGradient>
       </defs>
       <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#cl-logo-bg)" />
+      <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#cl-logo-gloss)" />
+      <rect x="2.5" y="2.5" width="59" height="59" rx="13.5" fill="none" stroke="url(#cl-logo-edge)" />
       <path
         d="M 32 18 a 14 14 0 1 0 0 28"
         fill="none"
