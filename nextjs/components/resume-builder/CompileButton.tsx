@@ -13,7 +13,7 @@ export default function CompileButton({ onClick, compiling, error, lastCompileTi
       <button
         onClick={onClick}
         disabled={compiling}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+        className="jf-btn jf-btn-primary w-full py-3 px-4 flex items-center justify-center gap-2 disabled:opacity-50"
       >
         {compiling ? (
           <>
@@ -48,7 +48,7 @@ export default function CompileButton({ onClick, compiling, error, lastCompileTi
         </p>
       )}
       {error && (
-        <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-[13px] whitespace-pre-wrap max-h-48 overflow-y-auto">
+        <div className="notice-banner notice-error mt-3 max-h-48 overflow-y-auto whitespace-pre-wrap p-3 text-[13px]">
           {error}
         </div>
       )}

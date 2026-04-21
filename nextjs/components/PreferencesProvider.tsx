@@ -30,7 +30,7 @@ function applyTheme(theme: Theme) {
 
 function applyFontSize(fontSize: FontSize) {
   if (typeof document === "undefined") return;
-  const scale = fontSize === "sm" ? "0.9" : fontSize === "lg" ? "1.1" : "1.0";
+  const scale = fontSize === "sm" ? "0.9" : fontSize === "lg" ? "1.3" : "1.1";
   document.documentElement.style.setProperty("--font-scale", scale);
 }
 

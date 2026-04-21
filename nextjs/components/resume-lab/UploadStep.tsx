@@ -74,7 +74,7 @@ export default function UploadStep({
       title="Select"
       description="Pick one of your existing resumes or upload a new file. Either path leads to the same edit, preview, and graph steps."
     >
-      <div className="card hover-ring card-hue mb-4">
+      <div className="card hover-ring lab-surface mb-4">
         <div className="mb-4">
           <h3 className="text-[20px] font-medium">Use an Existing Resume</h3>
           <p className="mt-2 text-[14px] text-muted">
@@ -105,7 +105,7 @@ export default function UploadStep({
         )}
       </div>
 
-      <div className="card hover-ring card-hue">
+      <div className="card hover-ring lab-surface">
         <div className="mb-4">
           <h3 className="text-[20px] font-medium">Upload a New Resume</h3>
           <p className="mt-2 text-[14px] text-muted">
@@ -115,10 +115,8 @@ export default function UploadStep({
         </div>
 
         <div
-          className={`rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
-            dragActive
-              ? "border-blue-500 bg-blue-500/10"
-              : "border-(--input-border) hover:border-(--border-color)"
+          className={`dropzone rounded-lg border-2 p-8 ${
+            dragActive ? "border-[var(--accent)] bg-[var(--accent)]/10" : ""
           }`}
           onDragEnter={onDrag}
           onDragLeave={onDrag}
@@ -142,7 +140,7 @@ export default function UploadStep({
 
             <div>
               <label className="cursor-pointer">
-                <span className="font-medium text-blue-400 hover:text-blue-300">
+                <span className="font-medium text-accent hover:text-foreground">
                   Click to upload
                 </span>
                 <span className="text-muted"> or drag and drop</span>
@@ -219,7 +217,7 @@ export default function UploadStep({
             </p>
 
             {file && (
-              <div className="mt-2 text-[14px] text-green-400">
+              <div className="mt-2 text-[14px] text-[var(--tone-success-text)]">
                 Selected: {file.name}
               </div>
             )}
@@ -237,7 +235,7 @@ export default function UploadStep({
             type="button"
             onClick={onUpload}
             disabled={!resumeNameInput.trim()}
-            className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="jf-btn jf-btn-primary mt-4 w-full px-4 py-3 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {resumeNameInput.trim() ? "Process Resume" : "Add a resume name to continue"}
           </button>
@@ -251,10 +249,10 @@ export default function UploadStep({
       </div>
 
       {result && (
-        <div className="card-3d border border-green-500/20 bg-green-500/10 p-5">
+        <div className="card-3d lab-panel-success p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-[12px] font-medium uppercase tracking-[0.24em] text-green-300">
+              <p className="text-[12px] font-medium uppercase tracking-[0.24em] text-[var(--tone-success-text)]">
                 Import complete
               </p>
               <h3 className="mt-2 text-[22px] font-semibold text-foreground">
@@ -270,7 +268,7 @@ export default function UploadStep({
                   {detailCounts.map((item) => (
                     <span
                       key={item.label}
-                      className="inline-flex rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-[12px] font-medium text-foreground"
+                      className="inline-flex rounded-full border border-[var(--tone-success-border)] bg-[var(--tone-success-bg)] px-3 py-1 text-[12px] font-medium text-foreground"
                     >
                       {item.label}: {item.value}
                     </span>

@@ -32,7 +32,7 @@ function PreviewToolbar({
       : selectedTemplateInfo?.name || "Not selected";
 
   return (
-    <div className="card-3d p-5">
+    <div className="card-3d lab-surface p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h3 className="text-[20px] font-medium text-foreground">
@@ -45,7 +45,7 @@ function PreviewToolbar({
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="panel-tinted rounded-lg p-4">
+          <div className="lab-panel-info rounded-lg p-4">
             <p className="mb-1 text-[12px] uppercase tracking-[0.2em] text-muted">
               Resume
             </p>
@@ -53,7 +53,7 @@ function PreviewToolbar({
               {result?.resume_name || result?.graph_data.person.name || result?.filename || "Untitled"}
             </p>
           </div>
-          <div className="panel-tinted rounded-lg p-4">
+          <div className="lab-panel-ai rounded-lg p-4">
             <p className="mb-1 text-[12px] uppercase tracking-[0.2em] text-muted">
               Template
             </p>
@@ -95,7 +95,7 @@ export default function PreviewStep({
       />
 
       {!hasUploadedPreview && !hasLatexPreview && (
-        <div className="card hover-ring card-hue">
+        <div className="card hover-ring lab-surface">
           <h3 className="text-[20px] font-medium text-foreground">
             Preview will appear here
           </h3>

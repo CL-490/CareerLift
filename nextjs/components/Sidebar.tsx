@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import React, { useEffect, useState, type ReactNode } from "react";
+import { CLLogo } from "@/components/BrandLogo";
 
 interface NavItem {
   label: string;
@@ -124,42 +125,26 @@ function CollapseIcon({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-/** Stylized "CL" monogram. Rounded-square background in the app's accent
- *  gradient with a hand-drawn C arc + L stroke, the L's foot ticking upward
- *  to evoke "lift". */
-function CLLogo({ size = 32, className }: { size?: number; className?: string }) {
+function SignOutIcon() {
   return (
     <svg
-      viewBox="0 0 64 64"
-      width={size}
-      height={size}
-      role="img"
-      aria-label="CareerLift"
-      className={className}
+      className="h-4.5 w-4.5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden
     >
-      <defs>
-        <linearGradient id="cl-logo-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="var(--accent)" />
-          <stop offset="100%" stopColor="var(--accent-strong, var(--accent))" />
-        </linearGradient>
-      </defs>
-      <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#cl-logo-bg)" />
-      {/* C: open arc on the left */}
       <path
-        d="M 32 18 a 14 14 0 1 0 0 28"
-        fill="none"
-        stroke="white"
-        strokeWidth="6"
-        strokeLinecap="round"
-      />
-      {/* L: vertical down + horizontal right with a small upward tick */}
-      <path
-        d="M 38 18 v 26 h 12 l 0 -3"
-        fill="none"
-        stroke="white"
-        strokeWidth="6"
         strokeLinecap="round"
         strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M15.75 8.25V6.5A1.75 1.75 0 0 0 14 4.75H7.5A1.75 1.75 0 0 0 5.75 6.5v11A1.75 1.75 0 0 0 7.5 19.25H14A1.75 1.75 0 0 0 15.75 17.5v-1.75"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M10.5 12h7.75M15.5 8.25 19.25 12 15.5 15.75"
       />
     </svg>
   );
@@ -281,22 +266,45 @@ function UserBadge({ collapsed }: { collapsed: boolean }) {
   const email = session.user?.email || "user";
   const name = session.user?.name || email;
   return (
-    <div className="flex items-center justify-between gap-2 rounded-md border border-[var(--border-color)] p-2">
-      {!collapsed && (
-        <div className="min-w-0">
-          <p className="truncate text-[12px] font-medium text-foreground">{name}</p>
-          <p className="truncate text-[10px] text-muted">{email}</p>
+    <div
+      className={`border border-[var(--border-color)] bg-[rgba(255,255,255,0.03)] shadow-[var(--shadow-1)] ${
+        collapsed
+          ? "flex justify-center rounded-xl p-2"
+          : "rounded-2xl p-3"
+      }`}
+    >
+      {collapsed ? (
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] text-foreground transition-colors hover:bg-[rgba(255,255,255,0.08)]"
+          title="Sign out"
+          aria-label="Sign out"
+        >
+          <SignOutIcon />
+        </button>
+      ) : (
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[linear-gradient(160deg,rgba(156,205,248,0.14),rgba(144,225,214,0.08))] text-[15px] font-semibold text-foreground shadow-[var(--shadow-1)]">
+            {name.trim().charAt(0).toUpperCase() || "U"}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px] font-semibold text-foreground">{name}</p>
+            <p className="truncate text-[11px] text-muted">{email}</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="shrink-0 rounded-xl border border-[rgba(255,255,255,0.07)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-[11px] font-semibold text-muted transition-colors hover:bg-[rgba(255,255,255,0.08)] hover:text-foreground"
+            title="Sign out"
+            aria-label="Sign out"
+          >
+            Sign out
+          </button>
         </div>
       )}
-      <button
-        type="button"
-        onClick={() => signOut({ callbackUrl: "/login" })}
-        className="rounded px-2 py-1 text-[11px] font-semibold text-muted transition-colors hover:bg-[rgba(255,255,255,0.08)] hover:text-foreground"
-        title="Sign out"
-        aria-label="Sign out"
-      >
-        {collapsed ? "⏻" : "Sign out"}
-      </button>
     </div>
   );
 }

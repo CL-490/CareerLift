@@ -58,7 +58,7 @@ export default function SavedJobsCard() {
   }, [activeResumeId]);
 
   return (
-    <div className="card hover-ring flex flex-col">
+    <div className="card hover-ring card-tone-cyan flex flex-col">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="card-header">Saved Jobs</h2>
         <Link

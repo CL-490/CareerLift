@@ -116,7 +116,7 @@ export default function RecentResumeCard() {
   if (!resume) {
     if (availableResumes.length === 0) {
       return (
-        <div className="card hover-ring flex flex-col">
+        <div className="card hover-ring card-tone-plum flex flex-col">
           <h2 className="card-header mb-3">Resume</h2>
           <p className="text-[13px] leading-5 text-muted">
             You haven&rsquo;t uploaded a resume yet.
@@ -134,7 +134,7 @@ export default function RecentResumeCard() {
     }
 
     return (
-      <div className="card hover-ring flex flex-col">
+      <div className="card hover-ring card-tone-plum flex flex-col">
         <div className="flex items-center justify-between mb-3">
           <h2 className="card-header">Resume</h2>
           {uploadLink}
@@ -164,7 +164,7 @@ export default function RecentResumeCard() {
   const eduCount = graph_data.education?.length ?? 0;
 
   return (
-    <div className="card hover-ring flex flex-col">
+    <div className="card hover-ring card-tone-plum flex flex-col">
       <div className="flex items-center justify-between mb-1">
         <h2 className="card-header">Resume</h2>
         <span className="text-[11px] uppercase tracking-wider text-muted font-medium">

@@ -9,8 +9,8 @@ interface ComingSoonProps {
 
 export function ComingSoon({ title, blurb = "This feature is under active development.", backHref = "/" }: ComingSoonProps) {
   return (
-    <div className="max-w-400 mx-auto">
-      <h1 className="text-[40px] font-semibold tracking-tight heading-gradient mb-6">
+    <div className="mx-auto max-w-300">
+      <h1 className="mb-5 text-[30px] font-semibold tracking-tight heading-gradient sm:text-[32px]">
         {title}
       </h1>
       <div className="card hover-ring mb-10 card-hue">

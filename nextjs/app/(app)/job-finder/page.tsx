@@ -61,8 +61,8 @@ export default function JobFinderPage() {
     // hydration agree. The real UI renders right after mount once
     // localStorage-derived state is available.
     return (
-      <main className="mx-auto max-w-400">
-        <h1 className="text-[40px] font-semibold tracking-tight heading-gradient mb-2">
+      <main className="mx-auto max-w-300">
+        <h1 className="mb-2 text-[30px] font-semibold tracking-tight heading-gradient sm:text-[32px]">
           Job Finder
         </h1>
         <p className="text-[15px] text-muted mb-6">
@@ -75,8 +75,8 @@ export default function JobFinderPage() {
   }
 
   return (
-    <main className="mx-auto max-w-400">
-      <h1 className="text-[40px] font-semibold tracking-tight heading-gradient mb-2">
+    <main className="mx-auto max-w-300">
+      <h1 className="mb-2 text-[30px] font-semibold tracking-tight heading-gradient sm:text-[32px]">
         Job Finder
       </h1>
       <p className="text-[15px] text-muted mb-6">

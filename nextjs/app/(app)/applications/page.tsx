@@ -242,8 +242,8 @@ export default function ApplicationsPage() {
   }, [applications, linkedByUrl]);
 
   return (
-    <main className="mx-auto max-w-400">
-      <h1 className="text-[40px] font-semibold tracking-tight heading-gradient mb-2">
+    <main className="mx-auto max-w-300">
+      <h1 className="mb-2 text-[30px] font-semibold tracking-tight heading-gradient sm:text-[32px]">
         Applications
       </h1>
       <p className="text-[15px] text-muted mb-6">

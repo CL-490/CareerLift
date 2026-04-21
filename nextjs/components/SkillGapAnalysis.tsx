@@ -76,16 +76,16 @@ export default function SkillGapAnalysisComponent({ resumeId }: SkillGapAnalysis
   };
 
   const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
-    <span className="text-slate-400">{isOpen ? "▼" : "►"}</span>
+    <span className="text-muted">{isOpen ? "▼" : "►"}</span>
   );
 
   if (loading) {
     return (
       <div className="space-y-4">
         <div className="animate-pulse space-y-3">
-          <div className="h-8 w-32 rounded bg-gray-700"></div>
-          <div className="h-4 w-full rounded bg-gray-700"></div>
-          <div className="h-4 w-3/4 rounded bg-gray-700"></div>
+          <div className="h-8 w-32 rounded bg-[var(--panel-bg)]"></div>
+          <div className="h-4 w-full rounded bg-[var(--panel-bg)]"></div>
+          <div className="h-4 w-3/4 rounded bg-[var(--panel-bg)]"></div>
         </div>
       </div>
     );
@@ -182,30 +182,30 @@ export default function SkillGapAnalysisComponent({ resumeId }: SkillGapAnalysis
     <div className="space-y-6">
       {/* Summary Metrics */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-          <p className="text-sm text-slate-400">Avg ATS Score</p>
+        <div className="panel-cyan rounded-lg border p-4">
+          <p className="text-sm text-muted">Avg ATS Score</p>
           <p className="mt-2 flex items-baseline gap-1 text-3xl font-bold">
-            <span className="text-blue-400">{data.summary.average_ats_score}</span>
-            <span className="text-sm text-slate-500">/100</span>
+            <span className="text-[var(--tone-info-text)]">{data.summary.average_ats_score}</span>
+            <span className="text-sm text-muted">/100</span>
           </p>
         </div>
 
-        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-          <p className="text-sm text-slate-400">Analyzed Jobs</p>
+        <div className="lab-panel-success rounded-lg p-4">
+          <p className="text-sm text-muted">Analyzed Jobs</p>
           <p className="mt-2 text-3xl font-bold text-emerald-400">
             {data.summary.total_saved_jobs}
           </p>
         </div>
 
-        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-          <p className="text-sm text-slate-400">Matched Skills</p>
+        <div className="lab-panel-success rounded-lg p-4">
+          <p className="text-sm text-muted">Matched Skills</p>
           <p className="mt-2 text-3xl font-bold text-green-400">
             {data.summary.matched_skills_count}
           </p>
         </div>
 
-        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-          <p className="text-sm text-slate-400">Skills to Learn</p>
+        <div className="card-tone-amber rounded-lg border p-4">
+          <p className="text-sm text-muted">Skills to Learn</p>
           <p className="mt-2 text-3xl font-bold text-yellow-400">
             {data.summary.missing_required_skills_count}
           </p>
@@ -213,10 +213,10 @@ export default function SkillGapAnalysisComponent({ resumeId }: SkillGapAnalysis
       </div>
 
       {/* Matched Skills Section */}
-      <div className="rounded-lg border border-slate-700 bg-slate-800/50">
+      <div className="lab-panel-success rounded-lg">
         <button
           onClick={() => toggleSection("matched")}
-          className="flex w-full items-center justify-between p-4 hover:bg-slate-700/50"
+          className="flex w-full items-center justify-between p-4 hover:bg-[var(--selection-hover-bg)]"
         >
           <div className="flex items-center gap-3">
             <span className="text-xl">✅</span>
@@ -232,7 +232,7 @@ export default function SkillGapAnalysisComponent({ resumeId }: SkillGapAnalysis
         </button>
 
         {expandedSections.matched && (
-          <div className="border-t border-slate-700 p-4">
+          <div className="border-t border-[var(--border-color)] p-4">
             {data.skill_analysis.matched_skills.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {data.skill_analysis.matched_skills.map((skill) => (
@@ -245,17 +245,17 @@ export default function SkillGapAnalysisComponent({ resumeId }: SkillGapAnalysis
                 ))}
               </div>
             ) : (
-              <p className="text-slate-400">No matched skills found</p>
+              <p className="text-muted">No matched skills found</p>
             )}
           </div>
         )}
       </div>
 
       {/* Missing Required Skills Section */}
-      <div className="rounded-lg border border-slate-700 bg-slate-800/50">
+      <div className="card-tone-amber rounded-lg border">
         <button
           onClick={() => toggleSection("required")}
-          className="flex w-full items-center justify-between p-4 hover:bg-slate-700/50"
+          className="flex w-full items-center justify-between p-4 hover:bg-[var(--selection-hover-bg)]"
         >
           <div className="flex items-center gap-3">
             <span className="text-xl">⚠️</span>
@@ -271,7 +271,7 @@ export default function SkillGapAnalysisComponent({ resumeId }: SkillGapAnalysis
         </button>
 
         {expandedSections.required && (
-          <div className="border-t border-slate-700 p-4">
+          <div className="border-t border-[var(--border-color)] p-4">
             {data.skill_analysis.missing_required_skills.length > 0 ? (
               <div className="space-y-2">
                 {data.skill_analysis.missing_required_skills.map((item) => (
@@ -305,14 +305,14 @@ export default function SkillGapAnalysisComponent({ resumeId }: SkillGapAnalysis
       </div>
 
       {/* Missing Preferred Skills Section */}
-      <div className="rounded-lg border border-slate-700 bg-slate-800/50">
+      <div className="panel-cyan rounded-lg border">
         <button
           onClick={() => toggleSection("preferred")}
-          className="flex w-full items-center justify-between p-4 hover:bg-slate-700/50"
+          className="flex w-full items-center justify-between p-4 hover:bg-[var(--selection-hover-bg)]"
         >
           <div className="flex items-center gap-3">
             <span className="text-xl">💡</span>
-            <h3 className="text-lg font-semibold text-blue-400">
+            <h3 className="text-lg font-semibold text-[var(--tone-info-text)]">
               Bonus Skills ({data.summary.missing_preferred_skills_count})
             </h3>
           </div>
@@ -324,7 +324,7 @@ export default function SkillGapAnalysisComponent({ resumeId }: SkillGapAnalysis
         </button>
 
         {expandedSections.preferred && (
-          <div className="border-t border-slate-700 p-4">
+          <div className="border-t border-[var(--border-color)] p-4">
             {data.skill_analysis.missing_preferred_skills.length > 0 ? (
               <div className="space-y-2">
                 {data.skill_analysis.missing_preferred_skills
@@ -352,7 +352,7 @@ export default function SkillGapAnalysisComponent({ resumeId }: SkillGapAnalysis
                   ))}
               </div>
             ) : (
-              <p className="text-blue-400">
+              <p className="text-[var(--tone-info-text)]">
                 No preferred skills identified - you're well-covered!
               </p>
             )}
@@ -361,14 +361,14 @@ export default function SkillGapAnalysisComponent({ resumeId }: SkillGapAnalysis
       </div>
 
       {/* Recommendations Section */}
-      <div className="rounded-lg border border-slate-700 bg-slate-800/50">
+      <div className="lab-panel-ai rounded-lg">
         <button
           onClick={() => toggleSection("recommendations")}
-          className="flex w-full items-center justify-between p-4 hover:bg-slate-700/50"
+          className="flex w-full items-center justify-between p-4 hover:bg-[var(--selection-hover-bg)]"
         >
           <div className="flex items-center gap-3">
             <span className="text-xl">📈</span>
-            <h3 className="text-lg font-semibold text-purple-400">
+            <h3 className="text-lg font-semibold text-[color:color-mix(in_oklab,var(--foreground)_78%,#8c74bf)]">
               Learning Recommendations
             </h3>
           </div>
@@ -380,13 +380,13 @@ export default function SkillGapAnalysisComponent({ resumeId }: SkillGapAnalysis
         </button>
 
         {expandedSections.recommendations && (
-          <div className="border-t border-slate-700 p-4">
+          <div className="border-t border-[var(--border-color)] p-4">
             {data.recommendations.length > 0 ? (
               <ul className="space-y-3">
                 {data.recommendations.map((rec, idx) => (
                   <li
                     key={idx}
-                    className="flex gap-3 rounded-lg bg-purple-500/10 p-3 text-sm text-purple-200"
+                    className="lab-panel-ai flex gap-3 rounded-lg p-3 text-sm text-foreground"
                   >
                     <span className="text-lg">💬</span>
                     <span>{rec}</span>
@@ -394,7 +394,7 @@ export default function SkillGapAnalysisComponent({ resumeId }: SkillGapAnalysis
                 ))}
               </ul>
             ) : (
-              <p className="text-slate-400">No specific recommendations at this time.</p>
+              <p className="text-muted">No specific recommendations at this time.</p>
             )}
           </div>
         )}

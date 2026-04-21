@@ -440,7 +440,7 @@ export default function MockInterview({
       </div>
 
       {/* Message History - Scrollable */}
-      <div className="surface rounded-lg p-4 space-y-4 max-h-64 overflow-y-auto">
+      <div className="mock-transcript rounded-lg p-4 space-y-4 max-h-64 overflow-y-auto">
         {messages.map((msg, idx) => (
           <div key={idx} className="space-y-2">
             {msg.question && (
@@ -456,7 +456,7 @@ export default function MockInterview({
               </div>
             )}
             {msg.evaluation && (
-              <div className="border-l-2 border-[var(--tone-info-border)] pl-4">
+              <div className="mock-coach rounded-lg border-l-2 border-[var(--tone-info-border)] px-4 py-3">
                 <p className="mb-1 text-xs font-semibold uppercase text-[var(--tone-info-text)]">Feedback</p>
                 {msg.evaluation.score !== null && msg.evaluation.score !== undefined && (
                   <p className="mb-1 text-xs font-bold text-[var(--tone-info-text)]">
@@ -495,7 +495,7 @@ export default function MockInterview({
                 ? "Type your answer, or click 🎤 to speak... (Ctrl+Enter to submit)"
                 : "Type your answer here... (Ctrl+Enter to submit)"
             }
-            className="h-24 w-full resize-none rounded-lg p-3 text-sm"
+            className="mock-transcript h-24 w-full resize-none rounded-lg p-3 text-sm"
           />
           <div className="flex gap-2">
             {voiceSupport.input && (
@@ -506,7 +506,7 @@ export default function MockInterview({
                 aria-label={isRecording ? "Stop voice input" : "Start voice input"}
                 aria-pressed={isRecording}
                 className={`${
-                  isRecording ? "notice-error" : "surface"
+                  isRecording ? "notice-error" : "mock-transcript"
                 } rounded px-4 py-2 text-sm font-semibold transition-colors hover:opacity-85 disabled:opacity-50`}
               >
                 {isRecording ? "⏺ Stop" : "🎤 Speak"}
@@ -545,12 +545,12 @@ function InterviewSummary({ summary, onNewInterview }: InterviewSummaryProps) {
     <div className="space-y-4">
       {/* Score Cards */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="notice-banner notice-info p-4 text-center">
+        <div className="mock-coach rounded-xl p-4 text-center">
           <p className="mb-1 text-xs font-semibold uppercase">Average Score</p>
           <p className="text-2xl font-bold">{averageScore}</p>
           <p className="text-xs">out of 10</p>
         </div>
-        <div className="notice-banner notice-success p-4 text-center">
+        <div className="mock-ready rounded-xl p-4 text-center">
           <p className="mb-1 text-xs font-semibold uppercase">Questions</p>
           <p className="text-2xl font-bold">{summary.steps.length}</p>
           <p className="text-xs">completed</p>
@@ -569,7 +569,7 @@ function InterviewSummary({ summary, onNewInterview }: InterviewSummaryProps) {
       <div className="space-y-3 max-h-96 overflow-y-auto">
         <p className="text-sm font-semibold text-foreground">Detailed Feedback</p>
         {summary.steps.map((step, idx) => (
-          <div key={idx} className="surface rounded-lg p-3 space-y-2 text-sm">
+          <div key={idx} className="mock-transcript rounded-lg p-3 space-y-2 text-sm">
             <div>
               <p className="text-xs font-semibold uppercase text-[var(--tone-info-text)]">Q{idx + 1}</p>
               <p className="font-medium text-foreground">{step.question.text}</p>
@@ -581,7 +581,7 @@ function InterviewSummary({ summary, onNewInterview }: InterviewSummaryProps) {
               </div>
             )}
             {step.evaluation && (
-              <div className="border-l-2 border-[var(--tone-info-border)] pl-3">
+              <div className="mock-coach rounded-lg border-l-2 border-[var(--tone-info-border)] px-3 py-3">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-xs font-semibold uppercase text-[var(--tone-info-text)]">Feedback</p>
                   {step.evaluation.score !== null && step.evaluation.score !== undefined && (
@@ -638,17 +638,17 @@ function RubricBreakdown({
       {entries.length > 0 && (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           {entries.map(([label, value]) => (
-            <div key={label} className="rounded-md bg-slate-50 border border-slate-200 p-2 text-center">
-              <p className="text-[11px] font-semibold uppercase text-slate-500">{label}</p>
-              <p className="text-sm font-bold text-slate-700">{value.toFixed(1)}</p>
+            <div key={label} className="mock-transcript rounded-md p-2 text-center">
+              <p className="text-[11px] font-semibold uppercase text-muted">{label}</p>
+              <p className="text-sm font-bold text-foreground">{value.toFixed(1)}</p>
             </div>
           ))}
         </div>
       )}
       {evaluation.strengths && evaluation.strengths.length > 0 && (
         <div>
-          <p className="text-[11px] font-semibold uppercase text-green-700 mb-1">Strengths</p>
-          <ul className="list-disc list-inside text-slate-700 space-y-1">
+          <p className="text-[11px] font-semibold uppercase text-[var(--tone-success-text)] mb-1">Strengths</p>
+          <ul className="list-disc list-inside text-foreground space-y-1">
             {evaluation.strengths.map((item, idx) => (
               <li key={`${item}-${idx}`}>{item}</li>
             ))}
@@ -657,8 +657,8 @@ function RubricBreakdown({
       )}
       {evaluation.improvements && evaluation.improvements.length > 0 && (
         <div>
-          <p className="text-[11px] font-semibold uppercase text-amber-700 mb-1">Improve Next</p>
-          <ul className="list-disc list-inside text-slate-700 space-y-1">
+          <p className="text-[11px] font-semibold uppercase text-[var(--tone-warning-text)] mb-1">Improve Next</p>
+          <ul className="list-disc list-inside text-foreground space-y-1">
             {evaluation.improvements.map((item, idx) => (
               <li key={`${item}-${idx}`}>{item}</li>
             ))}

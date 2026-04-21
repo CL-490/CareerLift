@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { CLLogo } from "@/components/BrandLogo";
 
 type ProviderId = "google" | "microsoft-entra-id" | "apple";
 
@@ -99,89 +100,110 @@ function LoginInner() {
   ];
 
   return (
-    <main className="mx-auto flex min-h-[80vh] max-w-md flex-col justify-center">
-      <h1 className="mb-6 text-[34px] font-semibold tracking-tight heading-gradient">
-        Sign in
-      </h1>
+    <main className="relative min-h-screen overflow-hidden">
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 h-full w-full object-cover"
+      >
+        <source src="/videos/login-bg.mp4" type="video/mp4" />
+      </video>
 
-      <form onSubmit={handleCredentials} className="space-y-3">
-        <div>
-          <label htmlFor="login-email" className="form-label">Email</label>
-          <input
-            id="login-email"
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="form-control w-full rounded-lg p-2"
-            // Password managers (Proton Pass, 1Password, etc.) inject icons
-            // and styles into login inputs after the server render, which
-            // would otherwise trip React's hydration check.
-            suppressHydrationWarning
-          />
-        </div>
-        <div>
-          <label htmlFor="login-password" className="form-label">Password</label>
-          <input
-            id="login-password"
-            type="password"
-            required
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="form-control w-full rounded-lg p-2"
-            suppressHydrationWarning
-          />
-        </div>
-        {error && (
-          <p className="text-[12px] text-red-400" role="alert">
-            {error}
-          </p>
-        )}
-        <button
-          type="submit"
-          disabled={busy}
-          className="jf-btn jf-btn-primary w-full px-4 py-2 text-sm disabled:opacity-50"
-        >
-          {busy ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(18,7,35,0.34),rgba(10,6,26,0.55)_45%,rgba(7,8,14,0.82))]" />
 
-      <div className="my-6 flex items-center gap-3">
-        <div className="h-px flex-1 bg-[var(--border-color)]" />
-        <span className="text-[11px] uppercase tracking-wider text-muted">
-          Or continue with
-        </span>
-        <div className="h-px flex-1 bg-[var(--border-color)]" />
-      </div>
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+        <div className="flex w-full max-w-md flex-col items-center">
+          <div className="mb-8 flex flex-col items-center text-center">
+            <CLLogo size={88} className="mb-4 drop-shadow-[0_12px_32px_rgba(0,0,0,0.35)]" />
+            <div className="brand select-none text-[34px] leading-none sm:text-[40px]">CareerLift</div>
+            <div className="mt-2 text-sm text-white/70">Your AI-powered career workspace</div>
+          </div>
 
-      <div className="flex items-center justify-center gap-3">
-        {providers.map((provider) => {
-          const isBusy = providerBusy === provider.id;
-          const disabled = provider.disabled || providerBusy !== null;
-          return (
-            <button
-              key={provider.id}
-              type="button"
-              onClick={() => handleProvider(provider.id)}
-              disabled={disabled}
-              title={
-                provider.disabled
-                  ? `${provider.label} sign-in (coming soon)`
-                  : `Continue with ${provider.label}`
-              }
-              aria-label={`Continue with ${provider.label}`}
-              className="surface flex h-12 w-12 items-center justify-center rounded-full border border-[var(--border-color)] text-foreground transition-colors hover:border-[var(--accent)] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {isBusy ? (
-                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
-              ) : (
-                provider.icon
+          <div className="w-full rounded-[28px] border border-white/10 bg-[rgba(11,14,20,0.58)] p-6 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.75)] backdrop-blur-xl sm:p-7">
+            <h1 className="mb-6 text-[34px] font-semibold tracking-tight text-white">
+              Sign in
+            </h1>
+
+            <form onSubmit={handleCredentials} className="space-y-3">
+              <div>
+                <label htmlFor="login-email" className="form-label">Email</label>
+                <input
+                  id="login-email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="form-control w-full rounded-lg p-2"
+                  suppressHydrationWarning
+                />
+              </div>
+              <div>
+                <label htmlFor="login-password" className="form-label">Password</label>
+                <input
+                  id="login-password"
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="form-control w-full rounded-lg p-2"
+                  suppressHydrationWarning
+                />
+              </div>
+              {error && (
+                <p className="text-[12px] text-red-300" role="alert">
+                  {error}
+                </p>
               )}
-            </button>
-          );
-        })}
+              <button
+                type="submit"
+                disabled={busy}
+                className="jf-btn jf-btn-primary w-full px-4 py-2 text-sm disabled:opacity-50"
+              >
+                {busy ? "Signing in…" : "Sign in"}
+              </button>
+            </form>
+
+            <div className="my-6 flex items-center gap-3">
+              <div className="h-px flex-1 bg-white/10" />
+              <span className="text-[11px] uppercase tracking-wider text-white/55">
+                Or continue with
+              </span>
+              <div className="h-px flex-1 bg-white/10" />
+            </div>
+
+            <div className="flex items-center justify-center gap-3">
+              {providers.map((provider) => {
+                const isBusy = providerBusy === provider.id;
+                const disabled = provider.disabled || providerBusy !== null;
+                return (
+                  <button
+                    key={provider.id}
+                    type="button"
+                    onClick={() => handleProvider(provider.id)}
+                    disabled={disabled}
+                    title={
+                      provider.disabled
+                        ? `${provider.label} sign-in (coming soon)`
+                        : `Continue with ${provider.label}`
+                    }
+                    aria-label={`Continue with ${provider.label}`}
+                    className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors hover:border-[var(--accent)] hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {isBusy ? (
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+                    ) : (
+                      provider.icon
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   );

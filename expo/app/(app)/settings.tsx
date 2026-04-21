@@ -5,6 +5,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { Card } from "@/components/ui/Card";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { getApiBase } from "@/lib/api/config";
+import { useAuth } from "@/lib/auth/provider";
 import { FontSizeMode, ThemeMode, useAppTheme } from "@/lib/theme";
 
 const modes: ThemeMode[] = ["system", "dark", "light"];
@@ -12,9 +13,35 @@ const fontSizes: FontSizeMode[] = ["sm", "md", "lg"];
 
 export default function SettingsScreen() {
   const { mode, setMode, fontSize, setFontSize, theme } = useAppTheme();
+  const { session, signOut } = useAuth();
 
   return (
     <AppShell title="Settings" subtitle="Phase 1 includes theme control, environment visibility, and the same polished shell used throughout the mobile app.">
+      <Card delay={10}>
+        <SectionTitle
+          eyebrow="Account"
+          title="Signed in on mobile"
+          subtitle="This Expo shell now uses the same FastAPI-backed identity model as the web app."
+        />
+        <View
+          style={[
+            styles.accountPanel,
+            {
+              borderColor: theme.palette.divider,
+              backgroundColor: theme.palette.surfaceMuted,
+            },
+          ]}
+        >
+          <View style={styles.subscriptionCopy}>
+            <Text style={{ color: theme.palette.foreground, fontWeight: "700" }}>{session?.user.name || "CareerLift User"}</Text>
+            <Text style={{ color: theme.palette.muted }}>{session?.user.email || "No email available"}</Text>
+          </View>
+          <Pressable onPress={() => void signOut()} style={[styles.signOutButton, { backgroundColor: `${theme.palette.danger}18` }]}>
+            <Text style={{ color: theme.palette.danger, fontWeight: "700" }}>Sign Out</Text>
+          </Pressable>
+        </View>
+      </Card>
+
       <Card delay={40}>
         <SectionTitle
           eyebrow="Appearance"
@@ -200,6 +227,12 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 16,
   },
+  accountPanel: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 16,
+    gap: 16,
+  },
   subscriptionCopy: {
     gap: 8,
   },
@@ -209,5 +242,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     opacity: 0.7,
+  },
+  signOutButton: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
 });

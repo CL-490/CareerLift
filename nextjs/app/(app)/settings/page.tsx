@@ -8,14 +8,14 @@ export default function SettingsPage() {
   const { theme, fontSize, setTheme, setFontSize } = usePreferences();
 
   return (
-    <div className="max-w-400 mx-auto space-y-8">
+    <div className="mx-auto max-w-300 space-y-6">
       <div>
-        <h1 className="text-[40px] font-semibold tracking-tight heading-gradient mb-2">Settings</h1>
+        <h1 className="mb-2 text-[30px] font-semibold tracking-tight heading-gradient sm:text-[32px]">Settings</h1>
         <p className="text-[15px] text-muted mb-6">Personalize the app and manage your plan.</p>
       </div>
 
       {/* UI Preferences */}
-      <section className="card-3d rounded-xl border border-[var(--border-color)] bg-[var(--background-alt)]/50 p-5">
+      <section className="card-3d panel-tinted panel-plum rounded-xl border border-[var(--border-color)] p-5">
         <h2 className="text-lg font-medium mb-4">UI Preferences</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
@@ -67,7 +67,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Subscription placeholder */}
-      <section className="card-3d rounded-xl border border-[var(--border-color)] bg-[var(--background-alt)]/50 p-5">
+      <section className="card-3d panel-tinted panel-cyan rounded-xl border border-[var(--border-color)] p-5">
         <h2 className="text-lg font-medium mb-4">Manage Subscription</h2>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>

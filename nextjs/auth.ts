@@ -5,6 +5,7 @@ import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 
 const INTERNAL_API_URL =
   process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const AUTH_SECRET = process.env.AUTH_SECRET?.trim() || undefined;
 
 const GOOGLE_ID = process.env.GOOGLE_OAUTH_CLIENT_ID;
 const GOOGLE_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
@@ -72,9 +73,9 @@ if (MS_ID && MS_SECRET) {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
-  // AUTH_SECRET is auto-detected by Auth.js, but we set it explicitly here so
-  // the dev secret in .env wins even if a stray env var leaks in.
-  secret: process.env.AUTH_SECRET,
+  // Avoid passing an empty string, which Auth.js treats as an invalid server
+  // configuration. In local dev it can fall back when the env var is unset.
+  secret: AUTH_SECRET,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers,

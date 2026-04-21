@@ -6,7 +6,7 @@ export default function AdvancedToolsDrawer() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="card-3d overflow-hidden">
+    <div className="card-3d lab-surface overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -42,7 +42,7 @@ export default function AdvancedToolsDrawer() {
 
       {open && (
         <div className="border-t border-[var(--border-color)] px-5 py-5">
-          <div className="rounded-lg border border-[var(--border-color)] bg-[var(--background-alt)]/70 p-4">
+          <div className="lab-panel-info rounded-lg p-4">
             <h3 className="text-[16px] font-medium text-foreground">
               Neo4j Browser
             </h3>

@@ -59,7 +59,7 @@ export default function PdfViewer({
 
   if (showUploaded && uploadedFileUrl) {
     return (
-      <div className="card hover-ring card-hue">
+      <div className="card hover-ring lab-surface">
         <h2 className={`${titleClass} mb-3 font-medium`}>PDF Preview</h2>
         <iframe
           src={uploadedFileUrl}
@@ -73,7 +73,7 @@ export default function PdfViewer({
 
   if (!previewImageUrl) {
     return (
-      <div className="card hover-ring card-hue">
+      <div className="card hover-ring lab-surface">
         <h2 className={`${titleClass} mb-3 font-medium`}>PDF Preview</h2>
         <div
           className={`flex ${placeholderHeight} items-center justify-center rounded-lg border-2 border-dashed border-[var(--border-color)] text-[14px] text-muted`}
@@ -92,14 +92,14 @@ export default function PdfViewer({
   }
 
   return (
-    <div className="card hover-ring card-hue">
+    <div className="card hover-ring lab-surface">
       <div className="mb-3 flex items-center justify-between">
         <h2 className={`${titleClass} font-medium`}>PDF Preview</h2>
         {onDownloadPdf && (
           <button
             onClick={onDownloadPdf}
             disabled={downloadingPdf}
-            className={`flex items-center gap-1.5 rounded-lg bg-blue-600 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 ${buttonClass}`}
+            className={`jf-btn jf-btn-primary ${buttonClass}`}
           >
             {downloadingPdf ? (
               <>
@@ -178,7 +178,7 @@ export default function PdfViewer({
 
       <div className="relative">
         {isRecompiling && (
-          <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-blue-600/90 px-2.5 py-1 text-[12px] font-medium text-white backdrop-blur-sm">
+          <div className="notice-banner notice-info absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium backdrop-blur-sm">
             <Spinner className="h-3.5 w-3.5" />
             Updating...
           </div>

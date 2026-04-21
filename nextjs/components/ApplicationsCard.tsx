@@ -66,7 +66,7 @@ export default function ApplicationsCard() {
     .slice(0, 3);
 
   return (
-    <div className="card hover-ring flex flex-col">
+    <div className="card hover-ring card-tone-mint flex flex-col">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="card-header">Applications</h2>
         <Link

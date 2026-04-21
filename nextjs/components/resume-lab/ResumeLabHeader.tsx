@@ -10,7 +10,7 @@ export default function ResumeLabHeader({
   return (
     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h1 className="text-[40px] font-semibold tracking-tight heading-gradient">
+        <h1 className="text-[30px] font-semibold tracking-tight heading-gradient sm:text-[32px]">
           Resume Lab
         </h1>
         <p className="mt-2 max-w-2xl text-[15px] text-muted">

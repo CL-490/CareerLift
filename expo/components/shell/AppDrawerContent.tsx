@@ -5,6 +5,8 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { BrandWordmark } from "@/components/brand/BrandWordmark";
+import { useAuth } from "@/lib/auth/provider";
 import { useAppTheme } from "@/lib/theme";
 
 const iconMap: Record<string, keyof typeof Feather.glyphMap> = {
@@ -27,6 +29,7 @@ const labelMap: Record<string, string> = {
 
 export function AppDrawerContent({ state, navigation }: DrawerContentComponentProps) {
   const { theme } = useAppTheme();
+  const { session, signOut } = useAuth();
   const insets = useSafeAreaInsets();
 
   return (
@@ -46,19 +49,19 @@ export function AppDrawerContent({ state, navigation }: DrawerContentComponentPr
         edges={["top", "bottom", "left"]}
       >
         <View style={styles.brandBlock}>
+          <BrandWordmark subtitle="Native command center" compact />
           <View
             style={[
-              styles.brandChip,
+              styles.accountCard,
               {
-                backgroundColor: theme.palette.accentSoft,
                 borderColor: theme.palette.divider,
+                backgroundColor: theme.palette.surfaceMuted,
               },
             ]}
           >
-            <Text style={{ color: theme.palette.accent, fontSize: 11, fontWeight: "700", letterSpacing: 0.9 }}>CAREERLIFT</Text>
+            <Text style={{ color: theme.palette.foreground, fontWeight: "700" }}>{session?.user.name || "Signed in"}</Text>
+            <Text style={{ color: theme.palette.muted, fontSize: 12 }}>{session?.user.email}</Text>
           </View>
-          <Text style={{ color: theme.palette.foreground, fontSize: 26, fontWeight: "700" }}>CareerLift</Text>
-          <Text style={{ color: theme.palette.muted, fontSize: 13 }}>Mobile command center</Text>
         </View>
 
         <View style={styles.menuList}>
@@ -99,19 +102,19 @@ export function AppDrawerContent({ state, navigation }: DrawerContentComponentPr
           })}
         </View>
 
-        <View
-          style={[
-            styles.footerCard,
-            {
-              borderColor: theme.palette.divider,
-              backgroundColor: theme.palette.surfaceMuted,
-            },
-          ]}
-        >
-          <Text style={{ color: theme.palette.foreground, fontWeight: "700" }}>Phase 1 mobile build</Text>
-          <Text style={{ color: theme.palette.muted, lineHeight: 20 }}>
-            Dashboard parity is live. Feature pages are framed and ready for their next implementation passes.
-          </Text>
+        <View style={styles.signOutWrap}>
+          <Pressable
+            onPress={() => void signOut()}
+            style={[
+              styles.signOutButton,
+              {
+                borderColor: theme.palette.divider,
+                backgroundColor: theme.palette.surface,
+              },
+            ]}
+          >
+            <Text style={{ color: theme.palette.danger, fontWeight: "700" }}>Sign Out</Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     </LinearGradient>
@@ -133,22 +136,29 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderWidth: 1,
   },
+  accountCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 3,
+  },
   menuList: {
-    gap: 8,
+    gap: 6,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    borderRadius: 22,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    gap: 10,
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     borderWidth: 1,
   },
   iconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -156,15 +166,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   activeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
-  footerCard: {
+  signOutWrap: {
     marginTop: "auto",
-    gap: 8,
-    borderRadius: 24,
-    padding: 16,
+    paddingTop: 18,
+    paddingBottom: 10,
+  },
+  signOutButton: {
+    alignSelf: "flex-start",
     borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
   },
 });

@@ -162,6 +162,39 @@ npm run cap:android  # For Android Studio
 npm run cap:ios      # For Xcode (macOS only)
 ```
 
+Mobile Application (Expo)
+
+1. Install dependencies and start Expo:
+```bash
+cd expo
+npm install
+npm run start
+```
+
+2. Configure Expo auth environment values in `.env`:
+```bash
+AUTH_JWT_SECRET=replace-with-openssl-rand-hex-32
+BOOTSTRAP_USER_EMAIL=user@careerlift.local
+BOOTSTRAP_USER_PASSWORD=changeme
+BOOTSTRAP_USER_NAME=user
+EXPO_PUBLIC_API_URL=http://localhost:8000
+EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID=...
+EXPO_PUBLIC_MICROSOFT_OAUTH_CLIENT_ID=...
+EXPO_PUBLIC_MICROSOFT_TENANT_ID=common
+```
+
+3. Restart the FastAPI backend after changing `AUTH_JWT_SECRET` or any `BOOTSTRAP_USER_*` value.
+
+4. The bootstrap email/password login depends on FastAPI being able to mint JWTs. If `AUTH_JWT_SECRET` is blank, the seeded credentials will not work even if the user exists in Neo4j.
+
+5. Make sure your Google and Microsoft OAuth apps allow the Expo redirect scheme:
+```text
+careerlift-mobile://auth/google
+careerlift-mobile://auth/microsoft
+```
+
+The Expo app now supports native email/password login plus Google and Microsoft OAuth backed by the same FastAPI auth endpoints used by the web app.
+
 Project Structure
 
 ```

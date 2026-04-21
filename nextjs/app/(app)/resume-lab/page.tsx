@@ -538,7 +538,7 @@ export default function ResumeLabPage() {
   };
 
   return (
-    <div className="mx-auto max-w-400">
+    <div className="mx-auto max-w-300">
       <ResumeLabHeader
         canClear={Boolean(result || resumeData)}
         onClear={clearResume}

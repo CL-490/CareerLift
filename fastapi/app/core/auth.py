@@ -47,8 +47,9 @@ def create_access_token(
     extra: Optional[dict] = None,
 ) -> str:
     if not settings.auth_jwt_secret:
-        raise RuntimeError(
-            "AUTH_JWT_SECRET is not configured. Set it in .env before issuing tokens."
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AUTH_JWT_SECRET is not configured on the server. Set it in .env and restart the backend.",
         )
     now = datetime.now(timezone.utc)
     payload: dict[str, Any] = {
@@ -199,7 +200,7 @@ async def bootstrap_seed_user(db) -> Optional[dict]:
         u.name = $name,
         u.password_hash = $hash
     SET u.name = coalesce(u.name, $name),
-        u.password_hash = coalesce(u.password_hash, $hash),
+        u.password_hash = $hash,
         u.updated_at = datetime()
     RETURN u
     """

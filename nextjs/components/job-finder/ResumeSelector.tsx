@@ -47,7 +47,7 @@ export default function ResumeSelector({
     }
   };
   return (
-    <div className="mb-6 rounded-2xl border border-(--border-color) p-4 surface">
+    <div className="surface-strong mb-6 rounded-2xl p-4">
       <label className="mb-2 block text-sm font-medium">
         Select Resume{" "}
         <span className="text-xs font-normal text-muted">
@@ -59,7 +59,7 @@ export default function ResumeSelector({
         <select
           value={selectedResume?.resume_id ?? ""}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 rounded-2xl border px-4 py-2"
+          className="flex-1 rounded-2xl border border-[var(--border-strong)] px-4 py-2"
         >
         <option value="">
           {availableResumes.length === 0
@@ -103,7 +103,7 @@ export default function ResumeSelector({
         )}
       </div>
       {selectedResume ? (
-        <div className="mt-3 rounded-xl border border-blue-500/20 bg-blue-500/10 p-3">
+        <div className="panel-cyan mt-3 rounded-xl p-3">
           <div className="mb-1 flex items-start justify-between gap-2">
             <p className="text-sm font-medium text-blue-300">
               Selected Resume: <strong>{selectedResume.resume_name}</strong>

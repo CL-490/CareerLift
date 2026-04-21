@@ -13,7 +13,7 @@ export default function ResumeLabStepper({
 }: ResumeLabStepperProps) {
   return (
     <nav aria-label="Resume Lab steps" className="mb-8">
-      <div className="card-3d overflow-hidden p-2">
+      <div className="card-3d lab-surface overflow-hidden p-2">
         <div className="flex gap-2 overflow-x-auto pb-1 styled-scrollbar">
           {steps.map((step, index) => {
             const isActive = step.id === activeStep;
@@ -30,7 +30,7 @@ export default function ResumeLabStepper({
                   isActive
                     ? "border-[var(--accent)] bg-[var(--accent)]/10 text-foreground shadow-[var(--shadow-2)]"
                     : step.enabled
-                      ? "border-[var(--border-color)] bg-[var(--background-alt)]/50 text-foreground hover:border-[var(--accent)]/70 hover:bg-[var(--background-alt)]"
+                      ? "border-[var(--border-color)] bg-[var(--panel-bg)] text-foreground hover:border-[var(--accent)]/70 hover:bg-[var(--selection-hover-bg)]"
                       : "cursor-not-allowed border-[var(--border-strong)] bg-[var(--background-alt)]/30 text-muted opacity-50"
                 }`}
               >

@@ -161,7 +161,7 @@ export default function MockInterviewSetup({ onStartInterview }: MockInterviewSe
               <button
                 key={idx}
                 onClick={() => setSelectedJob(job)}
-                className={`selection-card w-full p-4 text-left ${
+                className={`selection-card mock-transcript w-full p-4 text-left ${
                   selectedJob === job ? "selection-card-active" : ""
                 }`}
               >
@@ -187,7 +187,7 @@ export default function MockInterviewSetup({ onStartInterview }: MockInterviewSe
       </button>
 
       {/* Info Box */}
-      <div className="notice-banner notice-info p-4 text-sm">
+      <div className="mock-coach rounded-xl p-4 text-sm">
         <p className="font-semibold mb-2">💡 Interview Tips:</p>
         <ul className="list-disc list-inside space-y-1 text-xs">
           <li>Select a resume you want to practice with</li>

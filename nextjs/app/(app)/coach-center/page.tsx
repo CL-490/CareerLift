@@ -41,8 +41,8 @@ export default function CoachCenterPage() {
   };
 
   return (
-    <main className="mx-auto max-w-400">
-      <h1 className="text-[40px] font-semibold tracking-tight heading-gradient mb-2">
+    <main className="mx-auto max-w-300">
+      <h1 className="mb-2 text-[30px] font-semibold tracking-tight heading-gradient sm:text-[32px]">
         Coach Center
       </h1>
       <p className="text-[15px] text-muted mb-6">
@@ -52,9 +52,9 @@ export default function CoachCenterPage() {
 
         {/* Scrollable Content Container */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-6">
+          <div className="p-4">
             {/* Interview Simulator Section */}
-            <div className="card hover-ring mb-6 card-hue">
+            <div className="card hover-ring mb-6 mock-shell">
               <div className="mb-6">
                 <h2 className="text-[20px] font-medium">Mock Interview</h2>
                 <h3 className="mb-2 text-lg font-semibold text-muted">Practice for a specific job role with AI-powered feedback</h3>
@@ -76,7 +76,7 @@ export default function CoachCenterPage() {
             </div>
 
             {/* Skill Gap Analysis Section */}
-            <div className="card hover-ring mb-6 card-hue">
+            <div className="card hover-ring mb-6 card-tone-amber">
               <div className="mb-6">
                 <h2 className="text-[20px] font-medium">Skill Gap Analysis</h2>
                 <h3 className="mb-4 text-lg font-semibold text-muted">Identify gaps between your skills and saved job requirements</h3>

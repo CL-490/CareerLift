@@ -44,9 +44,9 @@ function EditStatusBar({
       : selectedTemplateInfo?.name || "Choose a template";
 
   return (
-    <div className="card-3d p-5">
+    <div className="card-3d lab-surface p-5">
       <div className="grid gap-3 md:grid-cols-3">
-        <div className="panel-tinted rounded-lg p-4">
+        <div className="lab-panel-info rounded-lg p-4">
           <p className="mb-1 text-[12px] uppercase tracking-[0.2em] text-muted">
             Imported resume
           </p>
@@ -54,7 +54,7 @@ function EditStatusBar({
             {result?.resume_name || result?.graph_data.person.name || result?.filename || "Untitled"}
           </p>
         </div>
-        <div className="panel-tinted rounded-lg p-4">
+        <div className="lab-panel-ai rounded-lg p-4">
           <p className="mb-1 text-[12px] uppercase tracking-[0.2em] text-muted">
             Template
           </p>
@@ -62,7 +62,7 @@ function EditStatusBar({
             {templateLabel}
           </p>
         </div>
-        <div className="panel-tinted rounded-lg p-4">
+        <div className="lab-panel-success rounded-lg p-4">
           <p className="mb-1 text-[12px] uppercase tracking-[0.2em] text-muted">
             Preview status
           </p>
@@ -123,7 +123,7 @@ export default function EditStep({
       )}
 
       {!selectedTemplate && (
-        <div className="card hover-ring card-hue">
+        <div className="card hover-ring lab-surface">
           <h3 className="text-[20px] font-medium text-foreground">
             Start by choosing a template
           </h3>
@@ -137,7 +137,7 @@ export default function EditStep({
 
       {hasUploadedPreview && (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-          <div className="card hover-ring card-hue">
+          <div className="card hover-ring lab-panel-info">
             <h3 className="text-[20px] font-medium text-foreground">
               Uploaded file selected
             </h3>

@@ -78,7 +78,7 @@ export default function ImportedDetailsDrawer({
   }, [result.resume_id, result.filename]);
 
   return (
-    <div className="card-3d overflow-hidden">
+    <div className="card-3d lab-surface overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -121,32 +121,32 @@ export default function ImportedDetailsDrawer({
       {open && (
         <div className="border-t border-[var(--border-color)] px-5 py-5">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="panel-tinted rounded-lg p-4">
+            <div className="lab-panel-info rounded-lg p-4">
               <p className="mb-1 text-[13px] text-muted">File</p>
               <p className="text-[15px] font-medium text-foreground">
                 {result.filename}
               </p>
             </div>
-            <div className="panel-tinted rounded-lg p-4">
+            <div className="lab-panel-info rounded-lg p-4">
               <p className="mb-1 text-[13px] text-muted">Text Extracted</p>
               <p className="text-[15px] font-medium text-foreground">
                 {result.text_length.toLocaleString()} characters
               </p>
             </div>
-            <div className="panel-tinted rounded-lg p-4">
+            <div className="lab-panel-ai rounded-lg p-4">
               <p className="mb-1 text-[13px] text-muted">Nodes Created</p>
               <p className="text-[15px] font-medium text-foreground">
                 {result.nodes_created}
               </p>
             </div>
-            <div className="panel-tinted rounded-lg p-4">
+            <div className="lab-panel-success rounded-lg p-4">
               <p className="mb-1 text-[13px] text-muted">Status</p>
               <p className="text-[15px] font-medium text-green-400">Success</p>
             </div>
           </div>
 
           <DetailSection title="Person">
-            <div className="panel-tinted rounded-lg p-4">
+            <div className="lab-panel-ai rounded-lg p-4">
               <p className="mb-2 text-[18px] font-semibold text-foreground">
                 {result.graph_data.person.name}
               </p>
@@ -196,11 +196,11 @@ export default function ImportedDetailsDrawer({
             >
               <div className="space-y-3">
                 {result.graph_data.experiences.map((exp, idx) => (
-                  <div key={idx} className="panel-tinted rounded-lg p-4">
+                  <div key={idx} className="lab-panel-info rounded-lg p-4">
                     <p className="text-[15px] font-medium text-foreground">
                       {asString(exp.title)}
                     </p>
-                    <p className="text-[14px] text-blue-400">
+                    <p className="text-[14px] text-[#8fc1f5]">
                       {asString(exp.company)}
                     </p>
                     {exp.duration && (
@@ -225,11 +225,11 @@ export default function ImportedDetailsDrawer({
             >
               <div className="space-y-3">
                 {result.graph_data.education.map((edu, idx) => (
-                  <div key={idx} className="panel-tinted rounded-lg p-4">
+                  <div key={idx} className="lab-panel-info rounded-lg p-4">
                     <p className="text-[15px] font-medium text-foreground">
                       {asString(edu.degree)}
                     </p>
-                    <p className="text-[14px] text-blue-400">
+                    <p className="text-[14px] text-[#8fc1f5]">
                       {asString(edu.institution)}
                     </p>
                     {edu.year && (
@@ -250,12 +250,12 @@ export default function ImportedDetailsDrawer({
                   );
 
                   return (
-                    <div key={idx} className="panel-tinted rounded-lg p-4">
+                    <div key={idx} className="lab-panel-ai rounded-lg p-4">
                       <p className="text-[15px] font-medium text-foreground">
                         {asString(job.title) || asString(job.company) || "Job"}
                       </p>
                       {Boolean(job.company) && (
-                        <p className="text-[14px] text-blue-400">
+                        <p className="text-[14px] text-[var(--tone-info-text)]">
                           {asString(job.company)}
                         </p>
                       )}

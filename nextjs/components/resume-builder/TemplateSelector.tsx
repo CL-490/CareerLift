@@ -144,7 +144,7 @@ export default function TemplateSelector({
   }, []);
 
   return (
-    <div className="card hover-ring card-hue mb-6">
+    <div className="card hover-ring lab-surface mb-6">
       <h2 className="text-[20px] font-medium mb-3">Select Template</h2>
       <div className="flex gap-3 overflow-x-auto pb-2 styled-scrollbar">
         {hasUploadedFile && (
@@ -152,7 +152,7 @@ export default function TemplateSelector({
             onClick={() => onSelect("uploaded")}
             className={`flex-shrink-0 w-32 h-44 rounded-lg border-2 flex flex-col items-center justify-center gap-2 transition-all ${
               selected === "uploaded"
-                ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20"
+                ? "border-[var(--accent)] bg-[var(--accent)]/10 shadow-lg"
                 : "border-[var(--border-color)] hover:border-[var(--accent)]"
             }`}
           >
@@ -180,13 +180,13 @@ export default function TemplateSelector({
             onClick={() => onSelect(t.id)}
             className={`flex-shrink-0 w-32 h-44 rounded-lg border-2 flex flex-col items-center justify-center gap-2 transition-all ${
               selected === t.id
-                ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20"
+                ? "border-[var(--accent)] bg-[var(--accent)]/10 shadow-lg"
                 : "border-[var(--border-color)] hover:border-[var(--accent)]"
             }`}
           >
            <div className="flex-1 w-full flex items-center justify-center overflow-hidden rounded">
               {loading[t.id] ? (
-                <div className="w-full h-full bg-white/5 animate-pulse rounded" />
+                <div className="h-full w-full animate-pulse rounded bg-[var(--background-alt)]/60" />
               ) : previews[t.id] ? (
                 <img
                   src={previews[t.id]}
@@ -194,7 +194,7 @@ export default function TemplateSelector({
                   className="w-full h-full object-cover object-top rounded"
                 />
               ) : (
-                <div className="w-16 h-20 bg-white/5 rounded flex items-center justify-center">
+                <div className="flex h-20 w-16 items-center justify-center rounded bg-[var(--background-alt)]/60">
                   <span className="text-[24px] font-bold text-muted">
                     {t.id.replace("template", "")}
                   </span>

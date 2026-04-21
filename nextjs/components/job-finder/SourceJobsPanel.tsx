@@ -82,8 +82,8 @@ export default function SourceJobsPanel({
   const progress = loadingState?.progress || 0;
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-(--border-color) surface">
-      <div className="border-b border-(--border-color) bg-linear-to-r from-blue-500/10 to-purple-500/10 p-4">
+    <div className="surface-strong flex flex-col overflow-hidden rounded-2xl">
+      <div className="border-b border-[var(--border-strong)] bg-linear-to-r from-blue-500/10 to-purple-500/10 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             <span>{source.emoji}</span>
@@ -150,7 +150,7 @@ export default function SourceJobsPanel({
             </button>
           </div>
         ) : (
-          <ul className="divide-y divide-(--border-color)">
+          <ul className="divide-y divide-[var(--border-strong)]">
             {jobs.map((job, idx) => {
               const jobKey = `${source.key}-${idx}`;
               const jobUrl = job.apply_url || job.source_url || "";
@@ -172,7 +172,7 @@ export default function SourceJobsPanel({
               return (
                 <li
                   key={jobKey}
-                  className="p-4 transition-colors hover:bg-[var(--background-alt)/10]"
+                  className="border-l-2 border-transparent p-4 transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--selection-hover-bg)]"
                 >
                   <div className="mb-1 flex items-start justify-between gap-2">
                     <h3 className="line-clamp-2 text-sm font-semibold">

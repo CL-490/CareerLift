@@ -10,12 +10,12 @@ export default function CoachCenterCard() {
   const activeResume = useActiveResume();
 
   return (
-    <div className="card hover-ring flex flex-col">
+    <div className="card hover-ring card-tone-amber flex flex-col">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="card-header">Skill Gap Analysis</h2>
         <Link
           href="/coach-center"
-          className="text-xs text-muted hover:text-white transition-colors shrink-0"
+          className="text-xs text-muted hover:text-foreground transition-colors shrink-0"
         >
           Coach Center →
         </Link>
