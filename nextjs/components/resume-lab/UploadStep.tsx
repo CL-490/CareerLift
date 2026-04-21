@@ -3,7 +3,9 @@
 import type { DragEvent } from "react";
 import ImportedDetailsDrawer from "@/components/resume-lab/ImportedDetailsDrawer";
 import ResumeLabStepPanel from "@/components/resume-lab/ResumeLabStepPanel";
+import ResumeCarousel from "@/components/ResumeCarousel";
 import type { UploadResult } from "@/components/resume-lab/types";
+import type { Resume } from "@/components/job-finder/types";
 
 interface UploadStepProps {
   file: File | null;
@@ -14,6 +16,10 @@ interface UploadStepProps {
   allowedExtensions: string[];
   personNameInput: string;
   resumeNameInput: string;
+  existingResumes: Resume[];
+  loadingExisting: boolean;
+  selectingExistingId: string | null;
+  existingError: string | null;
   onPersonNameChange: (value: string) => void;
   onResumeNameChange: (value: string) => void;
   onDrag: (e: DragEvent<HTMLDivElement>) => void;
@@ -21,6 +27,7 @@ interface UploadStepProps {
   onFileSelect: (file: File) => void;
   onUpload: () => void;
   onContinue: () => void;
+  onSelectExisting: (resumeId: string) => void;
 }
 
 export default function UploadStep({
@@ -32,6 +39,10 @@ export default function UploadStep({
   allowedExtensions,
   personNameInput,
   resumeNameInput,
+  existingResumes,
+  loadingExisting,
+  selectingExistingId,
+  existingError,
   onPersonNameChange,
   onResumeNameChange,
   onDrag,
@@ -39,6 +50,7 @@ export default function UploadStep({
   onFileSelect,
   onUpload,
   onContinue,
+  onSelectExisting,
 }: UploadStepProps) {
   const importedName =
     result?.graph_data.person.name ||
@@ -59,15 +71,46 @@ export default function UploadStep({
 
   return (
     <ResumeLabStepPanel
-      title="Upload"
-      description="Bring in a resume, confirm the imported name, and keep the raw parsed details tucked away until you need them."
+      title="Select"
+      description="Pick one of your existing resumes or upload a new file. Either path leads to the same edit, preview, and graph steps."
     >
+      <div className="card hover-ring card-hue mb-4">
+        <div className="mb-4">
+          <h3 className="text-[20px] font-medium">Use an Existing Resume</h3>
+          <p className="mt-2 text-[14px] text-muted">
+            Pick one of the resumes already imported into your library. Click a
+            card to load it straight into the editor.
+          </p>
+        </div>
+
+        {loadingExisting ? (
+          <p className="text-[14px] text-muted">Loading your resumes…</p>
+        ) : existingResumes.length === 0 ? (
+          <p className="text-[14px] text-muted">
+            No existing resumes yet — upload one below to get started.
+          </p>
+        ) : (
+          <ResumeCarousel
+            resumes={existingResumes}
+            selectedResumeId={selectingExistingId}
+            onSelect={onSelectExisting}
+            busyResumeId={selectingExistingId}
+          />
+        )}
+
+        {existingError && (
+          <div className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-[14px] text-red-400">
+            {existingError}
+          </div>
+        )}
+      </div>
+
       <div className="card hover-ring card-hue">
         <div className="mb-4">
-          <h3 className="text-[20px] font-medium">Upload Resume</h3>
+          <h3 className="text-[20px] font-medium">Upload a New Resume</h3>
           <p className="mt-2 text-[14px] text-muted">
-            Upload your resume to extract career details and prepare it for
-            editing, previewing, and graph analysis.
+            Import a fresh resume file to extract career details and prepare it
+            for editing, previewing, and graph analysis.
           </p>
         </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import EditStep from "@/components/resume-lab/EditStep";
 import GraphStep from "@/components/resume-lab/GraphStep";
@@ -21,9 +22,27 @@ import {
   createEmptyResumeData,
   graphDataToResumeData,
 } from "@/lib/resumeDataMapper";
+import {
+  loadResumeById,
+  persistStoredResume,
+  toUploadResult,
+} from "@/lib/resumeLoader";
+import type { Resume } from "@/components/job-finder/types";
 import type { ResumeData, TemplateInfo } from "@/types/resume";
 
+const VALID_STEPS = ["upload", "edit", "preview", "graph"] as const;
+
+function normalizeStepParam(value: string | null): ResumeLabStepId | null {
+  if (!value) return null;
+  return (VALID_STEPS as readonly string[]).includes(value)
+    ? (value as ResumeLabStepId)
+    : null;
+}
+
 export default function ResumeLabPage() {
+  const searchParams = useSearchParams();
+  const initialStepParam = normalizeStepParam(searchParams.get("step"));
+
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
@@ -31,16 +50,26 @@ export default function ResumeLabPage() {
   const [dragActive, setDragActive] = useState(false);
   const [personNameInput, setPersonNameInput] = useState("");
   const [resumeNameInput, setResumeNameInput] = useState("Default Resume");
-  const [activeStep, setActiveStep] = useState<ResumeLabStepId>("upload");
+  const [activeStep, setActiveStep] = useState<ResumeLabStepId>(
+    initialStepParam ?? "upload"
+  );
 
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [templates, setTemplates] = useState<TemplateInfo[]>([]);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [existingResumes, setExistingResumes] = useState<Resume[]>([]);
+  const [loadingExisting, setLoadingExisting] = useState(true);
+  const [selectingExistingId, setSelectingExistingId] = useState<string | null>(
+    null
+  );
+  const [existingError, setExistingError] = useState<string | null>(null);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const seededInitialStepRef = useRef(false);
+  // If an explicit `?step=` is provided, honor it and skip the auto-advance
+  // that would normally jump to "edit" when a cached resume exists.
+  const seededInitialStepRef = useRef(initialStepParam !== null);
 
   const allowedExtensions = [".txt", ".md", ".pdf", ".doc", ".docx"];
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -68,6 +97,22 @@ export default function ResumeLabPage() {
       .then((res) => setTemplates(res.data))
       .catch(() => {});
   }, [API_URL]);
+
+  const refreshExistingResumes = async () => {
+    setLoadingExisting(true);
+    try {
+      const list = await listResumes();
+      setExistingResumes(list);
+    } catch {
+      /* non-fatal — upload path still works */
+    } finally {
+      setLoadingExisting(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshExistingResumes();
+  }, []);
 
   useEffect(() => {
     type SavedResume = {
@@ -344,6 +389,34 @@ export default function ResumeLabPage() {
     }
   };
 
+  const handleSelectExisting = async (resumeId: string) => {
+    setSelectingExistingId(resumeId);
+    setExistingError(null);
+    try {
+      const stored = await loadResumeById(resumeId, existingResumes);
+      persistStoredResume(stored);
+      const uploadResult = toUploadResult(stored);
+      setResult(uploadResult);
+      setPersonNameInput(stored.person_name);
+      setResumeNameInput(stored.resume_name || "Default Resume");
+      setResumeData(graphDataToResumeData(stored.graph_data));
+      setFile(null);
+      if (uploadedFileUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(uploadedFileUrl);
+      }
+      setUploadedFileUrl(null);
+      setError(null);
+      setActiveStep("edit");
+      seededInitialStepRef.current = true;
+    } catch (err) {
+      setExistingError(
+        err instanceof Error ? err.message : "Failed to load the selected resume"
+      );
+    } finally {
+      setSelectingExistingId(null);
+    }
+  };
+
   const handleDownloadPdf = async () => {
     if (!resumeData || !selectedTemplate || selectedTemplate === "uploaded") {
       return;
@@ -428,8 +501,8 @@ export default function ResumeLabPage() {
   const steps: ResumeLabStep[] = [
     {
       id: "upload",
-      label: "Upload",
-      description: "Import a resume and keep raw details out of the main flow.",
+      label: "Select",
+      description: "Pick an existing resume or upload a new one to start the flow.",
       enabled: true,
       complete: Boolean(result || resumeData),
     },
@@ -486,6 +559,10 @@ export default function ResumeLabPage() {
           allowedExtensions={allowedExtensions}
           personNameInput={personNameInput}
           resumeNameInput={resumeNameInput}
+          existingResumes={existingResumes}
+          loadingExisting={loadingExisting}
+          selectingExistingId={selectingExistingId}
+          existingError={existingError}
           onPersonNameChange={setPersonNameInput}
           onResumeNameChange={setResumeNameInput}
           onDrag={handleDrag}
@@ -493,6 +570,7 @@ export default function ResumeLabPage() {
           onFileSelect={handleFileChange}
           onUpload={handleUpload}
           onContinue={() => setActiveStep("edit")}
+          onSelectExisting={handleSelectExisting}
         />
       )}
 
