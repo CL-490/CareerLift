@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     # Ollama
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "gemma4:31b-cloud"
+
+    # Kokoro TTS
+    kokoro_url: str = "http://localhost:8880"
+    kokoro_voice: str = "af_heart"
+
     # CORS
     cors_origins: list[str] = [
         "http://localhost:3000",

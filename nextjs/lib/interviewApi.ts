@@ -23,6 +23,7 @@ export type InterviewResponse = {
   evaluation?: InterviewEvaluation;
   session_complete: boolean;
   session_id?: string;
+  summary?: SessionSummary;
 };
 
 export type InterviewSession = {
