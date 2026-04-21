@@ -18,28 +18,6 @@ export function BrandedBackground() {
       <View
         pointerEvents="none"
         style={[
-          styles.glow,
-          {
-            backgroundColor: theme.palette.spotlight,
-            top: -90,
-            right: -30,
-          },
-        ]}
-      />
-      <View
-        pointerEvents="none"
-        style={[
-          styles.glow,
-          {
-            backgroundColor: `${theme.palette.accentWarm}18`,
-            bottom: -70,
-            left: -20,
-          },
-        ]}
-      />
-      <View
-        pointerEvents="none"
-        style={[
           StyleSheet.absoluteFillObject,
           {
             backgroundColor: theme.isDark ? "transparent" : "rgba(255,255,255,0.02)",
@@ -49,12 +27,3 @@ export function BrandedBackground() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  glow: {
-    position: "absolute",
-    width: 220,
-    height: 220,
-    borderRadius: 999,
-  },
-});

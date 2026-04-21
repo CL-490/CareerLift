@@ -17,11 +17,21 @@ export function BrandWordmark({
     <View style={[styles.row, compact ? styles.rowCompact : null]}>
       <BrandMark size={compact ? 42 : 58} />
       <View style={styles.copy}>
-        <Text style={[styles.title, { color: theme.palette.foreground, fontSize: compact ? theme.text.size(20) : theme.text.size(30) }]}>
+        <Text
+          style={[
+            styles.title,
+            {
+              color: theme.isDark ? "#f6efff" : "#1d1230",
+              fontSize: compact ? theme.text.size(20) : theme.text.size(30),
+            },
+          ]}
+        >
           CareerLift
         </Text>
-        <Text style={[styles.kicker, { color: theme.palette.accentStrong }]}>Elevate every next move</Text>
-        {subtitle ? <Text style={[styles.subtitle, { color: theme.palette.muted }]}>{subtitle}</Text> : null}
+        <Text style={[styles.kicker, { color: theme.isDark ? "#caa9ff" : "#7b54c9" }]}>Fluid momentum for every next move</Text>
+        {subtitle ? (
+          <Text style={[styles.subtitle, { color: theme.isDark ? "rgba(236, 225, 255, 0.74)" : theme.palette.muted }]}>{subtitle}</Text>
+        ) : null}
       </View>
     </View>
   );
@@ -38,20 +48,20 @@ const styles = StyleSheet.create({
   },
   copy: {
     flexShrink: 1,
-    gap: 2,
+    gap: 3,
   },
   title: {
     fontWeight: "900",
-    letterSpacing: -1.1,
+    letterSpacing: -1.35,
   },
   kicker: {
     fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 1.6,
+    fontWeight: "700",
+    letterSpacing: 1.2,
     textTransform: "uppercase",
   },
   subtitle: {
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 19,
   },
 });

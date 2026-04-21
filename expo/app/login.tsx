@@ -1,14 +1,14 @@
 "use client";
 
 import React from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import * as AuthSession from "expo-auth-session";
 import { Feather } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
+import { VideoView, useVideoPlayer } from "expo-video";
 
-import { BrandMark } from "@/components/brand/BrandMark";
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
 import { BrandedBackground } from "@/components/ui/BrandedBackground";
 import { useAuth } from "@/lib/auth/provider";
@@ -23,6 +23,7 @@ import {
 import { useAppTheme } from "@/lib/theme";
 
 type ProviderBusy = "credentials" | "google" | "microsoft" | null;
+const loginBackgroundVideo = require("../assets/videos/login-bg.mp4");
 
 async function fetchGoogleProfile(accessToken: string) {
   const response = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
@@ -63,6 +64,12 @@ async function fetchMicrosoftProfile(accessToken: string) {
 export default function LoginScreen() {
   const { theme } = useAppTheme();
   const { signInWithPassword, completeOAuthSignIn } = useAuth();
+  const insets = useSafeAreaInsets();
+  const backgroundPlayer = useVideoPlayer(loginBackgroundVideo, (player) => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  });
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [busy, setBusy] = React.useState<ProviderBusy>(null);
@@ -228,62 +235,47 @@ export default function LoginScreen() {
     }
   }
 
-  const providerButtonBase = [
-    styles.providerButton,
-    {
-      borderColor: theme.palette.divider,
-      backgroundColor: theme.palette.surface,
-    },
-  ] as const;
-
   return (
     <View style={styles.root}>
       <BrandedBackground />
-      <SafeAreaView style={styles.safeArea} edges={["top", "bottom", "left", "right"]}>
+      <View pointerEvents="none" style={styles.backgroundMedia}>
+        <VideoView
+          allowsPictureInPicture={false}
+          contentFit="cover"
+          nativeControls={false}
+          player={backgroundPlayer}
+          style={styles.backgroundVideo}
+        />
+        <LinearGradient
+          colors={["rgba(18, 6, 34, 0.28)", "rgba(10, 4, 24, 0.52)", "rgba(5, 6, 13, 0.82)"]}
+          locations={[0, 0.45, 1]}
+          style={styles.backgroundScrim}
+        />
+      </View>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <Animated.View entering={FadeInUp.duration(450)} style={styles.hero}>
-              <View style={styles.markRow}>
-                <BrandMark size={72} />
-                <View style={[styles.launchChip, { backgroundColor: `${theme.palette.accentWarm}22`, borderColor: `${theme.palette.accentWarm}44` }]}>
-                  <Text style={{ color: theme.palette.accentWarm, fontWeight: "800", fontSize: theme.text.size(11), letterSpacing: 0.8 }}>
-                    MOBILE AUTH LIVE
-                  </Text>
-                </View>
-              </View>
-
-              <BrandWordmark subtitle="Sign in once, then carry your resume, saved jobs, and interview prep everywhere." />
+          <View style={[styles.screen, { paddingTop: Math.max(insets.top, 6) }]}>
+            <Animated.View entering={FadeInUp.duration(420)} style={styles.header}>
+              <BrandWordmark />
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(80).duration(450)}>
+            <Animated.View entering={FadeInDown.delay(60).duration(420)} style={styles.sheetWrap}>
               <LinearGradient
-                colors={[theme.palette.cardStart, theme.palette.cardEnd]}
+                colors={["rgba(20,16,10,0.94)", "rgba(12,16,24,0.98)"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={[
-                  styles.panel,
-                  {
-                    borderColor: theme.palette.divider,
-                    shadowColor: theme.palette.shadow,
-                  },
-                ]}
+                style={[styles.sheet, { shadowColor: theme.palette.shadow }]}
               >
-                <View style={styles.panelHeader}>
-                  <Text style={{ color: theme.palette.foreground, fontSize: theme.text.size(28), fontWeight: "800", letterSpacing: -0.8 }}>
-                    Sign in
-                  </Text>
-                  <Text style={{ color: theme.palette.muted, lineHeight: theme.text.size(21) }}>
-                    Use the same credentials and providers as web, now with a native Expo flow and persistent session restore.
+                <View style={styles.sheetHeader}>
+                  <Text style={[styles.title, { color: "#fff7e8", fontSize: theme.text.size(24) }]}>Sign in</Text>
+                  <Text style={[styles.subtitle, { color: "rgba(255, 241, 214, 0.7)" }]}>
+                    Email, Google, or Microsoft. Same account system as web.
                   </Text>
                 </View>
 
                 <View style={styles.formGap}>
                   <View style={styles.inputGap}>
-                    <Text style={[styles.inputLabel, { color: theme.palette.foreground }]}>Email</Text>
+                    <Text style={[styles.inputLabel, { color: "#fff2d1" }]}>Email</Text>
                     <TextInput
                       autoCapitalize="none"
                       autoComplete="email"
@@ -291,43 +283,29 @@ export default function LoginScreen() {
                       value={email}
                       onChangeText={setEmail}
                       placeholder="you@careerlift.ai"
-                      placeholderTextColor={theme.palette.muted}
-                      style={[
-                        styles.input,
-                        {
-                          color: theme.palette.foreground,
-                          borderColor: theme.palette.divider,
-                          backgroundColor: theme.palette.surfaceMuted,
-                        },
-                      ]}
+                      placeholderTextColor="rgba(255, 236, 197, 0.38)"
+                      style={styles.input}
                     />
                   </View>
 
                   <View style={styles.inputGap}>
-                    <Text style={[styles.inputLabel, { color: theme.palette.foreground }]}>Password</Text>
+                    <Text style={[styles.inputLabel, { color: "#fff2d1" }]}>Password</Text>
                     <TextInput
                       autoComplete="current-password"
                       secureTextEntry
                       value={password}
                       onChangeText={setPassword}
                       placeholder="Enter your password"
-                      placeholderTextColor={theme.palette.muted}
-                      style={[
-                        styles.input,
-                        {
-                          color: theme.palette.foreground,
-                          borderColor: theme.palette.divider,
-                          backgroundColor: theme.palette.surfaceMuted,
-                        },
-                      ]}
+                      placeholderTextColor="rgba(255, 236, 197, 0.38)"
+                      style={styles.input}
                     />
                   </View>
                 </View>
 
                 {error ? (
-                  <View style={[styles.errorBanner, { borderColor: `${theme.palette.danger}33`, backgroundColor: `${theme.palette.danger}14` }]}>
+                  <View style={styles.errorBanner}>
                     <Text style={{ color: theme.palette.danger, fontWeight: "700" }}>Auth error</Text>
-                    <Text style={{ color: theme.palette.foreground, lineHeight: theme.text.size(20) }}>{error}</Text>
+                    <Text style={{ color: "#fff7ef", lineHeight: theme.text.size(20) }}>{error}</Text>
                   </View>
                 ) : null}
 
@@ -337,8 +315,8 @@ export default function LoginScreen() {
                   style={[
                     styles.primaryButton,
                     {
-                      backgroundColor: busy === "credentials" ? `${theme.palette.accentStrong}88` : theme.palette.accentStrong,
-                      opacity: busy !== null && busy !== "credentials" ? 0.7 : 1,
+                      backgroundColor: busy === "credentials" ? "rgba(217, 174, 87, 0.74)" : "#d9ae57",
+                      opacity: busy !== null && busy !== "credentials" ? 0.72 : 1,
                     },
                   ]}
                 >
@@ -346,63 +324,38 @@ export default function LoginScreen() {
                 </Pressable>
 
                 <View style={styles.dividerRow}>
-                  <View style={[styles.divider, { backgroundColor: theme.palette.divider }]} />
-                  <Text style={{ color: theme.palette.muted, fontWeight: "700", fontSize: theme.text.size(11), letterSpacing: 1.1 }}>OR CONTINUE WITH</Text>
-                  <View style={[styles.divider, { backgroundColor: theme.palette.divider }]} />
+                  <View style={styles.divider} />
+                  <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
+                  <View style={styles.divider} />
                 </View>
 
-                <View style={styles.providersRow}>
+                <View style={styles.providersStack}>
                   <Pressable
                     onPress={() => void handleProviderPress("google")}
                     disabled={busy !== null || !googleRequest}
-                    style={[
-                      providerButtonBase,
-                      {
-                        opacity: busy !== null && busy !== "google" ? 0.68 : !googleRequest ? 0.45 : 1,
-                      },
-                    ]}
+                    style={[styles.providerButton, busy !== null && busy !== "google" ? styles.dimmed : null, !googleRequest ? styles.disabled : null]}
                   >
-                    <Feather name="chrome" size={18} color={theme.palette.foreground} />
-                    <Text style={[styles.providerText, { color: theme.palette.foreground }]}>
-                      {busy === "google" ? "Connecting..." : "Google"}
-                    </Text>
+                    <Feather name="chrome" size={18} color="#fff1ce" />
+                    <Text style={styles.providerText}>{busy === "google" ? "Connecting..." : "Google"}</Text>
                   </Pressable>
 
                   <Pressable
                     onPress={() => void handleProviderPress("microsoft")}
                     disabled={busy !== null || !microsoftRequest}
-                    style={[
-                      providerButtonBase,
-                      {
-                        opacity: busy !== null && busy !== "microsoft" ? 0.68 : !microsoftRequest ? 0.45 : 1,
-                      },
-                    ]}
+                    style={[styles.providerButton, busy !== null && busy !== "microsoft" ? styles.dimmed : null, !microsoftRequest ? styles.disabled : null]}
                   >
-                    <Feather name="grid" size={18} color={theme.palette.foreground} />
-                    <Text style={[styles.providerText, { color: theme.palette.foreground }]}>
-                      {busy === "microsoft" ? "Connecting..." : "Microsoft"}
-                    </Text>
+                    <Feather name="grid" size={18} color="#fff1ce" />
+                    <Text style={styles.providerText}>{busy === "microsoft" ? "Connecting..." : "Microsoft"}</Text>
                   </Pressable>
-                </View>
 
-                <View style={styles.appleShell}>
-                  <Pressable
-                    disabled
-                    style={[
-                      styles.appleButton,
-                      {
-                        borderColor: theme.palette.divider,
-                        backgroundColor: theme.palette.surfaceMuted,
-                      },
-                    ]}
-                  >
-                    <Feather name="smartphone" size={18} color={theme.palette.muted} />
-                    <Text style={[styles.providerText, { color: theme.palette.muted }]}>Apple coming soon</Text>
+                  <Pressable disabled style={[styles.providerButton, styles.disabled]}>
+                    <Feather name="smartphone" size={18} color="rgba(255, 236, 197, 0.44)" />
+                    <Text style={[styles.providerText, { color: "rgba(255, 236, 197, 0.44)" }]}>Apple coming soon</Text>
                   </Pressable>
                 </View>
               </LinearGradient>
             </Animated.View>
-          </ScrollView>
+          </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
@@ -413,81 +366,104 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
+  backgroundMedia: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  backgroundVideo: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  backgroundScrim: {
+    ...StyleSheet.absoluteFillObject,
+  },
   safeArea: {
     flex: 1,
   },
   flex: {
     flex: 1,
   },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
+  screen: {
+    flex: 1,
     paddingHorizontal: 20,
-    paddingVertical: 26,
-    gap: 22,
-  },
-  hero: {
-    gap: 16,
-  },
-  markRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  launchChip: {
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  panel: {
-    borderWidth: 1,
-    borderRadius: 30,
-    padding: 22,
     gap: 18,
+    justifyContent: "space-between",
+  },
+  header: {
+    paddingTop: 0,
+    paddingBottom: 10,
+  },
+  sheetWrap: {
+    paddingBottom: 96,
+    alignItems: "center",
+  },
+  sheet: {
+    width: "100%",
+    maxWidth: 420,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 16,
+    gap: 14,
+    borderWidth: 1,
+    borderColor: "rgba(228, 186, 104, 0.16)",
     shadowOpacity: 0.22,
     shadowOffset: { width: 0, height: 16 },
     shadowRadius: 30,
     elevation: 10,
   },
-  panelHeader: {
-    gap: 8,
+  sheetHeader: {
+    gap: 6,
+  },
+  title: {
+    fontWeight: "800",
+    letterSpacing: -0.8,
+  },
+  subtitle: {
+    lineHeight: 19,
+    maxWidth: 290,
+    fontSize: 13,
   },
   formGap: {
-    gap: 14,
+    gap: 12,
   },
   inputGap: {
-    gap: 8,
+    gap: 6,
   },
   inputLabel: {
     fontWeight: "700",
-    fontSize: 13,
+    fontSize: 12,
   },
   input: {
-    minHeight: 56,
+    minHeight: 48,
     borderWidth: 1,
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    color: "#fff9ef",
+    borderColor: "rgba(228, 186, 104, 0.16)",
+    backgroundColor: "rgba(255, 249, 236, 0.04)",
   },
   errorBanner: {
     gap: 6,
     borderWidth: 1,
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderColor: "rgba(248, 113, 113, 0.22)",
+    backgroundColor: "rgba(248, 113, 113, 0.12)",
   },
   primaryButton: {
-    minHeight: 56,
-    borderRadius: 18,
+    minHeight: 48,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },
   primaryButtonText: {
-    color: "#ffffff",
+    color: "#241503",
     fontWeight: "800",
-    fontSize: 15,
+    fontSize: 14,
   },
   dividerRow: {
     flexDirection: "row",
@@ -497,36 +473,38 @@ const styles = StyleSheet.create({
   divider: {
     flex: 1,
     height: 1,
+    backgroundColor: "rgba(228, 186, 104, 0.14)",
   },
-  providersRow: {
-    flexDirection: "row",
-    gap: 10,
+  dividerText: {
+    color: "rgba(255, 236, 197, 0.56)",
+    fontWeight: "700",
+    fontSize: 10,
+    letterSpacing: 1.1,
+  },
+  providersStack: {
+    gap: 8,
   },
   providerButton: {
-    flex: 1,
-    minHeight: 54,
-    borderRadius: 18,
+    minHeight: 46,
+    borderRadius: 16,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
-    gap: 9,
+    gap: 8,
     paddingHorizontal: 12,
+    borderColor: "rgba(228, 186, 104, 0.16)",
+    backgroundColor: "rgba(255, 249, 236, 0.04)",
   },
   providerText: {
+    color: "#fff1ce",
     fontWeight: "700",
-    fontSize: 13,
+    fontSize: 12,
   },
-  appleShell: {
-    marginTop: -2,
+  dimmed: {
+    opacity: 0.68,
   },
-  appleButton: {
-    minHeight: 52,
-    borderRadius: 18,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-    gap: 9,
+  disabled: {
+    opacity: 0.45,
   },
 });

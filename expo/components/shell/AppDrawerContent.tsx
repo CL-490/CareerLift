@@ -102,19 +102,7 @@ export function AppDrawerContent({ state, navigation }: DrawerContentComponentPr
           })}
         </View>
 
-        <View
-          style={[
-            styles.footerCard,
-            {
-              borderColor: theme.palette.divider,
-              backgroundColor: theme.palette.surfaceMuted,
-            },
-          ]}
-        >
-          <Text style={{ color: theme.palette.foreground, fontWeight: "700" }}>Phase 1 mobile build</Text>
-          <Text style={{ color: theme.palette.muted, lineHeight: 20 }}>
-            Auth parity is now live with native sign-in, protected API access, and persistent sessions across app launches.
-          </Text>
+        <View style={styles.signOutWrap}>
           <Pressable
             onPress={() => void signOut()}
             style={[
@@ -156,21 +144,21 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   menuList: {
-    gap: 8,
+    gap: 6,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    borderRadius: 22,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    gap: 10,
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     borderWidth: 1,
   },
   iconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -178,22 +166,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   activeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
-  footerCard: {
+  signOutWrap: {
     marginTop: "auto",
-    gap: 8,
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1,
+    paddingTop: 18,
+    paddingBottom: 10,
   },
   signOutButton: {
     alignSelf: "flex-start",
     borderWidth: 1,
     borderRadius: 999,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 9,
   },
 });

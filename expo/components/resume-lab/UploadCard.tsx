@@ -33,6 +33,7 @@ export function UploadCard({
   hasResult,
 }: Props) {
   const { theme } = useAppTheme();
+  const isDisabled = !file || uploading;
 
   return (
     <Card delay={30}>
@@ -129,16 +130,23 @@ export function UploadCard({
 
       <Pressable
         onPress={onUpload}
-        disabled={!file || uploading}
+        disabled={isDisabled}
         style={[
           styles.primaryButton,
           {
-            backgroundColor: !file || uploading ? theme.palette.surfaceStrong : theme.palette.accentStrong,
-            opacity: !file || uploading ? 0.65 : 1,
+            backgroundColor: isDisabled ? (theme.isDark ? "rgba(255,255,255,0.05)" : "rgba(109, 70, 214, 0.08)") : theme.palette.accentStrong,
+            borderColor: isDisabled ? (theme.isDark ? "rgba(255,255,255,0.07)" : "rgba(109, 70, 214, 0.14)") : theme.palette.accentStrong,
+            opacity: 1,
           },
         ]}
       >
-        <Text style={{ color: "#ffffff", fontWeight: "700", fontSize: theme.text.size(14) }}>
+        <Text
+          style={{
+            color: isDisabled ? (theme.isDark ? "rgba(243, 239, 255, 0.62)" : "rgba(95, 71, 153, 0.78)") : "#ffffff",
+            fontWeight: "700",
+            fontSize: theme.text.size(14),
+          }}
+        >
           {uploading ? "Processing resume…" : "Process Resume"}
         </Text>
       </Pressable>
@@ -191,6 +199,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     minHeight: 52,
     borderRadius: 18,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
