@@ -440,7 +440,7 @@ export default function MockInterview({
       </div>
 
       {/* Message History - Scrollable */}
-      <div className="mock-transcript rounded-lg p-4 space-y-4 max-h-64 overflow-y-auto">
+      <div className="mock-transcript rounded-lg p-4 space-y-4 max-h-128 overflow-y-auto">
         {messages.map((msg, idx) => (
           <div key={idx} className="space-y-2">
             {msg.question && (
