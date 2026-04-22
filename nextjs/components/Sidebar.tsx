@@ -322,7 +322,7 @@ function MobileSidebar({
 }) {
   return (
     <>
-      <div className="sticky top-0 z-40 border-b border-[var(--border-color)] bg-[color:color-mix(in_oklab,var(--background)_82%,transparent)] backdrop-blur lg:hidden">
+      <div className="sticky top-0 z-40 border-b border-[var(--border-color)] bg-[var(--background)] lg:hidden">
         <div className="flex items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2">
             <CLLogo size={26} />
@@ -347,7 +347,7 @@ function MobileSidebar({
             aria-label="Close navigation menu"
             onClick={onClose}
           />
-          <aside className="fixed inset-y-0 left-0 z-50 flex w-[min(84vw,320px)] flex-col gap-6 border-r border-[var(--border-color)] px-5 py-6 glass shadow-2xl">
+          <aside className="fixed inset-y-0 left-0 z-50 flex w-[min(84vw,320px)] flex-col gap-6 border-r border-[var(--border-color)] bg-[var(--background)] px-5 py-6 shadow-2xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CLLogo size={26} />
